@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: glamai
+    env: node
+    region: frankfurt  # Ближайший к СНГ
+    plan: free
+    buildCommand: npm run build && cd backend && npm install
+    startCommand: node backend/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: FREE_CREDITS_SIGNUP
+        value: "20"
+      - key: GUEST_FREE_TRIALS
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true          # Render сгенерирует автоматически
+      - key: REPLICATE_API_TOKEN
+        sync: false                  # Введёте вручную в dashboard
+      - key: PUBLIC_BASE_URL
+        sync: false                  # Render URL — введёте после деплоя
