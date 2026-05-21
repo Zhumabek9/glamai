@@ -1,0 +1,462 @@
+{
+  "info": {
+    "title": "Cog",
+    "version": "0.1.0"
+  },
+  "paths": {},
+  "openapi": "3.0.2",
+  "components": {
+    "schemas": {
+      "Input": {
+        "type": "object",
+        "title": "Input",
+        "required": [
+          "input_image"
+        ],
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "title": "Seed",
+            "nullable": true,
+            "description": "Random seed. Set for reproducible generation"
+          },
+          "gender": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/gender"
+              }
+            ],
+            "default": "none",
+            "x-order": 3,
+            "description": "The gender of the person"
+          },
+          "haircut": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/haircut"
+              }
+            ],
+            "default": "No change",
+            "x-order": 1,
+            "description": "The haircut to give them"
+          },
+          "hair_color": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/hair_color"
+              }
+            ],
+            "default": "No change",
+            "x-order": 2,
+            "description": "The color of the person's hair"
+          },
+          "input_image": {
+            "type": "string",
+            "title": "Input Image",
+            "format": "uri",
+            "description": "Image of the person's haircut you want to edit. Must be jpeg, png, gif, or webp."
+          },
+          "aspect_ratio": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/aspect_ratio"
+              }
+            ],
+            "default": "match_input_image",
+            "x-order": 4,
+            "description": "Aspect ratio of the generated image. Use 'match_input_image' to match the aspect ratio of the input image."
+          },
+          "output_format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/output_format"
+              }
+            ],
+            "default": "png",
+            "x-order": 6,
+            "description": "Output format for the generated image"
+          },
+          "safety_tolerance": {
+            "type": "integer",
+            "title": "Safety Tolerance",
+            "default": 2,
+            "maximum": 2,
+            "minimum": 0,
+            "description": "Safety tolerance, 0 is most strict and 2 is most permissive. 2 is currently the maximum allowed."
+          }
+        }
+      },
+      "Output": {
+        "type": "string",
+        "title": "Output",
+        "format": "uri"
+      },
+      "Status": {
+        "enum": [
+          "starting",
+          "processing",
+          "succeeded",
+          "canceled",
+          "failed"
+        ],
+        "type": "string",
+        "title": "Status",
+        "description": "An enumeration."
+      },
+      "gender": {
+        "enum": [
+          "none",
+          "male",
+          "female"
+        ],
+        "type": "string",
+        "title": "gender",
+        "description": "An enumeration."
+      },
+      "haircut": {
+        "enum": [
+          "No change",
+          "Random",
+          "Straight",
+          "Wavy",
+          "Curly",
+          "Bob",
+          "Pixie Cut",
+          "Layered",
+          "Messy Bun",
+          "High Ponytail",
+          "Low Ponytail",
+          "Braided Ponytail",
+          "French Braid",
+          "Dutch Braid",
+          "Fishtail Braid",
+          "Space Buns",
+          "Top Knot",
+          "Undercut",
+          "Mohawk",
+          "Crew Cut",
+          "Faux Hawk",
+          "Slicked Back",
+          "Side-Parted",
+          "Center-Parted",
+          "Blunt Bangs",
+          "Side-Swept Bangs",
+          "Shag",
+          "Lob",
+          "Angled Bob",
+          "A-Line Bob",
+          "Asymmetrical Bob",
+          "Graduated Bob",
+          "Inverted Bob",
+          "Layered Shag",
+          "Choppy Layers",
+          "Razor Cut",
+          "Perm",
+          "Ombré",
+          "Straightened",
+          "Soft Waves",
+          "Glamorous Waves",
+          "Hollywood Waves",
+          "Finger Waves",
+          "Tousled",
+          "Feathered",
+          "Pageboy",
+          "Pigtails",
+          "Pin Curls",
+          "Rollerset",
+          "Twist Out",
+          "Bantu Knots",
+          "Dreadlocks",
+          "Cornrows",
+          "Box Braids",
+          "Crochet Braids",
+          "Double Dutch Braids",
+          "French Fishtail Braid",
+          "Waterfall Braid",
+          "Rope Braid",
+          "Heart Braid",
+          "Halo Braid",
+          "Crown Braid",
+          "Braided Crown",
+          "Bubble Braid",
+          "Bubble Ponytail",
+          "Ballerina Braids",
+          "Milkmaid Braids",
+          "Bohemian Braids",
+          "Flat Twist",
+          "Crown Twist",
+          "Twisted Bun",
+          "Twisted Half-Updo",
+          "Twist and Pin Updo",
+          "Chignon",
+          "Simple Chignon",
+          "Messy Chignon",
+          "French Twist",
+          "French Twist Updo",
+          "French Roll",
+          "Updo",
+          "Messy Updo",
+          "Knotted Updo",
+          "Ballerina Bun",
+          "Banana Clip Updo",
+          "Beehive",
+          "Bouffant",
+          "Hair Bow",
+          "Half-Up Top Knot",
+          "Half-Up, Half-Down",
+          "Messy Bun with a Headband",
+          "Messy Bun with a Scarf",
+          "Messy Fishtail Braid",
+          "Sideswept Pixie",
+          "Mohawk Fade",
+          "Zig-Zag Part",
+          "Victory Rolls"
+        ],
+        "type": "string",
+        "title": "haircut",
+        "description": "An enumeration."
+      },
+      "hair_color": {
+        "enum": [
+          "No change",
+          "Random",
+          "Blonde",
+          "Brunette",
+          "Black",
+          "Dark Brown",
+          "Medium Brown",
+          "Light Brown",
+          "Auburn",
+          "Copper",
+          "Red",
+          "Strawberry Blonde",
+          "Platinum Blonde",
+          "Silver",
+          "White",
+          "Blue",
+          "Purple",
+          "Pink",
+          "Green",
+          "Blue-Black",
+          "Golden Blonde",
+          "Honey Blonde",
+          "Caramel",
+          "Chestnut",
+          "Mahogany",
+          "Burgundy",
+          "Jet Black",
+          "Ash Brown",
+          "Ash Blonde",
+          "Titanium",
+          "Rose Gold"
+        ],
+        "type": "string",
+        "title": "hair_color",
+        "description": "An enumeration."
+      },
+      "WebhookEvent": {
+        "enum": [
+          "start",
+          "output",
+          "logs",
+          "completed"
+        ],
+        "type": "string",
+        "title": "WebhookEvent",
+        "description": "An enumeration."
+      },
+      "aspect_ratio": {
+        "enum": [
+          "match_input_image",
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "4:5",
+          "5:4",
+          "21:9",
+          "9:21",
+          "2:1",
+          "1:2"
+        ],
+        "type": "string",
+        "title": "aspect_ratio",
+        "description": "An enumeration."
+      },
+      "output_format": {
+        "enum": [
+          "jpg",
+          "png"
+        ],
+        "type": "string",
+        "title": "output_format",
+        "description": "An enumeration."
+      },
+      "ValidationError": {
+        "type": "object",
+        "title": "ValidationError",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "properties": {
+          "loc": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        }
+      },
+      "PredictionRequest": {
+        "type": "object",
+        "title": "PredictionRequest",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "nullable": true
+          },
+          "input": {
+            "$ref": "#/components/schemas/Input",
+            "nullable": true
+          },
+          "context": {
+            "type": "object",
+            "title": "Context",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "webhook": {
+            "type": "string",
+            "title": "Webhook",
+            "format": "uri",
+            "nullable": true,
+            "maxLength": 65536,
+            "minLength": 1
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "format": "date-time",
+            "nullable": true
+          },
+          "output_file_prefix": {
+            "type": "string",
+            "title": "Output File Prefix",
+            "nullable": true
+          },
+          "webhook_events_filter": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEvent"
+            },
+            "default": [
+              "start",
+              "output",
+              "logs",
+              "completed"
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "PredictionResponse": {
+        "type": "object",
+        "title": "PredictionResponse",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "nullable": true
+          },
+          "logs": {
+            "type": "string",
+            "title": "Logs",
+            "default": ""
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "nullable": true
+          },
+          "input": {
+            "$ref": "#/components/schemas/Input",
+            "nullable": true
+          },
+          "output": {
+            "$ref": "#/components/schemas/Output"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status",
+            "nullable": true
+          },
+          "metrics": {
+            "type": "object",
+            "title": "Metrics",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "format": "date-time",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completed_at": {
+            "type": "string",
+            "title": "Completed At",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "HTTPValidationError": {
+        "type": "object",
+        "title": "HTTPValidationError",
+        "properties": {
+          "detail": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail"
+          }
+        }
+      }
+    }
+  }
+}
