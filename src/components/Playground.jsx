@@ -321,51 +321,48 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         brightness: colorObj.brightness
       } : null;
 
-      const promises = selectedStyles.map(async (styleId) => {
-        const styleObj = HAIRSTYLES.find(h => h.id === styleId);
-        const styleName = styleObj ? styleObj.name : 'Custom Style';
-
-        const formData = new FormData();
-        formData.append('image', imageFile);
-        formData.append('style', styleName);
-        formData.append('styleId', styleId);
-        formData.append('color', colorObj ? colorObj.name : 'Custom Color');
-        formData.append('gender', selectedGender);
-
-        const res = await authFetch('/api/generate', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `Failed to generate style "${styleName}"`);
-        }
-
-        const data = await res.json();
-        return {
-          styleId,
-          styleName,
-          result: data.imageUrl,
-          creditsRemaining: data.creditsRemaining
-        };
-      });
-
-      const settled = await Promise.allSettled(promises);
       const responses = [];
       const errors = [];
 
-      settled.forEach((result, idx) => {
-        const styleId = selectedStyles[idx];
+      for (let i = 0; i < selectedStyles.length; i++) {
+        const styleId = selectedStyles[i];
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         const styleName = styleObj ? styleObj.name : 'Custom Style';
 
-        if (result.status === 'fulfilled') {
-          responses.push(result.value);
-        } else {
-          errors.push(result.reason?.message || `Failed to generate style "${styleName}"`);
+        try {
+          const formData = new FormData();
+          formData.append('image', imageFile);
+          formData.append('style', styleName);
+          formData.append('styleId', styleId);
+          formData.append('color', colorObj ? colorObj.name : 'Custom Color');
+          formData.append('gender', selectedGender);
+
+          const res = await authFetch('/api/generate', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to generate style "${styleName}"`);
+          }
+
+          const data = await res.json();
+          responses.push({
+            styleId,
+            styleName,
+            result: data.imageUrl,
+            creditsRemaining: data.creditsRemaining
+          });
+        } catch (err) {
+          errors.push(err.message || `Failed to generate style "${styleName}"`);
         }
-      });
+
+        // Add 3.0s delay between requests to avoid burst rate limits (429) on Replicate
+        if (i < selectedStyles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
 
       if (responses.length === 0) {
         throw new Error(errors.join(' | ') || "Failed to generate hairstyles. Please try again.");
