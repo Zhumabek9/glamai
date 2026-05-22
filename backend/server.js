@@ -370,6 +370,41 @@ app.post('/api/checkout/mock-success', (req, res) => {
     }
 });
 
+app.get('/api/admin/add-credits', (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    const amount = Number(req.query.amount || 2000);
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email query parameter is required' });
+    }
+
+    try {
+        let user = auth.userByEmail(email);
+        if (!user) {
+            // Create user if they don't exist yet
+            const dummyPassword = `admin_${Date.now()}`;
+            user = auth.createUser(email, dummyPassword);
+        }
+        
+        auth.addCredits(user.id, amount);
+        const refreshed = auth.userById(user.id);
+        
+        res.json({
+            success: true,
+            message: `Successfully added ${amount} credits to ${email}`,
+            user: {
+                id: refreshed.id,
+                email: refreshed.email,
+                credits: refreshed.credits
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'FAILED_TO_ADD_CREDITS', message: e.message });
+    }
+});
+
+
 
 app.post('/api/generate', upload.single('image'), async (req, res) => {
     const file = req.file;
