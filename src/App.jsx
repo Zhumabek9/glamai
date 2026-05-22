@@ -33,7 +33,7 @@ export default function App() {
   // 1. Initial State Load — Firebase auth + backend sync
   useEffect(() => {
     // Load Stripe config
-    fetch('/api/config')
+    authFetch('/api/config')
       .then(res => res.json())
       .then(config => setStripeEnabled(config.stripeEnabled))
       .catch(err => console.warn('Failed to load public config:', err));
@@ -91,7 +91,7 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     } catch (err) {
       console.error('Logout error:', err);
     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, CreditCard, ShieldCheck, CheckCircle } from 'lucide-react';
+import { authFetch } from '../apiClient';
 
 export default function PaymentModal({ plan, onClose, onPaymentSuccess }) {
   const [cardNumber, setCardNumber] = useState('');
@@ -78,7 +79,7 @@ export default function PaymentModal({ plan, onClose, onPaymentSuccess }) {
     // Run checkout simulation
     setIsProcessing(true);
 
-    fetch('/api/checkout/mock-success', {
+    authFetch('/api/checkout/mock-success', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

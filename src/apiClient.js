@@ -24,7 +24,8 @@ export async function getAuthHeaders() {
  */
 export async function authFetch(url, options = {}) {
   const authHeaders = await getAuthHeaders();
-  return fetch(url, {
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  return fetch(baseUrl + url, {
     ...options,
     headers: {
       ...authHeaders,
