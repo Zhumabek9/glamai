@@ -408,7 +408,7 @@ app.get('/api/admin/add-credits', (req, res) => {
 
 app.post('/api/generate', upload.single('image'), async (req, res) => {
     const file = req.file;
-    const { style = '', color = '', gender = '' } = req.body;
+    const { style = '', styleId = '', color = '', gender = '' } = req.body;
 
     const ip =
         req.headers['x-forwarded-for']?.split(',')[0]?.trim?.() ||
@@ -457,11 +457,12 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
     }
 
     try {
-        console.log(`Generating: ${gender} ${color} ${style} (${paidWith}) for ${file.path}`);
+        console.log(`Generating: ${gender} ${color} ${style} (ID: ${styleId}) (${paidWith}) for ${file.path}`);
 
         // Call Replicate model via nanobanana-bridge
         const bridgeRes = await callNanoBanana(file.path, {
             style,
+            styleId,
             color,
             gender
         });

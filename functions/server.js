@@ -212,7 +212,7 @@ app.post('/api/checkout/mock-success', async (req, res) => {
 // ── AI Generation ─────────────────────────────────────────────────────────────
 app.post('/api/generate', upload.single('image'), async (req, res) => {
   const file = req.file;
-  const { style = '', color = '', gender = '' } = req.body;
+  const { style = '', styleId = '', color = '', gender = '' } = req.body;
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
 
@@ -239,13 +239,13 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
   }
 
   try {
-    console.log(`Generating: ${gender} ${color} ${style} (${paidWith})`);
+    console.log(`Generating: ${gender} ${color} ${style} (ID: ${styleId}) (${paidWith})`);
 
     // Write buffer to temp file for nanobanana-bridge
     const tmpPath = `/tmp/upload_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     fs.writeFileSync(tmpPath, file.buffer);
 
-    const bridgeRes = await callNanoBanana(tmpPath, { style, color, gender });
+    const bridgeRes = await callNanoBanana(tmpPath, { style, styleId, color, gender });
 
     try { fs.unlinkSync(tmpPath); } catch (_) {}
 

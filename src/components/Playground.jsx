@@ -330,6 +330,7 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         const formData = new FormData();
         formData.append('image', imageFile);
         formData.append('style', styleName);
+        formData.append('styleId', styleId);
         formData.append('color', colorObj ? colorObj.name : 'Custom Color');
         formData.append('gender', selectedGender);
 
