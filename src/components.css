@@ -1707,17 +1707,35 @@
     flex-shrink: 0;
   }
 
-  /* Cards grid */
+  /* Cards grid — горизонтальный скролл на мобильном */
   .pricing-grid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: visible;
+    gap: 1rem;
     max-width: 100%;
-    padding: 0 1rem;
+    padding: 0.5rem 1rem 1.5rem;
+    margin: 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    /* Скрыть скроллбар визуально но оставить функционал */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .pricing-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .pricing-card {
+    flex: 0 0 78vw;       /* каждая карточка занимает 78% ширины экрана */
+    max-width: 300px;
+    min-width: 240px;
     padding: 1.75rem 1.25rem;
     text-align: center;
+    scroll-snap-align: center;
   }
 
   .tier-name {
@@ -1740,6 +1758,7 @@
 
   .tier-features li {
     font-size: 0.85rem;
+    text-align: left;
   }
 
   .pricing-card button {
