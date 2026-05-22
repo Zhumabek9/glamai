@@ -445,7 +445,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // Catch-all: return index.html for any non-API route (React Router)
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
