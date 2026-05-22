@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Coins, ShieldCheck, Sparkles, AlertCircle, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { t } from '../utils/i18n';
 
@@ -174,16 +174,23 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
 
   const activePlans = PLANS[billingPeriod];
 
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   return (
     <div style={{ background: 'var(--color-bg-light)', padding: '5rem 0 6rem' }}>
       <section className="pricing-section container animate-fade-in" style={{ padding: '0' }}>
         <p style={{ textTransform: 'uppercase', fontSize: '0.75rem', tracking: '0.1em', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.75rem' }}>
           {t('pricing.title')}
         </p>
-        <h1 className="pricing-title" style={{ fontFamily: 'var(--font-heading)', fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
+        <h1 className="pricing-title" style={{ fontFamily: 'var(--font-heading)', fontSize: isMobile ? '2rem' : '3rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.25rem', textAlign: isMobile ? 'center' : undefined }}>
           {t('pricing.chooseYourPlan')}
         </h1>
-        <p className="pricing-subtitle" style={{ maxWidth: '600px', margin: '0 auto 2.5rem', color: 'var(--text-secondary)' }}>
+        <p className="pricing-subtitle" style={{ maxWidth: '600px', margin: isMobile ? '0 auto 2rem' : '0 auto 2.5rem', color: 'var(--text-secondary)', textAlign: 'center', padding: isMobile ? '0 1rem' : '0' }}>
           {t('pricing.subtitle')}
         </p>
 
@@ -269,17 +276,46 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
         )}
 
         {/* Plans Grid */}
-        <div className="pricing-grid" style={{ maxWidth: '1024px', display: 'grid', gridTemplateColumns: activePlans.length === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: '2rem', marginBottom: '6rem' }}>
+        <div
+          className="pricing-grid"
+          style={isMobile ? {
+            /* mobile: горизонтальный скролл */
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'nowrap',
+            overflowX: 'auto',
+            gap: '1rem',
+            padding: '0.5rem 1.25rem 1.5rem',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            marginBottom: '3rem',
+          } : {
+            /* desktop: grid */
+            maxWidth: '1024px',
+            display: 'grid',
+            gridTemplateColumns: activePlans.length === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)',
+            gap: '2rem',
+            marginBottom: '6rem',
+          }}
+        >
           {activePlans.map((plan) => (
             <div 
               key={plan.id}
               className={`pricing-card glass-panel ${plan.highlighted ? 'featured' : ''}`}
               style={{
-                padding: '3rem 2rem 2.5rem',
+                padding: isMobile ? '2rem 1.25rem 1.75rem' : '3rem 2rem 2.5rem',
                 borderRadius: '24px',
                 border: plan.highlighted ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.08)',
                 boxShadow: plan.highlighted ? '0 12px 40px rgba(255, 46, 147, 0.08)' : '0 4px 20px rgba(0,0,0,0.01)',
-                background: plan.highlighted ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.03) 0%, rgba(255, 255, 255, 0.95) 100%)' : '#ffffff'
+                background: plan.highlighted ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.03) 0%, rgba(255, 255, 255, 0.95) 100%)' : '#ffffff',
+                /* мобильный: каждая карточка = 82% ширины экрана */
+                ...(isMobile ? {
+                  flex: '0 0 82vw',
+                  maxWidth: '320px',
+                  minWidth: '260px',
+                  scrollSnapAlign: 'center',
+                } : {})
               }}
             >
               {plan.badge && (
