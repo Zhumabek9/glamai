@@ -321,7 +321,9 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         brightness: colorObj.brightness
       } : null;
 
-      const promises = selectedStyles.map(async (styleId) => {
+      const responses = [];
+      for (let i = 0; i < selectedStyles.length; i++) {
+        const styleId = selectedStyles[i];
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         const styleName = styleObj ? styleObj.name : 'Custom Style';
 
@@ -342,15 +344,18 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         }
 
         const data = await res.json();
-        return {
+        responses.push({
           styleId,
           styleName,
           result: data.imageUrl,
           creditsRemaining: data.creditsRemaining
-        };
-      });
+        });
 
-      const responses = await Promise.all(promises);
+        // Add 1.5s delay between requests to avoid burst rate limits (429) on low-balance Replicate accounts
+        if (i < selectedStyles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
 
       clearInterval(interval);
       setProgress(100);
