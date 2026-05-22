@@ -18,6 +18,7 @@ import { ToastProvider } from './components/Toast';
 export default function App() {
   const [activeTab, setActiveTab] = useState('playground');
   const [user, setUser] = useState(null);
+  const [guestTokens, setGuestTokens] = useState(10);
   const [history, setHistory] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -35,7 +36,12 @@ export default function App() {
     // Load Stripe config
     authFetch('/api/config')
       .then(res => res.json())
-      .then(config => setStripeEnabled(config.stripeEnabled))
+      .then(config => {
+        setStripeEnabled(config.stripeEnabled);
+        if (config.guestTokensRemaining !== undefined) {
+          setGuestTokens(config.guestTokensRemaining);
+        }
+      })
       .catch(err => console.warn('Failed to load public config:', err));
 
     // Handle return from Stripe Checkout
@@ -85,6 +91,7 @@ export default function App() {
       tokens: backendUser.credits
     };
     setUser(activeUser);
+    setGuestTokens(10); // reset guest tokens on login
     loadHistory(activeUser.email);
   };
 
@@ -105,6 +112,14 @@ export default function App() {
     if (!user) return;
     setUser(prev => prev ? { ...prev, tokens: Math.max(0, prev.tokens - count) } : null);
   };
+
+  // 4b. Guest token deduction
+  const handleGuestDeductToken = (count = 10) => {
+    setGuestTokens(prev => Math.max(0, prev - count));
+  };
+
+  // Effective user object passed to components (real user or guest with tokens)
+  const effectiveUser = user || { isGuest: true, tokens: guestTokens, email: 'guest' };
 
   // 5. Payment completed (syncs state; actual increment happens via Stripe webhook/backend)
   const handlePaymentSuccess = (newTokens) => {
@@ -170,6 +185,7 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           user={user}
+          guestTokens={guestTokens}
           onLogout={handleLogout}
           onOpenAuth={() => setIsAuthOpen(true)}
         />
@@ -180,7 +196,8 @@ export default function App() {
               onStartClick={scrollToPlayground}
               onViewPricing={() => setActiveTab('pricing')}
               user={user}
-              onDeductToken={handleDeductToken}
+              guestTokens={guestTokens}
+              onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
               onOpenAuth={() => setIsAuthOpen(true)}
               onAddHistory={handleAddHistory}
               setActiveTab={setActiveTab}

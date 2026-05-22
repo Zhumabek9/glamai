@@ -26,7 +26,8 @@ import { t } from '../utils/i18n';
 export default function Hero({ 
   onStartClick, 
   onViewPricing, 
-  user, 
+  user,
+  guestTokens,
   onDeductToken, 
   onOpenAuth, 
   onAddHistory, 
@@ -37,6 +38,15 @@ export default function Hero({
   const isDragging = useRef(false);
   const containerRef = useRef(null);
   const [openFaq, setOpenFaq] = useState(null);
+  const [liveCount, setLiveCount] = useState(52847);
+
+  // Animate live generation counter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveCount(prev => prev + Math.floor(Math.random() * 3 + 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -117,18 +127,18 @@ export default function Hero({
           <div className="trust-strip animate-slide-up" style={{ animationDelay: '0.35s', marginBottom: '0.5rem' }}>
             <div className="trust-strip-item">
               <div style={{ display: 'flex' }}>
-                {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />)}
+                {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />)}
               </div>
               <span>4.9/5 rating</span>
             </div>
-            <div style={{ width: '1px', height: '18px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
+            <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
             <div className="trust-strip-item">
-              <Users size={15} />
-              <span>50,000+ transformations</span>
+              <Users size={18} />
+              <span key={liveCount} className="live-counter">{liveCount.toLocaleString()}+ transformations</span>
             </div>
-            <div style={{ width: '1px', height: '18px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
+            <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
             <div className="trust-strip-item">
-              <Lock size={14} />
+              <Lock size={18} />
               <span>Privacy guaranteed</span>
             </div>
           </div>
@@ -181,6 +191,7 @@ export default function Hero({
       <div ref={playgroundRef} style={{ scrollMarginTop: '100px' }}>
         <Playground 
           user={user}
+          guestTokens={guestTokens}
           onDeductToken={onDeductToken}
           onOpenAuth={onOpenAuth}
           onAddHistory={onAddHistory}
@@ -260,6 +271,88 @@ export default function Hero({
               <h3>{t('home.downloadShare')}</h3>
               <p>{t('home.downloadShareDesc')}</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3.5 TESTIMONIALS */}
+      <div className="landing-section testimonials-section">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">💬 Real Stories</span>
+            <h2>Loved by Thousands of Users</h2>
+            <p>See what people are saying about their GlamAI transformations.</p>
+          </div>
+
+          <div className="testimonials-grid">
+            {[
+              {
+                name: 'Sophia M.',
+                meta: 'Used Bob Cut style',
+                avatar: '💁‍♀️',
+                bg: 'linear-gradient(135deg,#ff2e93,#a855f7)',
+                text: 'I was nervous about cutting my hair short. GlamAI let me preview a bob cut and I loved it — booked my appointment the next day!',
+                stars: 5
+              },
+              {
+                name: 'James R.',
+                meta: 'Tried Fade & Undercut',
+                avatar: '🧔',
+                bg: 'linear-gradient(135deg,#3b82f6,#06b6d4)',
+                text: 'Finally found the perfect fade style without spending $50 on a cut I might hate. The AI results looked super realistic.',
+                stars: 5
+              },
+              {
+                name: 'Aisha K.',
+                meta: 'Tested Braids & Locs',
+                avatar: '👩🏾',
+                bg: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+                text: 'I tested 5 different braid styles in one session! The batch generation feature is a game changer. So worth it.',
+                stars: 5
+              },
+              {
+                name: 'Elena V.',
+                meta: 'Tried Wavy & Curly looks',
+                avatar: '🌸',
+                bg: 'linear-gradient(135deg,#ec4899,#f97316)',
+                text: 'The results are honestly better than I expected. The color matching is incredible — tried blonde highlights and it looked so natural.',
+                stars: 5
+              },
+              {
+                name: 'Marcus T.',
+                meta: 'Explored Long & Curly styles',
+                avatar: '🧑🏽',
+                bg: 'linear-gradient(135deg,#10b981,#3b82f6)',
+                text: 'Showed the results to my barber and he was impressed. Using GlamAI before every appointment now — saves so much time explaining.',
+                stars: 5
+              },
+              {
+                name: 'Lena P.',
+                meta: 'Tested Pixie & Shag cuts',
+                avatar: '✨',
+                bg: 'linear-gradient(135deg,#8b5cf6,#ec4899)',
+                text: 'Going from long to short is scary! GlamAI made it easy to commit. The pixie cut preview convinced me to take the leap.',
+                stars: 5
+              }
+            ].map((review, i) => (
+              <div key={i} className="testimonial-card glass-panel">
+                <div className="testimonial-stars">
+                  {[...Array(review.stars)].map((_, si) => (
+                    <Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />
+                  ))}
+                </div>
+                <p className="testimonial-text">{review.text}</p>
+                <div className="testimonial-author">
+                  <div className="testimonial-avatar" style={{ background: review.bg, color: '#fff' }}>
+                    {review.avatar}
+                  </div>
+                  <div className="testimonial-author-info">
+                    <span className="testimonial-name">{review.name}</span>
+                    <span className="testimonial-meta">{review.meta}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

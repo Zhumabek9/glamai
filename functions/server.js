@@ -173,8 +173,11 @@ app.post('/api/checkout', async (req, res) => {
   if (!pack?.priceId) return res.status(400).json({ error: 'UNKNOWN_PACK_OR_PRICE_NOT_SET' });
 
   try {
+    const isSubscription = packId.endsWith('-monthly') || packId.endsWith('-yearly');
+    const mode = isSubscription ? 'subscription' : 'payment';
+
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
+      mode,
       payment_method_types: ['card'],
       line_items: [{ price: pack.priceId, quantity: 1 }],
       metadata: {

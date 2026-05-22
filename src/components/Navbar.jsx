@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Coins, LogOut, User, LogIn, Menu, X } from 'lucide-react';
 import { t } from '../utils/i18n';
 
-export default function Navbar({ activeTab, setActiveTab, user, onLogout, onOpenAuth }) {
+export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = (tab) => {
@@ -97,15 +97,29 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout, onOpen
               </button>
             </div>
           ) : (
-            <button className="btn btn-primary" onClick={onOpenAuth}>
-              <LogIn size={16} />
-              <span>{t('nav.signIn')}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {guestTokens > 0 && (
+                <div className="token-pill" style={{ background: 'rgba(255,46,147,0.12)', border: '1px solid rgba(255,46,147,0.3)' }}>
+                  <Coins size={14} color="var(--color-pink-primary)" />
+                  <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{guestTokens} Free</span>
+                </div>
+              )}
+              <button className="btn btn-primary" onClick={onOpenAuth}>
+                <LogIn size={16} />
+                <span>{t('nav.signIn')}</span>
+              </button>
+            </div>
           )}
         </div>
 
         {/* Mobile right side: tokens + hamburger */}
         <div className="mobile-nav-right">
+          {!user && guestTokens > 0 && (
+            <div className="token-pill" style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', background: 'rgba(255,46,147,0.12)', border: '1px solid rgba(255,46,147,0.3)' }}>
+              <Coins size={13} color="var(--color-pink-primary)" />
+              <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{guestTokens}</span>
+            </div>
+          )}
           {user && (
             <div className="token-pill" style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}>
               <Coins size={13} />

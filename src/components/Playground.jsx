@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle } from 'lucide-react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+
+const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
 
 const HAIRSTYLES = [
   
@@ -192,7 +194,7 @@ const GENDERS = [
   { id: 'male', name: 'Male' }
 ];
 
-export default function Playground({ user, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
+export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -205,8 +207,10 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
   const [loadingText, setLoadingText] = useState('');
   const [resultImages, setResultImages] = useState([]);
   const [activeResultIndex, setActiveResultIndex] = useState(0);
-
-  const resultImage = resultImages.length > 0 ? resultImages[activeResultIndex]?.result : null;
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxTitle, setLightboxTitle] = useState('');
+  const activeResult = resultImages.length > 0 ? resultImages[activeResultIndex] : null;
+  const resultImage = activeResult && activeResult.status === 'success' ? activeResult.result : null;
 
   const handleSelectStyle = (styleId) => {
     if (styleId === 'no_change') {
@@ -272,16 +276,27 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
   };
 
   const handleGenerate = async () => {
-    if (!user) {
+    const tokenCost = selectedStyles.length * 10;
+    const isGuest = !user;
+    const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
+
+    // Guest with no tokens left — ask to sign up
+    if (isGuest && availableTokens < tokenCost) {
+      toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
-    const tokenCost = selectedStyles.length * 10;
-
-    if (user.tokens < tokenCost) {
+    // Logged-in user with no tokens — redirect to pricing
+    if (!isGuest && availableTokens < tokenCost) {
       toast.error(`You need at least ${tokenCost} token${tokenCost > 1 ? 's' : ''} to generate these styles!`);
       setActiveTab('pricing');
+      return;
+    }
+
+    // Guest: only 1 style allowed per free generation
+    if (isGuest && selectedStyles.filter(s => s !== 'no_change').length > 1) {
+      toast.error('Free generation allows only 1 style. Sign up to generate multiple!');
       return;
     }
 
@@ -298,21 +313,6 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
       { prg: 95, txt: 'Refining details and upscaling...' }
     ];
 
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const nextVal = prev + 1;
-        if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
-          setLoadingText(steps[currentStep].txt);
-          currentStep++;
-        }
-        if (nextVal >= 95) {
-          return 95;
-        }
-        return nextVal;
-      });
-    }, 150);
-
     try {
       const colorObj = COLORS.find(c => c.id === selectedColor);
       const colorFilterVal = (colorObj && colorObj.id !== 'ai-recommended' && colorObj.id !== 'no-change') ? {
@@ -321,13 +321,49 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         brightness: colorObj.brightness
       } : null;
 
-      const responses = [];
-      const errors = [];
+      // Initialize progressive result list with 'pending' and first one as 'generating'
+      const initialResults = selectedStyles.map((styleId, idx) => {
+        const styleObj = HAIRSTYLES.find(h => h.id === styleId);
+        return {
+          id: `gen-${Date.now()}-${idx}`,
+          styleId,
+          styleName: styleObj ? styleObj.name : 'Custom Style',
+          status: idx === 0 ? 'generating' : 'pending',
+          result: null,
+          original: image,
+          colorName: colorObj ? colorObj.name : 'Custom Color',
+          colorFilter: colorFilterVal
+        };
+      });
+
+      setResultImages(initialResults);
+      setActiveResultIndex(0);
 
       for (let i = 0; i < selectedStyles.length; i++) {
         const styleId = selectedStyles[i];
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         const styleName = styleObj ? styleObj.name : 'Custom Style';
+
+        // Update the current item's status to generating
+        setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'generating' } : item));
+
+        // Start progress animation for this style
+        setProgress(0);
+        setLoadingText('Uploading portrait to AI engine...');
+        let currentStep = 0;
+        const styleInterval = setInterval(() => {
+          setProgress(prev => {
+            const nextVal = prev + 1;
+            if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
+              setLoadingText(steps[currentStep].txt);
+              currentStep++;
+            }
+            if (nextVal >= 95) {
+              return 95;
+            }
+            return nextVal;
+          });
+        }, 120);
 
         try {
           const formData = new FormData();
@@ -342,20 +378,59 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
             body: formData
           });
 
+          clearInterval(styleInterval);
+
           if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
+            // Guest trial exhausted on backend
+            if (errData.code === 'LOGIN_REQUIRED') {
+              toast.error('Your free generation is used up! Sign up to continue.');
+              onOpenAuth();
+              setIsGenerating(false);
+              return;
+            }
             throw new Error(errData.error || `Failed to generate style "${styleName}"`);
           }
 
           const data = await res.json();
-          responses.push({
-            styleId,
-            styleName,
+
+          // Update result item to success
+          setResultImages(prev => prev.map((item, idx) => idx === i ? {
+            ...item,
+            status: 'success',
             result: data.imageUrl,
             creditsRemaining: data.creditsRemaining
-          });
+          } : item));
+
+          // Deduct credits immediately
+          onDeductToken(10);
+
+          // Add to history
+          const newHistoryItem = {
+            id: `history-${Date.now()}-${i}`,
+            original: image,
+            result: data.imageUrl,
+            style: styleName,
+            color: colorObj ? colorObj.name : 'Custom Color',
+            colorFilter: colorFilterVal,
+            date: new Date().toLocaleDateString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          };
+          onAddHistory(newHistoryItem);
+
         } catch (err) {
-          errors.push(err.message || `Failed to generate style "${styleName}"`);
+          clearInterval(styleInterval);
+          // Update result item to error
+          setResultImages(prev => prev.map((item, idx) => idx === i ? {
+            ...item,
+            status: 'error',
+            error: err.message || `Failed to generate style "${styleName}"`
+          } : item));
+          toast.error(err.message || `Failed to generate style "${styleName}"`);
         }
 
         // Add 3.0s delay between requests to avoid burst rate limits (429) on Replicate
@@ -364,72 +439,31 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         }
       }
 
-      if (responses.length === 0) {
-        throw new Error(errors.join(' | ') || "Failed to generate hairstyles. Please try again.");
-      }
-
-      if (errors.length > 0) {
-        errors.forEach(err => toast.error(err));
-      }
-
-      clearInterval(interval);
+      setIsGenerating(false);
       setProgress(100);
       setLoadingText('Generation complete!');
-
-      setTimeout(() => {
-        const newResults = responses.map((resp, index) => {
-          return {
-            id: `${Date.now()}-${index}`,
-            styleId: resp.styleId,
-            styleName: resp.styleName,
-            result: resp.result,
-            original: image,
-            colorName: colorObj ? colorObj.name : 'Custom Color',
-            colorFilter: colorFilterVal
-          };
-        });
-
-        setResultImages(newResults);
-        setActiveResultIndex(0);
-        setIsGenerating(false);
-
-        const creditsRemainingArray = responses
-          .map(r => r.creditsRemaining)
-          .filter(c => typeof c === 'number');
-        const minCredits = creditsRemainingArray.length > 0 ? Math.min(...creditsRemainingArray) : null;
-
-        if (typeof minCredits === 'number') {
-          onDeductToken(user.tokens - minCredits);
-        } else {
-          onDeductToken(responses.length * 10);
-        }
-
-        newResults.forEach(item => {
-          const newHistoryItem = {
-            id: item.id,
-            original: item.original,
-            result: item.result,
-            style: item.styleName,
-            color: item.colorName,
-            colorFilter: item.colorFilter,
-            date: new Date().toLocaleDateString('ru-RU', {
-              day: 'numeric',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          };
-          onAddHistory(newHistoryItem);
-        });
-
-        toast.success("AI Hairstyle rendering successful!");
-      }, 800);
+      toast.success("AI Hairstyle rendering finished!");
 
     } catch (err) {
-      clearInterval(interval);
       setIsGenerating(false);
       console.error(err);
       toast.error(err.message || "Failed to generate hairstyles. Please try again.");
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const successImages = resultImages.filter(r => r.status === 'success');
+    for (let i = 0; i < successImages.length; i++) {
+      const img = successImages[i];
+      const link = document.createElement('a');
+      link.href = img.result;
+      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (i < successImages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
   };
 
@@ -451,10 +485,21 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
 
   return (
     <section className="playground-section container">
+      {/* Mobile-only header, rendered on top of the layout on mobile */}
+      <div className="mobile-playground-header">
+        <h2 className="section-title">
+          <Scissors size={20} color="var(--color-pink-primary)" />
+          <span>AI Hairstyle Customizer</span>
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          Select your desired hair template and color. Every generation uses 10 tokens.
+        </p>
+      </div>
+
       <div className="playground-grid">
         {/* Left Side: Customizer Controls */}
         <div className="control-panel glass-panel">
-          <div>
+          <div className="desktop-playground-header">
             <h2 className="section-title">
               <Scissors size={20} color="var(--color-pink-primary)" />
               <span>AI Hairstyle Customizer</span>
@@ -508,6 +553,12 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
           {/* Hairstyle options */}
           <div className="selector-group">
             <span className="selector-title">Hairstyle Selection ({filteredHairstyles.length})</span>
+            {image && selectedStyles.every(s => s === 'no_change') && (
+              <div className="onboarding-hint">
+                <TrendingUp size={15} />
+                <span>👆 Select a hairstyle below to get started!</span>
+              </div>
+            )}
             <div className="style-cards-grid">
               {filteredHairstyles.map(h => {
                 const isSelected = selectedStyles.includes(h.id);
@@ -521,6 +572,9 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
                       <div className="selected-badge">
                         {h.id === 'no_change' ? <Check size={12} /> : (selectedStyles.indexOf(h.id) + 1)}
                       </div>
+                    )}
+                    {!h.isSpecial && POPULAR_STYLE_IDS.includes(h.id) && !isSelected && (
+                      <div className="style-card-popular-badge">Popular</div>
                     )}
                     <div className="style-card-image-wrapper">
                       {h.isSpecial ? (
@@ -612,7 +666,7 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
 
         {/* Right Side: Upload and Result Viewer */}
         <div className="preview-panel glass-panel">
-          {isGenerating && (
+          {isGenerating && resultImages.length <= 1 && (
             <div className="loading-overlay">
               <div className="spinner-outer">
                 <div className="spinner-inner"></div>
@@ -651,85 +705,295 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
             </div>
           ) : (
             /* Active State: Preview & Result */
-            <div style={{ width: '100%' }}>
-              <div className="preview-container">
-                <img 
-                  src={resultImage || image} 
-                  alt="Hairstyle Preview"
-                  style={colorFilterStyle}
-                />
-                
-                {!isGenerating && !resultImage && (
-                  <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
-                    <RefreshCw size={16} />
-                  </button>
-                )}
+            resultImages.length > 1 ? (
+              <div style={{ width: '100%' }}>
+                <div className="generation-grid">
+                  {resultImages.map((res, index) => {
+                    const isItemGenerating = res.status === 'generating';
+                    const isItemSuccess = res.status === 'success';
+                    const isItemPending = res.status === 'pending';
+                    const isItemError = res.status === 'error';
 
-                {resultImage && (
-                  <div className="slider-label after" style={{ top: '1rem', bottom: 'auto' }}>AI GENERATED</div>
-                )}
-              </div>
-
-              {/* Batch Preview Thumbnails */}
-              {resultImages.length > 0 && (
-                <div className="batch-thumbnails-container">
-                  <div className="batch-thumbnails-title">
-                    Generated Styles ({resultImages.length})
-                  </div>
-                  <div className="batch-thumbnails-grid">
-                    {resultImages.map((res, index) => {
-                      const isActive = index === activeResultIndex;
-                      const thumbColorFilter = {};
-                      return (
-                        <div
-                          key={res.id}
-                          className={`batch-thumbnail-wrapper ${isActive ? 'active' : ''}`}
-                          onClick={() => setActiveResultIndex(index)}
-                        >
-                          <img
-                            src={res.result}
-                            alt={res.styleName}
-                            style={thumbColorFilter}
-                            className="batch-thumbnail-img"
-                          />
-                          <span className="batch-thumbnail-label">
-                            {res.styleName === 'No Change' ? res.colorName : res.styleName}
-                          </span>
+                    return (
+                      <div key={res.id} className="generation-card">
+                        <div className="generation-card-badge">
+                          {res.styleName}
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
-              {/* Action Buttons under image */}
-              <div className="preview-controls">
-                {resultImage ? (
-                  <>
-                    <a 
-                      href={resultImage} 
-                      download={`glamai_${(resultImages[activeResultIndex]?.styleName === 'No Change' ? resultImages[activeResultIndex]?.colorName : resultImages[activeResultIndex]?.styleName) || 'hairstyle'}.png`} 
+                        <div className={`generation-card-status-badge ${res.status}`}>
+                          {res.status === 'generating' ? 'rendering' : res.status}
+                        </div>
+
+                        <div className="generation-card-image-wrapper">
+                          {isItemSuccess ? (
+                            <img
+                              src={res.result}
+                              alt={res.styleName}
+                              className="generation-card-image"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setLightboxImage(res.result);
+                                setLightboxTitle(`${res.styleName} (${res.colorName})`);
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={image}
+                              alt="Original"
+                              className="generation-card-image"
+                              style={{
+                                filter: isItemPending ? 'grayscale(0.5) blur(1px)' : 'none',
+                                opacity: isItemPending ? 0.6 : 1
+                              }}
+                            />
+                          )}
+
+                          {isItemGenerating && (
+                            <div className="generation-card-overlay">
+                              <div className="generation-card-spinner"></div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-pink-primary)' }}>Rendering...</span>
+                              <div className="progress-track" style={{ height: '4px', width: '80%', marginTop: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: 'var(--color-pink-primary)' }}></div>
+                              </div>
+                              <span className="generation-card-progress">{progress}%</span>
+                            </div>
+                          )}
+
+                          {isItemPending && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                              <RefreshCw size={24} className="animate-spin-slow" style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Waiting...</span>
+                            </div>
+                          )}
+
+                          {isItemError && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(30,10,10,0.8)' }}>
+                              <span style={{ color: '#ff4d4d', fontSize: '0.75rem', fontWeight: 600 }}>Failed</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.6rem', marginTop: '4px', maxWidth: '90%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {res.error || 'AI Server Error'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="generation-card-footer">
+                          <div className="generation-card-info">
+                            <span className="generation-card-title">{res.styleName}</span>
+                            <span className="generation-card-subtitle">{res.colorName}</span>
+                          </div>
+
+                          {isItemSuccess && (
+                            <div className="generation-card-actions">
+                              <a
+                                href={res.result}
+                                download={`glamai_${res.styleName}_${res.colorName}.png`}
+                                className="generation-card-btn"
+                                title="Download HD Render"
+                              >
+                                <Download size={14} />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="preview-controls" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  {resultImages.some(r => r.status === 'success') && (
+                    <button
                       className="btn btn-primary"
+                      onClick={handleDownloadAll}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                       <Download size={16} />
-                      <span>Download HD Render</span>
-                    </a>
-                    <button className="btn btn-secondary" onClick={handleReset}>
-                      <RefreshCw size={16} />
-                      <span>Try Another Style</span>
+                      <span>Download All</span>
                     </button>
-                  </>
-                ) : (
-                  <div style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-                    <HelpCircle size={12} />
-                    <span>Ready to render. Click the 'Render AI Hairstyle' button on the left.</span>
+                  )}
+                  {!isGenerating && (
+                    <button className="btn btn-secondary" onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <RefreshCw size={16} />
+                      <span>Try Another Batch</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <div className="preview-container">
+                  <img 
+                    src={resultImage || image} 
+                    alt="Hairstyle Preview"
+                    style={colorFilterStyle}
+                  />
+                  
+                  {!isGenerating && !resultImage && (
+                    <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
+                      <RefreshCw size={16} />
+                    </button>
+                  )}
+
+                  {resultImage && (
+                    <div className="slider-label after" style={{ top: '1rem', bottom: 'auto' }}>AI GENERATED</div>
+                  )}
+                </div>
+
+                {resultImages.length > 0 && (
+                  <div className="batch-thumbnails-container">
+                    <div className="batch-thumbnails-title">
+                      Generated Styles ({resultImages.length})
+                    </div>
+                    <div className="batch-thumbnails-grid">
+                      {resultImages.map((res, index) => {
+                        const isActive = index === activeResultIndex;
+                        const thumbColorFilter = {};
+                        return (
+                          <div
+                            key={res.id}
+                            className={`batch-thumbnail-wrapper ${isActive ? 'active' : ''}`}
+                            onClick={() => setActiveResultIndex(index)}
+                          >
+                            {res.status === 'success' ? (
+                              <img
+                                src={res.result}
+                                alt={res.styleName}
+                                style={thumbColorFilter}
+                                className="batch-thumbnail-img"
+                              />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.3)' }}>
+                                <RefreshCw size={16} className={res.status === 'generating' ? 'animate-spin' : ''} style={{ color: 'var(--text-muted)' }} />
+                              </div>
+                            )}
+                            <span className="batch-thumbnail-label">
+                              {res.styleName === 'No Change' ? res.colorName : res.styleName}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
+
+                <div className="preview-controls">
+                  {resultImage ? (
+                    <>
+                      <a 
+                        href={resultImage} 
+                        download={`glamai_${(resultImages[activeResultIndex]?.styleName === 'No Change' ? resultImages[activeResultIndex]?.colorName : resultImages[activeResultIndex]?.styleName) || 'hairstyle'}.png`} 
+                        className="btn btn-primary"
+                      >
+                        <Download size={16} />
+                        <span>Download HD Render</span>
+                      </a>
+                      <button className="btn btn-secondary" onClick={handleReset}>
+                        <RefreshCw size={16} />
+                        <span>Try Another Style</span>
+                      </button>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                      <HelpCircle size={12} />
+                      <span>Ready to render. Click the 'Render AI Hairstyle' button on the left.</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )
           )}
         </div>
       </div>
+      {lightboxImage && (
+        <div 
+          className="lightbox-overlay" 
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            padding: '2rem'
+          }}
+        >
+          <div 
+            style={{ 
+              position: 'relative', 
+              maxWidth: '90%', 
+              maxHeight: '80%', 
+              borderRadius: '12px', 
+              overflow: 'hidden', 
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <img 
+              src={lightboxImage} 
+              alt={lightboxTitle} 
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }}
+            />
+            <div 
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'rgba(0, 0, 0, 0.75)',
+                padding: '1rem',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backdropFilter: 'blur(5px)'
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>{lightboxTitle}</h4>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Generated by GlamAI</p>
+              </div>
+              <a 
+                href={lightboxImage} 
+                download={`glamai_${lightboxTitle}.png`}
+                className="btn btn-primary"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+              >
+                <Download size={14} />
+                <span>Download</span>
+              </a>
+            </div>
+            <button 
+              onClick={() => setLightboxImage(null)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'rgba(0,0,0,0.6)',
+                border: 'none',
+                color: '#fff',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.2rem',
+                fontWeight: 'bold'
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

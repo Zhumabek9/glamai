@@ -156,13 +156,21 @@ app.use((req, res, next) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-const sendPublicConfig = (_, res) => {
+const sendPublicConfig = (req, res) => {
+    const ip =
+        req.headers['x-forwarded-for']?.split(',')[0]?.trim?.() ||
+        req.socket.remoteAddress ||
+        'unknown';
+    const used = auth.guestTrialState(ip);
+    const guestTokensRemaining = Math.max(0, GUEST_TRIALS_ALLOWED - used) * 10;
+
     res.json({
         supabaseUrl: process.env.SUPABASE_URL || null,
         supabaseAnonKey: process.env.SUPABASE_ANON_KEY || null,
         publicUrl: PUBLIC_BASE_URL,
         freeCreditsSignup: auth.FREE_CREDITS_SIGNUP,
         guestTrialsAllowed: GUEST_TRIALS_ALLOWED,
+        guestTokensRemaining,
         packs: Object.entries(PACKS).map(([id, v]) => ({
             id,
             label: v.label,
@@ -317,8 +325,11 @@ app.post('/api/checkout', async (req, res) => {
     }
 
     try {
+        const isSubscription = packId.endsWith('-monthly') || packId.endsWith('-yearly');
+        const mode = isSubscription ? 'subscription' : 'payment';
+
         const session = await stripe.checkout.sessions.create({
-            mode: 'payment',
+            mode,
             payment_method_types: ['card'],
             line_items: [{ price: pack.priceId, quantity: 1 }],
             metadata: {

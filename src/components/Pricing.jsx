@@ -279,7 +279,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
         <div
           className="pricing-grid"
           style={isMobile ? {
-            /* mobile: горизонтальный скролл */
+            /* mobile: horizontal scroll */
             display: 'flex',
             flexDirection: 'row',
             flexWrap: 'nowrap',
@@ -309,7 +309,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 border: plan.highlighted ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.08)',
                 boxShadow: plan.highlighted ? '0 12px 40px rgba(255, 46, 147, 0.08)' : '0 4px 20px rgba(0,0,0,0.01)',
                 background: plan.highlighted ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.03) 0%, rgba(255, 255, 255, 0.95) 100%)' : '#ffffff',
-                /* мобильный: каждая карточка = 82% ширины экрана */
+                /* mobile: each card takes 82% of screen width */
                 ...(isMobile ? {
                   flex: '0 0 82vw',
                   maxWidth: '320px',
