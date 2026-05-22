@@ -669,7 +669,7 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
                             className="batch-thumbnail-img"
                           />
                           <span className="batch-thumbnail-label">
-                            {res.styleName}
+                            {res.styleName === 'No Change' ? res.colorName : res.styleName}
                           </span>
                         </div>
                       );
@@ -684,7 +684,7 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
                   <>
                     <a 
                       href={resultImage} 
-                      download={`glamai_${resultImages[activeResultIndex]?.styleName || 'hairstyle'}.png`} 
+                      download={`glamai_${(resultImages[activeResultIndex]?.styleName === 'No Change' ? resultImages[activeResultIndex]?.colorName : resultImages[activeResultIndex]?.styleName) || 'hairstyle'}.png`} 
                       className="btn btn-primary"
                     >
                       <Download size={16} />

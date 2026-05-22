@@ -11,6 +11,9 @@ const replicate = new Replicate({
 const HAIRCUT_MAP = {
     // Female/General
     "No Change": "No change",
+    "No change": "No change",
+    "no_change": "No change",
+    "no-change": "No change",
     "Straight": "Straight",
     "Straightened": "Straightened",
     "Blunt Bangs": "Blunt Bangs",
@@ -135,6 +138,9 @@ const HAIRCUT_MAP = {
 const COLOR_MAP = {
     "AI Recommended": "Random",
     "No Change": "No change",
+    "No change": "No change",
+    "no_change": "No change",
+    "no-change": "No change",
     "Jet Black": "Jet Black",
     "Blonde": "Blonde",
     "Blue Highlights": "Blue",

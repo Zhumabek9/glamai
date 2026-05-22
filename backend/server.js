@@ -121,7 +121,36 @@ app.post(
 app.use(express.json());
 
 app.use((req, res, next) => {
+    // 1. Try parsing auth cookie
     req.userFromCookie = auth.parseAuthCookie(req.headers.cookie);
+
+    // 2. Fallback: Parse Bearer token (Firebase ID token) from Authorization header
+    if (!req.userFromCookie && req.headers.authorization) {
+        const authHeader = req.headers.authorization;
+        if (authHeader.startsWith('Bearer ')) {
+            const idToken = authHeader.slice(7);
+            try {
+                const parts = idToken.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(
+                        Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+                    );
+                    // Verify that the token is not expired
+                    if (payload.exp && Date.now() / 1000 < payload.exp) {
+                        const email = (payload.email || '').trim().toLowerCase();
+                        if (email) {
+                            const userRow = auth.userByEmail(email);
+                            if (userRow) {
+                                req.userFromCookie = auth.userById(userRow.id);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Authorization header decode failed in middleware:', err.message);
+            }
+        }
+    }
     next();
 });
 
@@ -238,6 +267,10 @@ app.post('/api/auth/firebase', async (req, res) => {
 
         // Refresh user data (with credits)
         const fullUser = auth.userById(user.id);
+
+        // Sign and set auth cookie for session persistence
+        const token = auth.signToken(fullUser);
+        auth.setAuthCookie(res, token);
 
         res.json({
             ok: true,
