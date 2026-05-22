@@ -4,7 +4,7 @@ services:
     env: node
     region: frankfurt  # Ближайший к СНГ
     plan: free
-    buildCommand: npm run build && cd backend && npm install
+    buildCommand: npm install && npm run build && cd backend && npm install
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
