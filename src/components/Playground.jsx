@@ -321,9 +321,7 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         brightness: colorObj.brightness
       } : null;
 
-      const responses = [];
-      for (let i = 0; i < selectedStyles.length; i++) {
-        const styleId = selectedStyles[i];
+      const promises = selectedStyles.map(async (styleId) => {
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         const styleName = styleObj ? styleObj.name : 'Custom Style';
 
@@ -345,17 +343,36 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         }
 
         const data = await res.json();
-        responses.push({
+        return {
           styleId,
           styleName,
           result: data.imageUrl,
           creditsRemaining: data.creditsRemaining
-        });
+        };
+      });
 
-        // Add 1.5s delay between requests to avoid burst rate limits (429) on low-balance Replicate accounts
-        if (i < selectedStyles.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+      const settled = await Promise.allSettled(promises);
+      const responses = [];
+      const errors = [];
+
+      settled.forEach((result, idx) => {
+        const styleId = selectedStyles[idx];
+        const styleObj = HAIRSTYLES.find(h => h.id === styleId);
+        const styleName = styleObj ? styleObj.name : 'Custom Style';
+
+        if (result.status === 'fulfilled') {
+          responses.push(result.value);
+        } else {
+          errors.push(result.reason?.message || `Failed to generate style "${styleName}"`);
         }
+      });
+
+      if (responses.length === 0) {
+        throw new Error(errors.join(' | ') || "Failed to generate hairstyles. Please try again.");
+      }
+
+      if (errors.length > 0) {
+        errors.forEach(err => toast.error(err));
       }
 
       clearInterval(interval);
@@ -379,11 +396,15 @@ export default function Playground({ user, onDeductToken, onOpenAuth, onAddHisto
         setActiveResultIndex(0);
         setIsGenerating(false);
 
-        const lastCredits = responses[responses.length - 1].creditsRemaining;
-        if (typeof lastCredits === 'number') {
-          onDeductToken(user.tokens - lastCredits);
+        const creditsRemainingArray = responses
+          .map(r => r.creditsRemaining)
+          .filter(c => typeof c === 'number');
+        const minCredits = creditsRemainingArray.length > 0 ? Math.min(...creditsRemainingArray) : null;
+
+        if (typeof minCredits === 'number') {
+          onDeductToken(user.tokens - minCredits);
         } else {
-          onDeductToken(tokenCost);
+          onDeductToken(responses.length * 10);
         }
 
         newResults.forEach(item => {
