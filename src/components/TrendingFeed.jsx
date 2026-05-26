@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Compass, Sparkles, Flame, Play, Eye } from 'lucide-react';
 
 const TRENDING_POSTS = [

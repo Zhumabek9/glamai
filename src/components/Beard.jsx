@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff } from 'lucide-react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff, Smile } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 

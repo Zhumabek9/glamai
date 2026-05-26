@@ -287,10 +287,6 @@ const COLOR_MAP = {
 };
 
 async function callNanoBanana(imagePath, options) {
-    if (!process.env.REPLICATE_API_TOKEN) {
-        throw new Error('REPLICATE_API_TOKEN environment variable is not set');
-    }
-
     // Read local file into base64 data URI
     const fileBuffer = fs.readFileSync(imagePath);
     let mimeType = 'image/jpeg';
@@ -299,30 +295,135 @@ async function callNanoBanana(imagePath, options) {
     
     const dataUri = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
 
-    const mappedHaircut = HAIRCUT_MAP[options.styleId] || HAIRCUT_MAP[options.style] || options.style || 'keep the exact same hairstyle, only change the hair color';
-    const mappedColor = COLOR_MAP[options.color] || options.color || 'No change';
+    if (!process.env.REPLICATE_API_TOKEN) {
+        console.log(`[Replicate] Token missing. Running mock pipeline for task '${options.taskType || 'hairstyle'}'...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return {
+            success: true,
+            url: dataUri
+        };
+    }
 
-    console.log(`[Replicate] Mapped inputs: style "${options.style}" -> "${mappedHaircut}", color "${options.color}" -> "${mappedColor}"`);
-
-    // Construct prompt for xai/grok-imagine-image
     const genderWord = options.gender === 'male' ? 'man' : (options.gender === 'female' ? 'woman' : 'person');
-    const hasNoHaircutChange = !mappedHaircut || mappedHaircut.toLowerCase().includes('keep the exact same hairstyle') || mappedHaircut.toLowerCase().includes('no change');
-    const hasNoColorChange = !mappedColor || mappedColor.toLowerCase() === 'no change' || mappedColor.toLowerCase() === 'random';
-
     let promptText = '';
-    if (hasNoHaircutChange && hasNoColorChange) {
-        promptText = `A highly realistic photo of the same ${genderWord} from the input image. Keep the exact same hairstyle, hair color, face, expression, clothing, lighting, camera angle, and background as the input image. Absolutely no changes.`;
-    } else {
-        const hairColorInstruction = hasNoColorChange ? 'their original hair color' : mappedColor;
+
+    if (options.taskType === 'makeup') {
+        const makeupStyle = options.makeup || 'Natural';
+        let makeupPrompt = '';
+        if (makeupStyle.toLowerCase().includes('natural')) {
+            makeupPrompt = "no-makeup makeup look, very natural skin texture, light mascara, sheer nude lip gloss, subtle dewy skin glow, clean natural eyebrows";
+        } else if (makeupStyle.toLowerCase().includes('glam')) {
+            makeupPrompt = "glamorous makeup, dramatic smokey eyeshadow, bold defined winged black eyeliner, contoured cheekbones, full matte nude lips, glowing highlight";
+        } else if (makeupStyle.toLowerCase().includes('korean')) {
+            makeupPrompt = "Korean style glass skin makeup, gradient cherry lips, subtle puppy eyeliner, soft coral blush, clean straight eyebrows, youthful aesthetic";
+        } else if (makeupStyle.toLowerCase().includes('soft girl')) {
+            makeupPrompt = "soft girl makeup look, pink tones, rosy cheeks, cute faux freckles, glossy pink lips, fluffy brows";
+        } else if (makeupStyle.toLowerCase().includes('bridal')) {
+            makeupPrompt = "bridal makeup, soft champagne gold eyes, long fluttery eyelashes, nude-pink lipstick, soft contour, glowing skin, romantic classic aesthetic";
+        } else if (makeupStyle.toLowerCase().includes('euphoria')) {
+            makeupPrompt = "Euphoria style makeup, glittery rhinestones around eyes, colorful graphic eyeliner, glossy lip gloss, artistic bold aesthetic";
+        } else if (makeupStyle.toLowerCase().includes('matte')) {
+            makeupPrompt = "matte makeup look, full-coverage matte foundation, nude matte lips, clean brow, soft warm bronze contour, no shine";
+        } else {
+            makeupPrompt = `custom makeup style: ${makeupStyle}`;
+        }
+        promptText = `A highly realistic close-up photo of the same ${genderWord} from the input image.
+Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
+Modify only the makeup: apply ${makeupPrompt}.
+Ensure the makeup looks professionally applied, photorealistic, and blends naturally with the skin pore texture under the original photo's lighting.`;
+
+    } else if (options.taskType === 'beard') {
+        const beardStyle = options.beard || 'stubble';
+        let beardPrompt = '';
+        if (beardStyle.toLowerCase().includes('stubble')) {
+            beardPrompt = "a light stubble beard, 3-day stubble growth, neatly trimmed along the jawline and upper lip";
+        } else if (beardStyle.toLowerCase().includes('full beard') || beardStyle.toLowerCase().includes('full-beard')) {
+            beardPrompt = "a full thick beard, well-groomed, covering the jaw, chin, and cheeks, with a matching mustache";
+        } else if (beardStyle.toLowerCase().includes('viking')) {
+            beardPrompt = "a long thick Viking-style beard, full and rugged, extending down below the chin";
+        } else if (beardStyle.toLowerCase().includes('goatee')) {
+            beardPrompt = "a neat goatee beard on the chin, with a disconnected mustache";
+        } else if (beardStyle.toLowerCase().includes('mustache')) {
+            beardPrompt = "a clean-shaven face except for a prominent neatly styled classic mustache on the upper lip";
+        } else if (beardStyle.toLowerCase().includes('clean shave') || beardStyle.toLowerCase().includes('clean_shave')) {
+            beardPrompt = "completely clean-shaven face, smooth skin on cheeks, jaw, and chin, no facial hair whatsoever";
+        } else {
+            beardPrompt = `facial hair style: ${beardStyle}`;
+        }
         promptText = `A highly realistic photo of the same ${genderWord} from the input image.
+Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
+Modify only the facial hair: add or modify to ${beardPrompt}.
+Ensure the facial hair looks natural and realistic, matching the lighting and skin texture of the original photo.`;
+
+    } else if (options.taskType === 'nails') {
+        const nailStyle = options.nails || 'French nails';
+        let nailsPrompt = '';
+        if (nailStyle.toLowerCase().includes('french')) {
+            nailsPrompt = "classic French manicure nails with pink bases and clean white tips";
+        } else if (nailStyle.toLowerCase().includes('chrome')) {
+            nailsPrompt = "metallic silver chrome nails, high-shine reflective finish";
+        } else if (nailStyle.toLowerCase().includes('acrylic')) {
+            nailsPrompt = "long coffin-shaped acrylic nails with marble nail art";
+        } else if (nailStyle.toLowerCase().includes('luxury')) {
+            nailsPrompt = "luxury nails decorated with subtle gold foil accents and gemstone details";
+        } else if (nailStyle.toLowerCase().includes('minimal')) {
+            nailsPrompt = "minimalist nude gel nails with a clean glossy finish";
+        } else if (nailStyle.toLowerCase().includes('pink')) {
+            nailsPrompt = "sweet pastel pink glossy nails";
+        } else if (nailStyle.toLowerCase().includes('black')) {
+            nailsPrompt = "edgy high-gloss shiny black nails";
+        } else {
+            nailsPrompt = `nail art style: ${nailStyle}`;
+        }
+        promptText = `A highly realistic photo showing the hands of the same person from the input image.
+Modify only the fingernails: apply ${nailsPrompt}.
+Ensure the nails look professionally done, photorealistic, matching the hand's natural skin texture and lighting.`;
+
+    } else if (options.taskType === 'retouch') {
+        let retouchDetails = [];
+        try {
+            const sliders = typeof options.retouch === 'string' ? JSON.parse(options.retouch) : options.retouch;
+            if (sliders.smoothSkin > 20) retouchDetails.push("smooth clear skin with blemishes and wrinkles reduced while preserving natural skin pores");
+            if (sliders.teethWhitening > 20) retouchDetails.push("naturally whitened bright teeth");
+            if (sliders.eyeEnhancement > 20) retouchDetails.push("slightly brighter and clearer eyes with enhanced iris details");
+            if (sliders.faceSymmetry > 20) retouchDetails.push("perfectly balanced and symmetric facial features");
+            if (sliders.acneRemoval) retouchDetails.push("complete removal of temporary acne, spots, and skin blemishes");
+            if (sliders.skinGlow > 20) retouchDetails.push("radiant dewy skin glow with subtle highlighting");
+        } catch (_) {
+            retouchDetails.push("smooth clear skin, blemishes removed, teeth whitened, eyes enhanced, radiant skin glow");
+        }
+        
+        if (retouchDetails.length === 0) {
+            retouchDetails.push("smooth clear skin, natural skin pore texture, balanced highlight");
+        }
+        
+        const retouchPrompt = retouchDetails.join(', ');
+        promptText = `A highly realistic close-up portrait of the same ${genderWord} from the input image.
+Strict identity preservation: Keep the exact same face, identity, facial structure, hairstyle, hair color, clothing, background, and pose.
+Modify only with professional beauty retouching: ${retouchPrompt}.
+Maintain natural skin texture, shadows, and lighting. Avoid looking plastic, artificial, or over-processed.`;
+
+    } else {
+        const mappedHaircut = HAIRCUT_MAP[options.styleId] || HAIRCUT_MAP[options.style] || options.style || 'keep the exact same hairstyle, only change the hair color';
+        const mappedColor = COLOR_MAP[options.color] || options.color || 'No change';
+
+        const hasNoHaircutChange = !mappedHaircut || mappedHaircut.toLowerCase().includes('keep the exact same hairstyle') || mappedHaircut.toLowerCase().includes('no change');
+        const hasNoColorChange = !mappedColor || mappedColor.toLowerCase() === 'no change' || mappedColor.toLowerCase() === 'random';
+
+        if (hasNoHaircutChange && hasNoColorChange) {
+            promptText = `A highly realistic photo of the same ${genderWord} from the input image. Keep the exact same hairstyle, hair color, face, expression, clothing, lighting, camera angle, and background as the input image. Absolutely no changes.`;
+        } else {
+            const hairColorInstruction = hasNoColorChange ? 'their original hair color' : mappedColor;
+            promptText = `A highly realistic photo of the same ${genderWord} from the input image.
 Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, expression, skin tone, clothing, jewelry, background, camera angle, lighting, and pose as the input image.
 Hair modification (CRITICAL):
 - Hairstyle: Change the hair to ${mappedHaircut}.
 - Hair color: Change the hair color to ${hairColorInstruction}.
 Ensure the transition between the head and the new hair looks completely natural, clean, and photorealistic. The only change in the photo must be the hair.`;
+        }
     }
 
-    console.log(`[Replicate] Calling Grok Imagine with prompt:\n${promptText}`);
+    console.log(`[Replicate] Calling Grok Imagine for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
 
     try {
         const output = await replicate.run(
@@ -335,7 +436,6 @@ Ensure the transition between the head and the new hair looks completely natural
             }
         );
 
-        // The model output is typically a string URL or an array of URLs to the generated image(s)
         const finalUrl = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : (output && output.toString ? output.toString() : ''));
         console.log(`[Replicate] Success! Generated image URL: ${finalUrl}`);
         return {
@@ -350,5 +450,6 @@ Ensure the transition between the head and the new hair looks completely natural
         };
     }
 }
+
 
 module.exports = { callNanoBanana };
