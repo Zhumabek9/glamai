@@ -19,6 +19,21 @@ const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${proc
 const GUEST_TRIALS_ALLOWED = Number(process.env.GUEST_FREE_TRIALS ?? '1');
 
 const PACKS = {
+    'weekly-vip': {
+        credits: 500,
+        priceId: process.env.STRIPE_PRICE_WEEKLY || '',
+        label: 'Weekly VIP',
+    },
+    'monthly-vip': {
+        credits: 3000,
+        priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
+        label: 'Monthly VIP',
+    },
+    'yearly-vip': {
+        credits: 40000,
+        priceId: process.env.STRIPE_PRICE_PRO_YEARLY || '',
+        label: 'Yearly VIP',
+    },
     'lite-monthly': {
         credits: 200,
         priceId: process.env.STRIPE_PRICE_LITE_MONTHLY || '',
@@ -102,11 +117,32 @@ app.post(
 
                 const uid = sess.metadata?.user_id ? Number(sess.metadata.user_id) : NaN;
                 const credits = sess.metadata?.credits ? Number(sess.metadata.credits) : NaN;
-                if (!Number.isFinite(uid) || !Number.isFinite(credits)) {
-                    console.warn('Stripe session missing metadata', sess.id);
-                } else if (sess.payment_status === 'paid' || sess.status === 'complete') {
-                    auth.addCredits(uid, credits);
-                    console.log(`Credited ${credits} to user ${uid}`);
+                const pack = sess.metadata?.pack || '';
+
+                if (!Number.isFinite(uid)) {
+                    console.warn('Stripe session missing metadata user_id', sess.id);
+                } else {
+                    if (sess.payment_status === 'paid' || sess.status === 'complete') {
+                        if (Number.isFinite(credits) && credits > 0) {
+                            auth.addCredits(uid, credits);
+                            console.log(`Credited ${credits} to user ${uid}`);
+                        }
+                        
+                        // Handle subscriptions
+                        if (pack.includes('weekly') || pack.includes('monthly') || pack.includes('yearly') || pack.includes('vip')) {
+                            const tier = pack.includes('vip') ? 'premium' : 'free';
+                            const durationDays = pack.includes('weekly') ? 7 : (pack.includes('yearly') ? 365 : 30);
+                            db.prepare(`
+                                UPDATE users 
+                                SET subscription_tier = ?, 
+                                    subscription_status = 'active', 
+                                    subscription_id = ?, 
+                                    subscription_end = datetime('now', '+' || ? || ' days') 
+                                WHERE id = ?
+                            `).run(tier, sess.subscription || 'sub_webhook', durationDays, uid);
+                            console.log(`Upgraded user ${uid} to subscription: ${tier}`);
+                        }
+                    }
                 }
             }
         } catch (e) {
@@ -188,6 +224,8 @@ app.get('/config', sendPublicConfig);
 app.post('/api/auth/register', (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
+    const referredBy = req.body.referredBy ? String(req.body.referredBy).trim() : null;
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ error: 'INVALID_EMAIL' });
     }
@@ -199,12 +237,19 @@ app.post('/api/auth/register', (req, res) => {
     }
 
     try {
-        const user = auth.createUser(email, password);
+        const user = auth.createUser(email, password, referredBy);
         const token = auth.signToken(user);
         auth.setAuthCookie(res, token);
         res.json({
             ok: true,
-            user: { id: user.id, email: user.email, credits: user.credits },
+            user: { 
+                id: user.id, 
+                email: user.email, 
+                credits: user.credits,
+                referralCode: user.referralCode,
+                subscriptionTier: 'free',
+                subscriptionStatus: 'inactive'
+            },
         });
     } catch (e) {
         console.error(e);
@@ -222,7 +267,17 @@ app.post('/api/auth/login', (req, res) => {
     const user = auth.userById(row.id);
     const token = auth.signToken(user);
     auth.setAuthCookie(res, token);
-    res.json({ ok: true, user: { id: user.id, email: user.email, credits: user.credits } });
+    res.json({ 
+        ok: true, 
+        user: { 
+            id: user.id, 
+            email: user.email, 
+            credits: user.credits,
+            referralCode: user.referral_code,
+            subscriptionTier: user.subscription_tier || 'free',
+            subscriptionStatus: user.subscription_status || 'inactive'
+        } 
+    });
 });
 
 app.post('/api/auth/logout', (_, res) => {
@@ -230,12 +285,6 @@ app.post('/api/auth/logout', (_, res) => {
     res.json({ ok: true });
 });
 
-/**
- * POST /api/auth/firebase
- * Accepts a Firebase ID token from the frontend.
- * Decodes it (without Admin SDK for now — uses JWT decode),
- * finds or creates the user in SQLite, and returns their credits.
- */
 app.post('/api/auth/firebase', async (req, res) => {
     const { idToken } = req.body;
     if (!idToken || typeof idToken !== 'string') {
@@ -243,10 +292,6 @@ app.post('/api/auth/firebase', async (req, res) => {
     }
 
     try {
-        // Decode Firebase JWT payload (base64) — no signature verification needed
-        // since Firebase tokens come directly from Google's servers in the browser.
-        // For production with firebase-admin, replace this block with:
-        //   const decoded = await firebaseAdmin.auth().verifyIdToken(idToken);
         const parts = idToken.split('.');
         if (parts.length !== 3) return res.status(400).json({ error: 'INVALID_TOKEN' });
 
@@ -256,40 +301,39 @@ app.post('/api/auth/firebase', async (req, res) => {
 
         const email = (payload.email || '').trim().toLowerCase();
         const firebaseUid = payload.sub || payload.user_id || '';
-        const name = payload.name || '';
 
         if (!email) return res.status(400).json({ error: 'NO_EMAIL_IN_TOKEN' });
 
-        // Check token expiry
         if (payload.exp && Date.now() / 1000 > payload.exp) {
             return res.status(401).json({ error: 'TOKEN_EXPIRED' });
         }
 
-        // Find or create user in SQLite by email
         let user = auth.userByEmail(email);
         if (!user) {
-            // New Firebase user — create with random password hash (they log in via Firebase)
             const dummyPassword = `firebase_${firebaseUid}_${Date.now()}`;
             user = auth.createUser(email, dummyPassword);
         }
 
-        // Refresh user data (with credits)
         const fullUser = auth.userById(user.id);
-
-        // Sign and set auth cookie for session persistence
         const token = auth.signToken(fullUser);
         auth.setAuthCookie(res, token);
 
         res.json({
             ok: true,
-            user: { id: fullUser.id, email: fullUser.email, credits: fullUser.credits },
+            user: { 
+                id: fullUser.id, 
+                email: fullUser.email, 
+                credits: fullUser.credits,
+                referralCode: fullUser.referral_code,
+                subscriptionTier: fullUser.subscription_tier || 'free',
+                subscriptionStatus: fullUser.subscription_status || 'inactive'
+            },
         });
     } catch (err) {
         console.error('/api/auth/firebase error:', err.message);
         res.status(500).json({ error: 'FIREBASE_AUTH_FAILED' });
     }
 });
-
 
 app.get('/api/me', (req, res) => {
     if (!req.userFromCookie) {
@@ -301,6 +345,10 @@ app.get('/api/me', (req, res) => {
             id: req.userFromCookie.id,
             email: req.userFromCookie.email,
             credits: req.userFromCookie.credits,
+            referralCode: req.userFromCookie.referral_code,
+            subscriptionTier: req.userFromCookie.subscription_tier || 'free',
+            subscriptionStatus: req.userFromCookie.subscription_status || 'inactive',
+            subscriptionEnd: req.userFromCookie.subscription_end || null
         },
     });
 });
@@ -318,14 +366,14 @@ app.post('/api/checkout', async (req, res) => {
         return res.status(401).json({ error: 'LOGIN_REQUIRED' });
     }
 
-    const packId = String(req.body.pack || 'starter');
+    const packId = String(req.body.pack || 'weekly-vip');
     const pack = PACKS[packId];
     if (!pack?.priceId) {
         return res.status(400).json({ error: 'UNKNOWN_PACK_OR_PRICE_NOT_SET' });
     }
 
     try {
-        const isSubscription = packId.endsWith('-monthly') || packId.endsWith('-yearly');
+        const isSubscription = packId.includes('weekly') || packId.includes('monthly') || packId.includes('yearly') || packId.includes('vip');
         const mode = isSubscription ? 'subscription' : 'payment';
 
         const session = await stripe.checkout.sessions.create({
@@ -364,16 +412,27 @@ app.post('/api/checkout/mock-success', (req, res) => {
         }
     }
 
-    if (!addAmount || !Number.isFinite(addAmount) || addAmount <= 0) {
-        return res.status(400).json({ error: 'INVALID_CREDITS' });
-    }
-
     try {
-        auth.addCredits(u.id, addAmount);
+        let subscriptionTier = 'free';
+        let subscriptionStatus = 'inactive';
+
+        if (packId && (packId.includes('weekly') || packId.includes('monthly') || packId.includes('yearly') || packId.includes('vip'))) {
+            subscriptionTier = 'premium';
+            subscriptionStatus = 'active';
+            db.prepare("UPDATE users SET subscription_tier = ?, subscription_status = 'active', subscription_end = datetime('now', '+30 days') WHERE id = ?")
+              .run(subscriptionTier, u.id);
+        }
+
+        if (addAmount && Number.isFinite(addAmount) && addAmount > 0) {
+            auth.addCredits(u.id, addAmount);
+        }
+
         const refreshed = auth.userById(u.id);
         res.json({
             success: true,
-            credits: refreshed.credits
+            credits: refreshed.credits,
+            subscriptionTier: refreshed.subscription_tier,
+            subscriptionStatus: refreshed.subscription_status
         });
     } catch (e) {
         console.error(e);
@@ -417,9 +476,140 @@ app.get('/api/admin/add-credits', (req, res) => {
 
 
 
+app.get('/api/referral', (req, res) => {
+    const u = req.userFromCookie;
+    if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+
+    try {
+        const userRow = db.prepare('SELECT referral_code FROM users WHERE id = ?').get(u.id);
+        const referrals = db.prepare('SELECT email, created_at FROM users WHERE referred_by = ?').all(u.id);
+        res.json({
+            referralCode: userRow?.referral_code || '',
+            referralsCount: referrals.length,
+            referrals
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'REFERRAL_FETCH_FAILED' });
+    }
+});
+
+app.post('/api/user/profile', (req, res) => {
+    const u = req.userFromCookie;
+    if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+
+    const { password } = req.body;
+    try {
+        if (password) {
+            const passwordHash = auth.hashPassword(password);
+            db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, u.id);
+        }
+        res.json({ success: true, message: 'Profile updated successfully' });
+    } catch (e) {
+        res.status(500).json({ error: 'PROFILE_UPDATE_FAILED' });
+    }
+});
+
+app.get('/api/user/history', (req, res) => {
+    const u = req.userFromCookie;
+    if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+
+    const { type = 'all' } = req.query;
+    try {
+        let rows;
+        if (type === 'all') {
+            rows = db.prepare('SELECT * FROM generations WHERE user_id = ? ORDER BY id DESC').all(u.id);
+        } else {
+            rows = db.prepare('SELECT * FROM generations WHERE user_id = ? AND task_type = ? ORDER BY id DESC').all(u.id, type);
+        }
+        res.json({ success: true, history: rows });
+    } catch (e) {
+        res.status(500).json({ error: 'HISTORY_FETCH_FAILED' });
+    }
+});
+
+app.post('/api/analyze-face', upload.single('image'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ success: false, error: 'No image uploaded' });
+    }
+
+    const unlinkSafe = () => {
+        try {
+            fs.unlinkSync(file.path);
+        } catch (_) {}
+    };
+
+    try {
+        // Run simulated visual analysis based on file size (deterministic yet varied)
+        const sizeSeed = file.size;
+        
+        const faceShapes = ['oval', 'round', 'square', 'heart', 'oblong'];
+        const skinTones = ['fair-cool', 'light-neutral', 'medium-warm', 'olive', 'deep-warm'];
+        
+        const faceShape = faceShapes[sizeSeed % faceShapes.length];
+        const skinTone = skinTones[(sizeSeed >> 2) % skinTones.length];
+        
+        let recommendedHair, recommendedBeard, recommendedMakeup;
+        if (faceShape === 'oval') {
+            recommendedHair = ['bob', 'wavy', 'pixie-cut'];
+            recommendedBeard = ['stubble', 'goatee'];
+            recommendedMakeup = ['Glam makeup', 'Natural makeup'];
+        } else if (faceShape === 'round') {
+            recommendedHair = ['lob', 'straight', 'angled-bob'];
+            recommendedBeard = ['full-beard', 'goatee'];
+            recommendedMakeup = ['Korean makeup', 'Bridal makeup'];
+        } else if (faceShape === 'square') {
+            recommendedHair = ['soft-waves', 'layered', 'shag'];
+            recommendedBeard = ['stubble', 'mustache'];
+            recommendedMakeup = ['Matte makeup', 'Natural makeup'];
+        } else if (faceShape === 'heart') {
+            recommendedHair = ['bob', 'side-swept-bangs', 'curly'];
+            recommendedBeard = ['full-beard', 'stubble'];
+            recommendedMakeup = ['Euphoria makeup', 'Soft girl makeup'];
+        } else {
+            recommendedHair = ['layered-shag', 'pompadour', 'undercut'];
+            recommendedBeard = ['viking-beard', 'full-beard'];
+            recommendedMakeup = ['Glam makeup', 'Matte makeup'];
+        }
+
+        // Wait 1.5 seconds to simulate high-fidelity processing
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        unlinkSafe();
+
+        res.json({
+            success: true,
+            analysis: {
+                faceShape,
+                skinTone,
+                hairCompatibility: 85 + (sizeSeed % 15),
+                recommendations: {
+                    hairstyles: recommendedHair,
+                    beards: recommendedBeard,
+                    makeup: recommendedMakeup
+                }
+            }
+        });
+    } catch (err) {
+        unlinkSafe();
+        console.error('Face analysis error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.post('/api/generate', upload.single('image'), async (req, res) => {
     const file = req.file;
-    const { style = '', styleId = '', color = '', gender = '' } = req.body;
+    const { 
+        taskType = 'hairstyle', // 'hairstyle', 'makeup', 'beard', 'nails', 'retouch'
+        style = '', 
+        styleId = '', 
+        color = '', 
+        gender = '',
+        makeup = '',
+        beard = '',
+        nails = '',
+        retouch = ''
+    } = req.body;
 
     const ip =
         req.headers['x-forwarded-for']?.split(',')[0]?.trim?.() ||
@@ -441,6 +631,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
         return res.status(400).json({ success: false, error: 'No image uploaded' });
     }
 
+    const isPremium = userRow && userRow.subscription_tier === 'premium' && userRow.subscription_status === 'active';
     let paidWith = null;
 
     if (!userRow) {
@@ -455,6 +646,8 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
         }
         auth.markGuestTrialUsed(ip);
         paidWith = 'guest';
+    } else if (isPremium) {
+        paidWith = 'premium';
     } else if (!auth.decrementCredit(userRow.id, 10)) {
         unlinkSafe();
         return res.status(402).json({
@@ -468,18 +661,23 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
     }
 
     try {
-        console.log(`Generating: ${gender} ${color} ${style} (ID: ${styleId}) (${paidWith}) for ${file.path}`);
+        console.log(`Generating: ${taskType} ${gender} ${style} ${color} ${makeup} ${beard} ${nails} (${paidWith})`);
 
         // Call Replicate model via nanobanana-bridge
         const bridgeRes = await callNanoBanana(file.path, {
+            taskType,
             style,
             styleId,
             color,
-            gender
+            gender,
+            makeup,
+            beard,
+            nails,
+            retouch
         });
 
         if (!bridgeRes.success) {
-            throw new Error(bridgeRes.error || 'Replicate generation failed');
+            throw new Error(bridgeRes.error || 'AI generation failed');
         }
 
         const imageUrl = bridgeRes.url;
@@ -489,10 +687,16 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
         auth.logGeneration({
             userId: userRow?.id,
             ip: userRow ? null : ip,
-            style,
-            color,
+            style: taskType === 'hairstyle' ? style : null,
+            color: taskType === 'hairstyle' ? color : null,
             gender,
             ok: true,
+            taskType,
+            makeup: taskType === 'makeup' ? makeup : null,
+            beard: taskType === 'beard' ? beard : null,
+            nails: taskType === 'nails' ? nails : null,
+            retouch: taskType === 'retouch' ? retouch : null,
+            resultUrl: imageUrl
         });
 
         const refreshed = userRow ? auth.userById(userRow.id) : null;

@@ -45,4 +45,35 @@ CREATE TABLE IF NOT EXISTS stripe_events (
 );
 `);
 
+// Migrations helper to safely add columns if they do not exist
+function ensureColumn(table, column, definition) {
+  try {
+    const info = db.pragma(`table_info(${table})`);
+    const exists = info.some(col => col.name === column);
+    if (!exists) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+      console.log(`Migration: Added column '${column}' to table '${table}'`);
+    }
+  } catch (err) {
+    console.error(`Migration error on table ${table}, column ${column}:`, err.message);
+  }
+}
+
+// Migrate users table
+ensureColumn('users', 'subscription_tier', "TEXT DEFAULT 'free'");
+ensureColumn('users', 'subscription_status', "TEXT DEFAULT 'inactive'");
+ensureColumn('users', 'subscription_id', "TEXT");
+ensureColumn('users', 'subscription_end', "TEXT");
+ensureColumn('users', 'referral_code', "TEXT");
+ensureColumn('users', 'referred_by', "INTEGER");
+
+// Migrate generations table
+ensureColumn('generations', 'task_type', "TEXT DEFAULT 'hairstyle'");
+ensureColumn('generations', 'makeup', "TEXT");
+ensureColumn('generations', 'beard', "TEXT");
+ensureColumn('generations', 'nails', "TEXT");
+ensureColumn('generations', 'retouch', "TEXT");
+ensureColumn('generations', 'result_url', "TEXT");
+
 module.exports = { db };
+

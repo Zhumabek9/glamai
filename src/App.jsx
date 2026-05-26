@@ -15,6 +15,16 @@ import AuthModal from './components/AuthModal';
 import PaymentModal from './components/PaymentModal';
 import { ToastProvider } from './components/Toast';
 
+// New AI Beauty Components
+import Makeup from './components/Makeup';
+import Beard from './components/Beard';
+import Nails from './components/Nails';
+import Retouch from './components/Retouch';
+import FaceAnalysis from './components/FaceAnalysis';
+import Dashboard from './components/Dashboard';
+import TrendingFeed from './components/TrendingFeed';
+import Settings from './components/Settings';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('playground');
   const [user, setUser] = useState(null);
@@ -63,7 +73,14 @@ export default function App() {
         });
         if (res.ok) {
           const data = await res.json();
-          const activeUser = { id: data.user.id, email: data.user.email, tokens: data.user.credits };
+          const activeUser = { 
+            id: data.user.id, 
+            email: data.user.email, 
+            tokens: data.user.credits,
+            referralCode: data.user.referralCode,
+            subscriptionTier: data.user.subscriptionTier || 'free',
+            subscriptionStatus: data.user.subscriptionStatus || 'inactive'
+          };
           setUser(activeUser);
           loadHistory(activeUser.email);
         } else {
@@ -88,7 +105,10 @@ export default function App() {
     const activeUser = {
       id: backendUser.id,
       email: backendUser.email,
-      tokens: backendUser.credits
+      tokens: backendUser.credits,
+      referralCode: backendUser.referralCode,
+      subscriptionTier: backendUser.subscriptionTier || 'free',
+      subscriptionStatus: backendUser.subscriptionStatus || 'inactive'
     };
     setUser(activeUser);
     setGuestTokens(10); // reset guest tokens on login
@@ -119,7 +139,13 @@ export default function App() {
   };
 
   // Effective user object passed to components (real user or guest with tokens)
-  const effectiveUser = user || { isGuest: true, tokens: guestTokens, email: 'guest' };
+  const effectiveUser = user || { 
+    isGuest: true, 
+    tokens: guestTokens, 
+    email: 'guest',
+    subscriptionTier: 'free',
+    subscriptionStatus: 'inactive'
+  };
 
   // 5. Payment completed (syncs state; actual increment happens via Stripe webhook/backend)
   const handlePaymentSuccess = (newTokens) => {
@@ -195,7 +221,7 @@ export default function App() {
             <Hero
               onStartClick={scrollToPlayground}
               onViewPricing={() => setActiveTab('pricing')}
-              user={user}
+              user={effectiveUser}
               guestTokens={guestTokens}
               onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
               onOpenAuth={() => setIsAuthOpen(true)}
@@ -205,20 +231,93 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'makeup' && (
+            <Makeup
+              user={effectiveUser}
+              guestTokens={guestTokens}
+              onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onAddHistory={handleAddHistory}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'beard' && (
+            <Beard
+              user={effectiveUser}
+              guestTokens={guestTokens}
+              onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onAddHistory={handleAddHistory}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'nails' && (
+            <Nails
+              user={effectiveUser}
+              guestTokens={guestTokens}
+              onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onAddHistory={handleAddHistory}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'retouch' && (
+            <Retouch
+              user={effectiveUser}
+              guestTokens={guestTokens}
+              onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onAddHistory={handleAddHistory}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'analysis' && (
+            <FaceAnalysis
+              user={effectiveUser}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'trending' && (
+            <TrendingFeed
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'dashboard' && (
+            <Dashboard
+              user={effectiveUser}
+              onLogout={handleLogout}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <Settings
+              user={effectiveUser}
+              onLogout={handleLogout}
+              setActiveTab={setActiveTab}
+            />
+          )}
+
           {activeTab === 'pricing' && (
             <Pricing
-              user={user}
+              user={effectiveUser}
               onSelectPlan={handleSelectPlan}
               onOpenAuth={() => setIsAuthOpen(true)}
             />
           )}
 
-
           {activeTab === 'history' && (
-            <History
-              history={history}
-              onClearItem={handleClearHistoryItem}
-              onStartClick={scrollToPlayground}
+            <Dashboard
+              user={effectiveUser}
+              onLogout={handleLogout}
+              setActiveTab={setActiveTab}
             />
           )}
 

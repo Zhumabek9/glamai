@@ -19,22 +19,42 @@ function verifyPassword(password, hash) {
 }
 
 function userByEmail(email) {
-    return db.prepare('SELECT id, email, password_hash AS passwordHash, credits FROM users WHERE lower(email)=lower(?)').get(
+    return db.prepare('SELECT id, email, password_hash AS passwordHash, credits, subscription_tier, subscription_status, subscription_end, referral_code FROM users WHERE lower(email)=lower(?)').get(
         email
     );
 }
 
 function userById(id) {
-    return db.prepare('SELECT id, email, credits FROM users WHERE id=?').get(id);
+    return db.prepare('SELECT id, email, credits, subscription_tier, subscription_status, subscription_end, referral_code FROM users WHERE id=?').get(id);
 }
 
-function createUser(email, password) {
+function createUser(email, password, referredByCode = null) {
     const passwordHash = hashPassword(password);
     const credits = FREE_CREDITS_SIGNUP;
+    const referralCode = `GLAM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    // Resolve referred_by
+    let referredByUserId = null;
+    if (referredByCode) {
+        const referrer = db.prepare('SELECT id FROM users WHERE referral_code = ?').get(referredByCode);
+        if (referrer) {
+            referredByUserId = referrer.id;
+        }
+    }
+
     const info = db
-        .prepare('INSERT INTO users (email, password_hash, credits) VALUES (?,?,?)')
-        .run(email, passwordHash, credits);
-    return { id: info.lastInsertRowid, email, credits };
+        .prepare('INSERT INTO users (email, password_hash, credits, referral_code, referred_by) VALUES (?,?,?,?,?)')
+        .run(email, passwordHash, credits, referralCode, referredByUserId);
+        
+    const newUserId = info.lastInsertRowid;
+    
+    // If referred, award +50 tokens to both referrer and new user!
+    if (referredByUserId) {
+        addCredits(referredByUserId, 50);
+        addCredits(newUserId, 50);
+    }
+    
+    return { id: newUserId, email, credits: referredByUserId ? credits + 50 : credits, referralCode };
 }
 
 function addCredits(userId, amount) {
@@ -122,11 +142,24 @@ function markGuestTrialUsed(ip) {
   `).run(ip);
 }
 
-function logGeneration({ userId, ip, style, color, gender, ok }) {
+function logGeneration({ userId, ip, style, color, gender, ok, taskType = 'hairstyle', makeup = null, beard = null, nails = null, retouch = null, resultUrl = null }) {
     db.prepare(`
-    INSERT INTO generations (user_id, ip, style, color, gender, ok)
-    VALUES (?,?,?,?,?,?)
-  `).run(userId ?? null, ip ?? null, style, color, gender, ok ? 1 : 0);
+    INSERT INTO generations (user_id, ip, style, color, gender, ok, task_type, makeup, beard, nails, retouch, result_url)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+  `).run(
+      userId ?? null,
+      ip ?? null,
+      style ?? null,
+      color ?? null,
+      gender ?? null,
+      ok ? 1 : 0,
+      taskType,
+      makeup,
+      beard,
+      nails,
+      retouch,
+      resultUrl
+  );
 }
 
 module.exports = {
