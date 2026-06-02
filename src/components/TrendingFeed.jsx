@@ -48,18 +48,25 @@ export default function TrendingFeed({ setActiveTab }) {
   const [activePreset, setActivePreset] = useState(null);
 
   return (
-    <div style={{ background: 'var(--bg-primary)', padding: '4rem 0 6rem' }}>
+    <div style={{ background: 'var(--bg-primary)', padding: '2rem 0 6rem' }}>
       <div className="container animate-fade-in" style={{ maxWidth: '960px' }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <Flame size={24} color="var(--color-pink-primary)" style={{ fill: 'currentColor' }} />
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, textAlign: 'center', margin: 0 }}>
-            Trending Beauty Feed
+        {/* Premium Feature Landing Page Hero */}
+        <div className="category-landing-hero" style={{ marginBottom: '3rem', textAlign: 'center' }}>
+          <div className="glowing-orb pink-orb"></div>
+          <div className="glowing-orb purple-orb"></div>
+          <h1 className="landing-title">
+            <span className="gradient-text">Trending Beauty</span> Feed
           </h1>
+          <p className="landing-subtitle">
+            Explore viral AI transformations blowing up on TikTok and Instagram. See real side-by-side community creations and try on your favorite looks with a single tap.
+          </p>
+          <div className="landing-stats">
+            <div className="stat-badge"><Flame size={14} color="var(--color-pink-primary)" style={{ fill: 'currentColor' }} /> <span>15,000+ Daily Creations</span></div>
+            <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>Trending Looks Updated Hourly</span></div>
+            <div className="stat-badge"><span>🔥 Join the Glow Up Challenge</span></div>
+          </div>
         </div>
-        <p style={{ color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '550px', margin: '0 auto 3.5rem' }}>
-          Explore trending AI transformations blowing up on TikTok and Instagram. Drag sliders to preview, then try them on yourself!
-        </p>
 
         {/* Swipeable Grid of Videos/Sliders */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '2rem' }}>
@@ -75,7 +82,7 @@ export default function TrendingFeed({ setActiveTab }) {
                 after={post.afterImg} 
                 title={post.title}
               />
-
+ 
               {/* Feed Card Footer */}
               <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -88,20 +95,32 @@ export default function TrendingFeed({ setActiveTab }) {
                   <span>&bull;</span>
                   <span>{post.likes}</span>
                 </div>
-
-                <button 
-                  className="btn btn-primary" 
-                  style={{ width: '100%', padding: '0.6rem 0', fontSize: '0.8rem', marginTop: '0.5rem' }}
-                  onClick={() => setActiveTab(post.targetTab)}
-                >
-                  <Sparkles size={14} />
-                  <span>Try on Selfie</span>
-                </button>
+ 
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 2, padding: '0.6rem 0', fontSize: '0.8rem' }}
+                    onClick={() => setActiveTab(post.targetTab)}
+                  >
+                    <Sparkles size={14} />
+                    <span>Try on Selfie</span>
+                  </button>
+                  <button 
+                    className="btn btn-secondary" 
+                    style={{ flex: 1, padding: '0.6rem 0', fontSize: '0.8rem' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.origin + '?try=' + post.presetId);
+                      alert('Link to try this look copied to clipboard!');
+                    }}
+                  >
+                    <span>Share</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
-
+ 
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { 
   Sparkles, 
   ArrowRight, 
@@ -20,7 +20,7 @@ import {
   Users,
   Lock
 } from 'lucide-react';
-import Playground from './Playground';
+const Playground = lazy(() => import('./Playground'));
 import { t } from '../utils/i18n';
 
 export default function Hero({ 
@@ -86,12 +86,12 @@ export default function Hero({
 
   // 6 transformation GIFs metadata (English titles matching the user requested styles)
   const transformations = [
-    { id: 1, title: 'Curly Hair', path: '/transformation_1.gif', sliderPos: 8, hot: true },
-    { id: 2, title: 'Blonde Hair', path: '/transformation_3.gif', sliderPos: 12 },
-    { id: 3, title: 'Bob Cut', path: '/transformation_5.gif', sliderPos: 15 },
-    { id: 4, title: 'Wavy Hair', path: '/transformation_6.gif', sliderPos: 20 },
-    { id: 5, title: 'Short Cut', path: '/transformation_4.gif', sliderPos: 25 },
-    { id: 6, title: 'Highlights', path: '/transformation_2.gif', sliderPos: 12 },
+    { id: 1, title: 'Romantic Curls', path: '/transformation_1.gif', sliderPos: 8, hot: true },
+    { id: 2, title: 'Golden Platinum Blonde', path: '/transformation_3.gif', sliderPos: 12 },
+    { id: 3, title: 'Classic Parisian Bob', path: '/transformation_5.gif', sliderPos: 15 },
+    { id: 4, title: 'Textured Beach Waves', path: '/transformation_6.gif', sliderPos: 20 },
+    { id: 5, title: 'Sleek Pixie Cut', path: '/transformation_4.gif', sliderPos: 25 },
+    { id: 6, title: 'Sun-Kissed Highlights', path: '/transformation_2.gif', sliderPos: 12 },
   ];
 
   return (
@@ -175,6 +175,19 @@ export default function Hero({
               <div 
                 className="slider-handle-bar" 
                 style={{ left: `${sliderPosition}%` }}
+                role="slider"
+                aria-valuenow={Math.round(sliderPosition)}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Before and after comparison slider"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowLeft') {
+                    setSliderPosition(prev => Math.max(0, prev - 5));
+                  } else if (e.key === 'ArrowRight') {
+                    setSliderPosition(prev => Math.min(100, prev + 5));
+                  }
+                }}
               >
                 <div className="slider-handle-button">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -189,15 +202,22 @@ export default function Hero({
 
       {/* Customize Hairstyle (Playground Workspace) - Positioned between Slider and Real Transformations */}
       <div ref={playgroundRef} style={{ scrollMarginTop: '100px' }}>
-        <Playground 
-          user={user}
-          guestTokens={guestTokens}
-          onDeductToken={onDeductToken}
-          onOpenAuth={onOpenAuth}
-          onAddHistory={onAddHistory}
-          setActiveTab={setActiveTab}
-        />
+        <Suspense fallback={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: 'var(--color-pink-primary)' }}>
+            <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(255,46,147,0.1)', borderTopColor: 'var(--color-pink-primary)', borderRadius: '50%' }} />
+          </div>
+        }>
+          <Playground 
+            user={user}
+            guestTokens={guestTokens}
+            onDeductToken={onDeductToken}
+            onOpenAuth={onOpenAuth}
+            onAddHistory={onAddHistory}
+            setActiveTab={setActiveTab}
+          />
+        </Suspense>
       </div>
+
 
       {/* 2. REAL TRANSFORMATIONS (See the Magic in Action) */}
       <div className="landing-section transformations-section">
@@ -214,7 +234,7 @@ export default function Hero({
                 <div className="transformation-card glass-panel">
                   <div className="transformation-image-wrapper">
                     {tData.hot && <span className="transformation-hot-badge">HOT</span>}
-                    <img src={tData.path} alt={tData.title} className="transformation-gif" />
+                    <img src={tData.path} alt={tData.title} className="transformation-gif" loading="lazy" decoding="async" />
                   </div>
                 </div>
                 <div className="transformation-card-title-bottom">
@@ -232,7 +252,7 @@ export default function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.simpleProcess')}</span>
             <h2>{t('howItWorks.title')}</h2>
-            <p>No salon appointments, no regrets. Get your dream hairstyle preview in seconds.</p>
+            <p>Zero salon regrets, zero waste. Preview your perfect hair, makeup, beard, and nail styles instantly.</p>
           </div>
 
           <div className="process-timeline">
@@ -280,8 +300,8 @@ export default function Hero({
         <div className="container">
           <div className="section-header">
             <span className="section-badge">💬 Real Stories</span>
-            <h2>Loved by Thousands of Users</h2>
-            <p>See what people are saying about their GlamAI transformations.</p>
+            <h2>Loved by over 50,000+ Users</h2>
+            <p>Read how GlamAI helped users discover their signature look and prevent costly salon disasters.</p>
           </div>
 
           <div className="testimonials-grid">
@@ -363,7 +383,7 @@ export default function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.whyChooseUs')}</span>
             <h2>{t('trust.title')}</h2>
-            <p>Professional virtual hair styling powered by state-of-the-art AI models.</p>
+            <p>Advanced generative AI beauty studio delivering 100% realistic hair, cosmetics, and grooming previews.</p>
           </div>
 
           <div className="benefits-grid">
@@ -424,7 +444,7 @@ export default function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.gotQuestions')}</span>
             <h2>{t('faq.title')}</h2>
-            <p>Common questions about our AI virtual hair salon.</p>
+            <p>Answers to common questions about our AI virtual styling studio & beauty features.</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>

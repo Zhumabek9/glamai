@@ -80,8 +80,8 @@ export default function PrivacyPolicy({ setActiveTab }) {
             content: `We use Stripe for payment processing (see Stripe's Privacy Policy), Google Analytics for usage analytics, and cloud infrastructure providers for secure data storage. These services have their own privacy policies and security practices.`,
           },
           {
-            title: '7. Your Rights',
-            content: `You have the right to access your personal data, delete your account and all associated data, export your generated images, opt out of marketing communications, and request correction of inaccurate data. Contact us at privacy@glamai.app to exercise these rights.`,
+            title: '7. Your Rights (GDPR & CCPA Compliant)',
+            content: `Under GDPR (European Union General Data Protection Regulation) and CCPA (California Consumer Privacy Act), you have extended rights regarding your personal information. These include the right to access, rectify, or erase your personal data ("Right to be Forgotten"), the right to restrict or object to processing, the right to data portability, and the right to opt-out of the "sale" or "sharing" of your data (we do not sell your data). You can delete your account and clear all stored data directly in the Profile Settings panel, or by contacting us at privacy@glamai.app.`,
           },
           {
             title: '8. Children\'s Privacy',

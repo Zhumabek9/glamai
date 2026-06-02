@@ -1509,7 +1509,7 @@
    ============================================================ */
 
 /* Switch navbar to mobile mode */
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
   .desktop-nav {
     display: none !important;
   }
@@ -2624,5 +2624,215 @@
   0% { top: 0%; }
   50% { top: 100%; }
   100% { top: 0%; }
+}
+
+/* --- Category Landing Pages & Premium Option Card Previews --- */
+.category-landing-hero {
+  position: relative;
+  text-align: center;
+  padding: 4rem 1.5rem 3rem;
+  margin-bottom: 2.5rem;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 46, 147, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 46, 147, 0.04);
+  overflow: hidden;
+}
+
+.dark-mode .category-landing-hero {
+  background: radial-gradient(circle at 50% 0%, rgba(255, 46, 147, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+}
+
+.glowing-orb {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pink-orb {
+  background: var(--color-pink-primary);
+  top: -20px;
+  left: 25%;
+}
+
+.purple-orb {
+  background: var(--color-purple-primary);
+  bottom: -20px;
+  right: 25%;
+}
+
+.landing-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-title .gradient-text {
+  background: var(--gradient-pink-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.landing-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-badge {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 46, 147, 0.15);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 12px rgba(255, 46, 147, 0.04);
+}
+
+.dark-mode .stat-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 46, 147, 0.25);
+}
+
+.style-card-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #fdfafd;
+  transition: border-color 0.2s ease;
+}
+
+.style-card:hover .style-card-image-wrapper {
+  border-color: var(--color-pink-primary);
+}
+
+.style-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.style-card:hover .style-card-img {
+  transform: scale(1.08);
+}
+
+.style-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.3) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.style-card:hover .style-card-overlay {
+  opacity: 1;
+}
+
+/* Face Scanner scanner area enhancement */
+.face-scan-hero {
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 46, 147, 0.1) 0%, rgba(255, 255, 255, 0) 75%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 46, 147, 0.05);
+  margin-bottom: 2.5rem;
+}
+
+.scan-laser-glow {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 1.5rem;
+}
+
+.scan-laser-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--color-pink-primary);
+  border-radius: 50%;
+  animation: pulseScan 2s infinite;
+}
+
+@keyframes pulseScan {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* Before/After Side-by-Side Preview Grid */
+.before-after-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.before-after-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.before-after-label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.before-after-label.before {
+  color: #a0aec0;
+}
+
+.before-after-label.after {
+  color: #ff2e93; /* Premium pink */
+}
+
+@media (max-width: 640px) {
+  .before-after-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 }
 

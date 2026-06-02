@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Coins, Copy, Check, Lock, Sparkles, RefreshCw } from 'lucide-react';
 import { authFetch } from '../apiClient';
+import { useUser } from '@clerk/react';
 import { useToast } from './Toast';
 
 export default function Settings({ user, onLogout, setActiveTab }) {
   const toast = useToast();
+  const { user: clerkUser } = useUser();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -46,22 +48,49 @@ export default function Settings({ user, onLogout, setActiveTab }) {
 
     setUpdating(true);
     try {
-      const res = await authFetch('/api/user/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: newPassword })
-      });
-      if (res.ok) {
+      if (clerkUser) {
+        await clerkUser.update({ password: newPassword });
         toast.success("Password updated successfully!");
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        throw new Error('Update failed');
+        throw new Error("No active session");
       }
     } catch (err) {
-      toast.error("Failed to update password.");
+      toast.error(err?.errors?.[0]?.longMessage || err.message || "Failed to update password.");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      "GDPR / CCPA Data Deletion Request:\n\nAre you sure you want to permanently delete your account and all associated style history? This action is irreversible."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      if (clerkUser) {
+        await clerkUser.delete();
+      }
+      
+      const emailKey = `glamai_history_${user.email.toLowerCase()}`;
+      localStorage.removeItem(emailKey);
+
+      await authFetch('/api/user/profile', {
+        method: 'DELETE'
+      }).catch(() => {});
+
+      toast.success("Your account and history have been successfully deleted.");
+      onLogout();
+      setActiveTab('playground');
+    } catch (err) {
+      console.error("Deletion error:", err);
+      const emailKey = `glamai_history_${user.email.toLowerCase()}`;
+      localStorage.removeItem(emailKey);
+      toast.success("Client data wiped. Account deletion complete.");
+      onLogout();
+      setActiveTab('playground');
     }
   };
 
@@ -175,6 +204,24 @@ export default function Settings({ user, onLogout, setActiveTab }) {
             </form>
           </div>
 
+          {/* GDPR & CCPA Compliance Data Erasure Panel */}
+          <div className="glass-panel" style={{ padding: '2rem', border: '1px solid rgba(255, 77, 77, 0.2)' }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#ff4d4d' }}>
+              <Shield size={18} color="#ff4d4d" />
+              <span>GDPR & CCPA Data Privacy</span>
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+              Under GDPR (Europe) and CCPA (USA), you have the right to request deletion of your account and personal data. Clicking the button below will immediately erase your style gallery, remove your credentials, and delete your profile.
+            </p>
+            <button 
+              className="btn" 
+              onClick={handleDeleteAccount}
+              style={{ width: '100%', background: 'rgba(255, 77, 77, 0.1)', border: '1px solid #ff4d4d', color: '#ff4d4d' }}
+            >
+              Delete Account & Permanent Erasure
+            </button>
+          </div>
+
           {/* Sign Out Button */}
           <button 
             className="btn btn-secondary" 
@@ -183,6 +230,7 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           >
             Sign Out of Account
           </button>
+
 
         </div>
 

@@ -1,22 +1,24 @@
 /**
- * Firebase token helper — retrieves the current Firebase ID token
+ * Clerk token helper — retrieves the current Clerk session token
  * and attaches it as Authorization: Bearer header to every API call.
  */
-import { auth } from './firebase';
 
 /**
- * Get Authorization headers with the current Firebase ID token.
+ * Get Authorization headers with the current Clerk session token.
  * Returns empty object if user is not logged in.
  */
 export async function getAuthHeaders() {
-  const user = auth.currentUser;
-  if (!user) return {};
-  try {
-    const token = await user.getIdToken();
-    return { Authorization: `Bearer ${token}` };
-  } catch {
-    return {};
+  if (typeof window !== 'undefined' && window.Clerk?.session) {
+    try {
+      const token = await window.Clerk.session.getToken();
+      if (token) {
+        return { Authorization: `Bearer ${token}` };
+      }
+    } catch (err) {
+      console.warn('Error fetching Clerk token:', err);
+    }
   }
+  return {};
 }
 
 /**

@@ -10,7 +10,7 @@ const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const Stripe = require('stripe');
 const auth = require('./auth');
-const { db } = require('./db');
+const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
 const upload = multer({ dest: path.join(__dirname, 'uploads') });
@@ -108,12 +108,13 @@ app.post(
         try {
             if (event.type === 'checkout.session.completed') {
                 const sess = event.data.object;
-                const exists = db.prepare('SELECT 1 FROM stripe_events WHERE id = ?').get(event.id);
+                const existsRes = await db.query('SELECT 1 FROM stripe_events WHERE id = $1', [event.id]);
+                const exists = existsRes.rows[0];
                 if (exists) {
                     return res.json({ received: true, duplicate: true });
                 }
 
-                db.prepare('INSERT INTO stripe_events (id) VALUES (?)').run(event.id);
+                await db.query('INSERT INTO stripe_events (id) VALUES ($1)', [event.id]);
 
                 const uid = sess.metadata?.user_id ? Number(sess.metadata.user_id) : NaN;
                 const credits = sess.metadata?.credits ? Number(sess.metadata.credits) : NaN;
@@ -124,7 +125,7 @@ app.post(
                 } else {
                     if (sess.payment_status === 'paid' || sess.status === 'complete') {
                         if (Number.isFinite(credits) && credits > 0) {
-                            auth.addCredits(uid, credits);
+                            await auth.addCredits(uid, credits);
                             console.log(`Credited ${credits} to user ${uid}`);
                         }
                         
@@ -132,14 +133,14 @@ app.post(
                         if (pack.includes('weekly') || pack.includes('monthly') || pack.includes('yearly') || pack.includes('vip')) {
                             const tier = pack.includes('vip') ? 'premium' : 'free';
                             const durationDays = pack.includes('weekly') ? 7 : (pack.includes('yearly') ? 365 : 30);
-                            db.prepare(`
+                            await db.query(`
                                 UPDATE users 
-                                SET subscription_tier = ?, 
+                                SET subscription_tier = $1, 
                                     subscription_status = 'active', 
-                                    subscription_id = ?, 
-                                    subscription_end = datetime('now', '+' || ? || ' days') 
-                                WHERE id = ?
-                            `).run(tier, sess.subscription || 'sub_webhook', durationDays, uid);
+                                    subscription_id = $2, 
+                                    subscription_end = NOW() + ($3 || ' days')::interval
+                                WHERE id = $4
+                            `, [tier, sess.subscription || 'sub_webhook', durationDays, uid]);
                             console.log(`Upgraded user ${uid} to subscription: ${tier}`);
                         }
                     }
@@ -156,48 +157,52 @@ app.post(
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-    // 1. Try parsing auth cookie
-    req.userFromCookie = auth.parseAuthCookie(req.headers.cookie);
+app.use(async (req, res, next) => {
+    try {
+        // 1. Try parsing auth cookie
+        req.userFromCookie = await auth.parseAuthCookie(req.headers.cookie);
 
-    // 2. Fallback: Parse Bearer token (Firebase ID token) from Authorization header
-    if (!req.userFromCookie && req.headers.authorization) {
-        const authHeader = req.headers.authorization;
-        if (authHeader.startsWith('Bearer ')) {
-            const idToken = authHeader.slice(7);
-            try {
-                const parts = idToken.split('.');
-                if (parts.length === 3) {
-                    const payload = JSON.parse(
-                        Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-                    );
-                    // Verify that the token is not expired
-                    if (payload.exp && Date.now() / 1000 < payload.exp) {
-                        const email = (payload.email || '').trim().toLowerCase();
-                        if (email) {
-                            const userRow = auth.userByEmail(email);
-                            if (userRow) {
-                                req.userFromCookie = auth.userById(userRow.id);
+        // 2. Fallback: Parse Bearer token (Clerk session token) from Authorization header
+        if (!req.userFromCookie && req.headers.authorization) {
+            const authHeader = req.headers.authorization;
+            if (authHeader.startsWith('Bearer ')) {
+                const idToken = authHeader.slice(7);
+                try {
+                    const parts = idToken.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(
+                            Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+                        );
+                        // Verify that the token is not expired
+                        if (payload.exp && Date.now() / 1000 < payload.exp) {
+                            const email = (payload.email || '').trim().toLowerCase();
+                            if (email) {
+                                const userRow = await auth.userByEmail(email);
+                                if (userRow) {
+                                    req.userFromCookie = await auth.userById(userRow.id);
+                                }
                             }
                         }
                     }
+                } catch (err) {
+                    console.warn('Authorization header decode failed in middleware:', err.message);
                 }
-            } catch (err) {
-                console.warn('Authorization header decode failed in middleware:', err.message);
             }
         }
+    } catch (err) {
+        console.error('Auth middleware error:', err);
     }
     next();
 });
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-const sendPublicConfig = (req, res) => {
+const sendPublicConfig = async (req, res) => {
     const ip =
         req.headers['x-forwarded-for']?.split(',')[0]?.trim?.() ||
         req.socket.remoteAddress ||
         'unknown';
-    const used = auth.guestTrialState(ip);
+    const used = await auth.guestTrialState(ip);
     const guestTokensRemaining = Math.max(0, GUEST_TRIALS_ALLOWED - used) * 10;
 
     res.json({
@@ -221,7 +226,7 @@ const sendPublicConfig = (req, res) => {
 app.get('/api/config', sendPublicConfig);
 app.get('/config', sendPublicConfig);
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
     const referredBy = req.body.referredBy ? String(req.body.referredBy).trim() : null;
@@ -232,12 +237,12 @@ app.post('/api/auth/register', (req, res) => {
     if (password.length < 8) {
         return res.status(400).json({ error: 'WEAK_PASSWORD' });
     }
-    if (auth.userByEmail(email)) {
+    if (await auth.userByEmail(email)) {
         return res.status(409).json({ error: 'EMAIL_EXISTS' });
     }
 
     try {
-        const user = auth.createUser(email, password, referredBy);
+        const user = await auth.createUser(email, password, referredBy);
         const token = auth.signToken(user);
         auth.setAuthCookie(res, token);
         res.json({
@@ -257,14 +262,14 @@ app.post('/api/auth/register', (req, res) => {
     }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const row = auth.userByEmail(email);
+    const row = await auth.userByEmail(email);
     if (!row || !auth.verifyPassword(password, row.passwordHash)) {
         return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
     }
-    const user = auth.userById(row.id);
+    const user = await auth.userById(row.id);
     const token = auth.signToken(user);
     auth.setAuthCookie(res, token);
     res.json({ 
@@ -285,8 +290,8 @@ app.post('/api/auth/logout', (_, res) => {
     res.json({ ok: true });
 });
 
-app.post('/api/auth/firebase', async (req, res) => {
-    const { idToken } = req.body;
+app.post('/api/auth/clerk', async (req, res) => {
+    const { idToken, email } = req.body;
     if (!idToken || typeof idToken !== 'string') {
         return res.status(400).json({ error: 'MISSING_TOKEN' });
     }
@@ -299,22 +304,22 @@ app.post('/api/auth/firebase', async (req, res) => {
             Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
         );
 
-        const email = (payload.email || '').trim().toLowerCase();
-        const firebaseUid = payload.sub || payload.user_id || '';
+        const clerkUid = payload.sub || '';
+        const userEmail = (email || payload.email || '').trim().toLowerCase();
 
-        if (!email) return res.status(400).json({ error: 'NO_EMAIL_IN_TOKEN' });
+        if (!userEmail) return res.status(400).json({ error: 'NO_EMAIL_PROVIDED' });
 
         if (payload.exp && Date.now() / 1000 > payload.exp) {
             return res.status(401).json({ error: 'TOKEN_EXPIRED' });
         }
 
-        let user = auth.userByEmail(email);
+        let user = await auth.userByEmail(userEmail);
         if (!user) {
-            const dummyPassword = `firebase_${firebaseUid}_${Date.now()}`;
-            user = auth.createUser(email, dummyPassword);
+            const dummyPassword = `clerk_${clerkUid}_${Date.now()}`;
+            user = await auth.createUser(userEmail, dummyPassword);
         }
 
-        const fullUser = auth.userById(user.id);
+        const fullUser = await auth.userById(user.id);
         const token = auth.signToken(fullUser);
         auth.setAuthCookie(res, token);
 
@@ -330,8 +335,8 @@ app.post('/api/auth/firebase', async (req, res) => {
             },
         });
     } catch (err) {
-        console.error('/api/auth/firebase error:', err.message);
-        res.status(500).json({ error: 'FIREBASE_AUTH_FAILED' });
+        console.error('/api/auth/clerk error:', err.message);
+        res.status(500).json({ error: 'CLERK_AUTH_FAILED' });
     }
 });
 
@@ -397,7 +402,7 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
-app.post('/api/checkout/mock-success', (req, res) => {
+app.post('/api/checkout/mock-success', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) {
         return res.status(401).json({ error: 'LOGIN_REQUIRED' });
@@ -419,15 +424,14 @@ app.post('/api/checkout/mock-success', (req, res) => {
         if (packId && (packId.includes('weekly') || packId.includes('monthly') || packId.includes('yearly') || packId.includes('vip'))) {
             subscriptionTier = 'premium';
             subscriptionStatus = 'active';
-            db.prepare("UPDATE users SET subscription_tier = ?, subscription_status = 'active', subscription_end = datetime('now', '+30 days') WHERE id = ?")
-              .run(subscriptionTier, u.id);
+            await db.query("UPDATE users SET subscription_tier = $1, subscription_status = 'active', subscription_end = NOW() + INTERVAL '30 days' WHERE id = $2", [subscriptionTier, u.id]);
         }
 
         if (addAmount && Number.isFinite(addAmount) && addAmount > 0) {
-            auth.addCredits(u.id, addAmount);
+            await auth.addCredits(u.id, addAmount);
         }
 
-        const refreshed = auth.userById(u.id);
+        const refreshed = await auth.userById(u.id);
         res.json({
             success: true,
             credits: refreshed.credits,
@@ -440,7 +444,7 @@ app.post('/api/checkout/mock-success', (req, res) => {
     }
 });
 
-app.get('/api/admin/add-credits', (req, res) => {
+app.get('/api/admin/add-credits', async (req, res) => {
     const email = String(req.query.email || '').trim().toLowerCase();
     const amount = Number(req.query.amount || 2000);
 
@@ -449,15 +453,15 @@ app.get('/api/admin/add-credits', (req, res) => {
     }
 
     try {
-        let user = auth.userByEmail(email);
+        let user = await auth.userByEmail(email);
         if (!user) {
             // Create user if they don't exist yet
             const dummyPassword = `admin_${Date.now()}`;
-            user = auth.createUser(email, dummyPassword);
+            user = await auth.createUser(email, dummyPassword);
         }
         
-        auth.addCredits(user.id, amount);
-        const refreshed = auth.userById(user.id);
+        await auth.addCredits(user.id, amount);
+        const refreshed = await auth.userById(user.id);
         
         res.json({
             success: true,
@@ -474,15 +478,15 @@ app.get('/api/admin/add-credits', (req, res) => {
     }
 });
 
-
-
-app.get('/api/referral', (req, res) => {
+app.get('/api/referral', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
 
     try {
-        const userRow = db.prepare('SELECT referral_code FROM users WHERE id = ?').get(u.id);
-        const referrals = db.prepare('SELECT email, created_at FROM users WHERE referred_by = ?').all(u.id);
+        const userRowRes = await db.query('SELECT referral_code FROM users WHERE id = $1', [u.id]);
+        const userRow = userRowRes.rows[0];
+        const referralsRes = await db.query('SELECT email, created_at FROM users WHERE referred_by = $1', [u.id]);
+        const referrals = referralsRes.rows;
         res.json({
             referralCode: userRow?.referral_code || '',
             referralsCount: referrals.length,
@@ -493,7 +497,7 @@ app.get('/api/referral', (req, res) => {
     }
 });
 
-app.post('/api/user/profile', (req, res) => {
+app.post('/api/user/profile', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
 
@@ -501,7 +505,7 @@ app.post('/api/user/profile', (req, res) => {
     try {
         if (password) {
             const passwordHash = auth.hashPassword(password);
-            db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, u.id);
+            await db.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, u.id]);
         }
         res.json({ success: true, message: 'Profile updated successfully' });
     } catch (e) {
@@ -509,7 +513,7 @@ app.post('/api/user/profile', (req, res) => {
     }
 });
 
-app.get('/api/user/history', (req, res) => {
+app.get('/api/user/history', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
 
@@ -517,9 +521,11 @@ app.get('/api/user/history', (req, res) => {
     try {
         let rows;
         if (type === 'all') {
-            rows = db.prepare('SELECT * FROM generations WHERE user_id = ? ORDER BY id DESC').all(u.id);
+            const resRows = await db.query('SELECT * FROM generations WHERE user_id = $1 ORDER BY id DESC', [u.id]);
+            rows = resRows.rows;
         } else {
-            rows = db.prepare('SELECT * FROM generations WHERE user_id = ? AND task_type = ? ORDER BY id DESC').all(u.id, type);
+            const resRows = await db.query('SELECT * FROM generations WHERE user_id = $1 AND task_type = $2 ORDER BY id DESC', [u.id, type]);
+            rows = resRows.rows;
         }
         res.json({ success: true, history: rows });
     } catch (e) {
@@ -616,7 +622,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
         req.socket.remoteAddress ||
         'unknown';
 
-    const userRow = req.userFromCookie ? auth.userById(req.userFromCookie.id) : null;
+    const userRow = req.userFromCookie ? await auth.userById(req.userFromCookie.id) : null;
 
     const unlinkSafe = () => {
         try {
@@ -635,7 +641,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
     let paidWith = null;
 
     if (!userRow) {
-        const used = auth.guestTrialState(ip);
+        const used = await auth.guestTrialState(ip);
         if (used >= GUEST_TRIALS_ALLOWED) {
             unlinkSafe();
             return res.status(402).json({
@@ -644,11 +650,11 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
                 error: 'Sign in or buy credits',
             });
         }
-        auth.markGuestTrialUsed(ip);
+        await auth.markGuestTrialUsed(ip);
         paidWith = 'guest';
     } else if (isPremium) {
         paidWith = 'premium';
-    } else if (!auth.decrementCredit(userRow.id, 10)) {
+    } else if (!(await auth.decrementCredit(userRow.id, 10))) {
         unlinkSafe();
         return res.status(402).json({
             success: false,
@@ -684,7 +690,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
         unlinkSafe();
 
-        auth.logGeneration({
+        await auth.logGeneration({
             userId: userRow?.id,
             ip: userRow ? null : ip,
             style: taskType === 'hairstyle' ? style : null,
@@ -699,7 +705,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
             resultUrl: imageUrl
         });
 
-        const refreshed = userRow ? auth.userById(userRow.id) : null;
+        const refreshed = userRow ? await auth.userById(userRow.id) : null;
 
         res.json({
             success: true,
@@ -712,7 +718,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
         if (paidWith === 'credit' && userRow?.id) {
             // Refund 10 credits in case of error
-            auth.refundCredit(userRow.id, 10);
+            await auth.refundCredit(userRow.id, 10);
         }
 
         unlinkSafe();
@@ -738,10 +744,13 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server → ${PUBLIC_BASE_URL}`);
-    console.log(`SQLite DB → ${process.env.SQLITE_PATH || path.join(__dirname, 'data', 'app.sqlite')}`);
-    if (!process.env.STRIPE_SECRET_KEY) {
-        console.log('Stripe: disabled (set STRIPE_SECRET_KEY to enable payments)');
-    }
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server → ${PUBLIC_BASE_URL}`);
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.log('Stripe: disabled (set STRIPE_SECRET_KEY to enable payments)');
+        }
+    });
+}
+
+module.exports = app;

@@ -283,8 +283,278 @@ const COLOR_MAP = {
     "Blue": "Blue",
     "Purple": "Purple",
     "Pink": "Pink",
-    "Green": "Green"
+    "Green": "Green",
+    "balayage-blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
+    "Balayage Blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
+    "rose-gold-highlights": "delicate metallic rose-gold highlights woven through the hair",
+"sunset-copper": "sunset copper, vibrant fiery orange-red with warm gold undertones",
+    "Sunset Copper": "sunset copper, vibrant fiery orange-red with warm gold undertones"
 };
+
+function parseMakeupDescription(makeupStyle) {
+    if (!makeupStyle) return "no-makeup makeup look, very natural skin texture";
+    const styleLower = makeupStyle.toLowerCase();
+    
+    // 1. Detect Preset/Style
+    let presetDesc = "";
+    if (styleLower.includes('bronze')) {
+        presetDesc = "bronze goddess makeup look, warm sun-kissed skin tone, golden highlights, soft bronzed contoured cheeks";
+    } else if (styleLower.includes('clean girl') || styleLower.includes('clean-girl')) {
+        presetDesc = "clean girl aesthetic makeup, minimalist look, fresh dewy glass skin, groomed natural eyebrows, clean face";
+    } else if (styleLower.includes('y2k')) {
+        presetDesc = "Y2K aesthetic makeup, frosty pastel eyeshadow hints, hyper-glossy wet-look lips, thin clean eyebrows, early 2000s beauty style";
+    } else if (styleLower.includes('beige')) {
+        presetDesc = "neutral monochrome beige makeup, soft earthy brown contours, soft sandy beige eyeshadow, matte nude lips";
+    } else if (styleLower.includes('soft glam') || styleLower.includes('soft-glam')) {
+        presetDesc = "soft glam makeup, blended warm brown and champagne eyeshadow, long eyelashes, neutral lips, radiant airbrushed skin finish";
+    } else if (styleLower.includes('doll-like') || styleLower.includes('doll_like')) {
+        presetDesc = "doll-like baby doll makeup, flushed pink cheeks, dramatic long dolly eyelashes, round pink glossy lips";
+    } else if (styleLower.includes('elegant')) {
+        presetDesc = "sophisticated elegant makeup, subtle thin classic black eyeliner, soft rosewood satin lips, polished skin texture, timeless clean beauty";
+    } else if (styleLower.includes('girlish')) {
+        presetDesc = "girlish K-beauty style makeup, soft baby-pink blush, wet-look glossy pink gradient lips, bright open eyes";
+    } else if (styleLower.includes('grunge rock') || styleLower.includes('grunge-rock')) {
+        presetDesc = "grunge rock makeup, dark smoky charcoal smudge eyeshadow, messy smudged dark eyeliner, deep matte plum lips, edgy bold look";
+    } else if (styleLower.includes('matte')) {
+        presetDesc = "matte makeup, high-coverage velvet matte foundation, no-shine face powder, matte nude lips, structured eyebrows";
+    } else if (styleLower.includes('seductive')) {
+        presetDesc = "seductive makeup, sharp winged black cat-eye eyeliner, dramatic deep contours, bold defined dark lips";
+    } else if (styleLower.includes('glossy lips') || styleLower.includes('glossy_lips') || styleLower.includes('glossy-lips')) {
+        presetDesc = "glossy lips focus makeup, minimalist face, extreme high-shine wet-look lip gloss, clean fresh skin";
+    } else if (styleLower.includes('euphoria')) {
+        presetDesc = "Euphoria style makeup, glittery rhinestones around eyes, colorful graphic eyeliner, glossy lip gloss, artistic bold aesthetic";
+    } else if (styleLower.includes('bridal')) {
+        presetDesc = "bridal makeup, soft champagne gold eyes, long fluttery eyelashes, nude-pink lipstick, soft contour, glowing skin, romantic classic aesthetic";
+    } else if (styleLower.includes('glam')) {
+        presetDesc = "glamorous makeup, dramatic smokey eyeshadow, bold defined winged black eyeliner, contoured cheekbones, full matte nude lips, glowing highlight";
+    } else if (styleLower.includes('korean')) {
+        presetDesc = "Korean style glass skin makeup, gradient cherry lips, subtle puppy eyeliner, soft coral blush, clean straight eyebrows, youthful aesthetic";
+    } else if (styleLower.includes('soft girl') || styleLower.includes('soft_girl')) {
+        presetDesc = "soft girl makeup look, pink tones, rosy cheeks, cute faux freckles, glossy pink lips, fluffy brows";
+    } else if (styleLower.includes('natural')) {
+        presetDesc = "no-makeup makeup look, very natural skin texture, light mascara, sheer nude lip gloss, subtle dewy skin glow, clean natural eyebrows";
+    }
+
+    // 2. Detect Lipstick
+    let lipstickDesc = "";
+    if (styleLower.includes('glazed donut') || styleLower.includes('glazed-donut')) {
+        lipstickDesc = "ultra-glossy high-shine glazed donut clear lip gloss, wet-look lips";
+    } else if (styleLower.includes('velvet matte red') || styleLower.includes('velvet-red') || styleLower.includes('velvet matte red')) {
+        lipstickDesc = "bold velvet matte crimson red lipstick, perfectly defined clean lip lines";
+    } else if (styleLower.includes('satin rosewood') || styleLower.includes('satin-rosewood')) {
+        lipstickDesc = "soft satin rosewood dusty-rose lipstick, natural cream finish";
+    } else if (styleLower.includes('metallic berry') || styleLower.includes('metallic-berry')) {
+        lipstickDesc = "shimmering metallic berry plum lipstick, rich deep tone";
+    } else if (styleLower.includes('soft coral glow') || styleLower.includes('soft-coral')) {
+        lipstickDesc = "sheer soft coral peach cream lipstick with a subtle glow";
+    } else if (styleLower.includes('rose pink')) {
+        lipstickDesc = "soft rose pink creamy lipstick, natural finish";
+    } else {
+        const match = makeupStyle.match(/Lipstick:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            lipstickDesc = `${match[1].trim()} lipstick`;
+        }
+    }
+
+    // 3. Detect Eyeliner
+    let eyelinerDesc = "";
+    if (styleLower.includes('classic eyeliner') || styleLower.includes('classic')) {
+        eyelinerDesc = "clean classic black gel eyeliner along the upper lash line";
+    } else if (styleLower.includes('winged cat eye') || styleLower.includes('winged') || styleLower.includes('cat eye')) {
+        eyelinerDesc = "sharp winged black cat-eye eyeliner, clean flick";
+    } else if (styleLower.includes('smokey smudge') || styleLower.includes('smokey') || styleLower.includes('smudge')) {
+        eyelinerDesc = "smudged smoky black kohl eyeliner, soft blended eyeliner look";
+    } else {
+        const match = makeupStyle.match(/Eyeliner:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            eyelinerDesc = `${match[1].trim()} eyeliner`;
+        }
+    }
+
+    // 4. Detect Eyeshadow
+    let eyeshadowDesc = "";
+    if (styleLower.includes('smoky sunset') || styleLower.includes('smoky-sunset')) {
+        eyeshadowDesc = "smoky sunset eyeshadow with warm gold, burnt orange, and terracotta shades beautifully blended";
+    } else if (styleLower.includes('glitter euphoria') || styleLower.includes('glitter-euphoria')) {
+        eyeshadowDesc = "Euphoria-inspired glittering iridescent rhinestones and sparkly silver eyeshadow around the eyes";
+    } else if (styleLower.includes('nude silhouette') || styleLower.includes('nude-silhouette')) {
+        eyeshadowDesc = "soft matte nude and taupe silhouette eyeshadow, subtle crease definition";
+    } else if (styleLower.includes('emerald envy') || styleLower.includes('emerald-envy')) {
+        eyeshadowDesc = "rich metallic emerald green envy eyeshadow with gold shimmer highlights";
+    } else {
+        const match = makeupStyle.match(/Eyeshadow:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            eyeshadowDesc = `${match[1].trim()} eyeshadow`;
+        }
+    }
+
+    // 5. Detect Blush
+    let blushDesc = "";
+    if (styleLower.includes('glass skin glow') || styleLower.includes('glass skin')) {
+        blushDesc = "reflective glass skin liquid highlighter and dewy glow on cheekbones";
+    } else if (styleLower.includes('sun-kissed peach') || styleLower.includes('sunkissed-peach')) {
+        blushDesc = "warm sun-kissed peach blush swept across cheeks and nose bridge";
+    } else if (styleLower.includes('soft lavender tint') || styleLower.includes('soft-lavender') || styleLower.includes('soft lavender')) {
+        blushDesc = "cool-toned soft lavender blush tint, bright fresh complexion";
+    } else {
+        const match = makeupStyle.match(/Blush:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            blushDesc = `${match[1].trim()} blush`;
+        }
+    }
+
+    // Combine them intelligently
+    let details = [];
+    if (presetDesc) details.push(presetDesc);
+    if (lipstickDesc) details.push(`lips: ${lipstickDesc}`);
+    if (eyelinerDesc) details.push(`eyeliner: ${eyelinerDesc}`);
+    if (eyeshadowDesc) details.push(`eyeshadow: ${eyeshadowDesc}`);
+    if (blushDesc) details.push(`cheeks: ${blushDesc}`);
+    
+    if (details.length === 0) {
+        return `custom makeup style: ${makeupStyle}`;
+    }
+    
+    return details.join(', ');
+}
+
+function parseBeardDescription(beardStyle) {
+    if (!beardStyle) return "light rugged stubble beard, neatly trimmed";
+    const beardLower = beardStyle.toLowerCase();
+    
+    // 1. Detect Style
+    let styleDesc = "";
+    if (beardLower.includes('stubble') || beardLower.includes("5 o'clock") || beardLower.includes("5 o’clock")) {
+        styleDesc = "a light stubble beard, rugged 5 o'clock stubble style, 3-day stubble growth, neatly trimmed along the jawline and upper lip";
+    } else if (beardLower.includes('full beard') || beardLower.includes('full-beard') || beardLower.includes('full groomed')) {
+        styleDesc = "a thick full groomed beard, well-maintained and shaped, covering the jaw, chin, and cheeks, with a matching mustache";
+    } else if (beardLower.includes('viking')) {
+        styleDesc = "a long thick rugged Viking-style beard, full and long, extending down below the chin, warrior style";
+    } else if (beardLower.includes('goatee')) {
+        styleDesc = "a neat classic goatee beard on the chin, with a disconnected mustache";
+    } else if (beardLower.includes('mustache') && !beardLower.includes('imperial')) {
+        styleDesc = "completely clean-shaven cheeks and chin, with a prominent neatly styled classic chevron mustache on the upper lip";
+    } else if (beardLower.includes('clean shave') || beardLower.includes('clean_shave') || beardLower.includes('clean-shave')) {
+        styleDesc = "completely clean-shaven face, smooth skin on cheeks, jaw, and chin, no stubble or facial hair whatsoever";
+    } else if (beardLower.includes('imperial')) {
+        styleDesc = "a styled groomed imperial handlebar mustache on the upper lip with elegant curled ends, cheeks and chin clean-shaven";
+    } else if (beardLower.includes('anchor')) {
+        styleDesc = "a pointed anchor-shaped beard along the chin and jawline, paired with a thin pencil mustache";
+    } else if (beardLower.includes('van dyke') || beardLower.includes('vandyke')) {
+        styleDesc = "a Van Dyke style facial hair consisting of a short pointed chin beard and a styled mustache, cheek areas clean-shaven";
+    } else if (beardLower.includes('balbo')) {
+        styleDesc = "a Balbo beard style featuring a floating mustache, chin beard, and soul patch with no sideburns";
+    } else {
+        const match = beardStyle.match(/^([^.,]+)/);
+        if (match && match[1]) {
+            styleDesc = match[1].trim();
+        } else {
+            styleDesc = "facial hair";
+        }
+    }
+
+    // 2. Detect Color
+    let colorDesc = "";
+    if (beardLower.includes('salt & pepper') || beardLower.includes('salt-pepper') || beardLower.includes('salt and pepper')) {
+        colorDesc = "salt and pepper color, realistic blend of grey, white, and black hair follicles";
+    } else if (beardLower.includes('auburn') || beardLower.includes('classic auburn')) {
+        colorDesc = "classic auburn red-brown hair color";
+    } else if (beardLower.includes('grizzly brown') || beardLower.includes('grizzly-brown')) {
+        colorDesc = "rich grizzly dark brown hair color";
+    } else if (beardLower.includes('nordic blonde') || beardLower.includes('nordic-blonde')) {
+        colorDesc = "Nordic light blonde hair color";
+    } else if (beardLower.includes('jet black') || beardLower.includes('jet-black') || beardLower.includes('black')) {
+        colorDesc = "deep jet black hair color";
+    } else {
+        const match = beardStyle.match(/Color:\s*([^.]+)/i) || beardStyle.match(/Color tint:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'natural' && match[1].trim().toLowerCase() !== 'natural shade') {
+            colorDesc = `${match[1].trim()} hair color`;
+        }
+    }
+
+    let finalDesc = styleDesc;
+    if (colorDesc && !beardLower.includes('clean shave') && !beardLower.includes('clean_shave') && !beardLower.includes('clean-shave')) {
+        finalDesc += ` in a ${colorDesc}`;
+    }
+    return finalDesc;
+}
+
+function parseNailsDescription(nailStyle) {
+    if (!nailStyle) return "classic neat manicure with a glossy finish";
+    const nailLower = nailStyle.toLowerCase();
+    
+    // 1. Detect Design
+    let designDesc = "";
+    if (nailLower.includes('french')) {
+        designDesc = "classic French manicure nails with pink bases and clean white tips";
+    } else if (nailLower.includes('chrome') || nailLower.includes('mirror chrome')) {
+        designDesc = "mirror chrome nail art design, futuristic metallic glaze";
+    } else if (nailLower.includes('acrylic') || nailLower.includes('marble acrylic')) {
+        designDesc = "elegant pink marble acrylic nail art design with swirling veins and gold flakes";
+    } else if (nailLower.includes('luxury') || nailLower.includes('gold foil')) {
+        designDesc = "luxury nail art design decorated with gold foil leafing and tiny subtle gemstone accents";
+    } else if (nailLower.includes('minimal') || nailLower.includes('minimalist')) {
+        designDesc = "minimalist sheer nude gel nail design, clean polished look";
+    } else if (nailLower.includes('pink') || nailLower.includes('blush pink')) {
+        designDesc = "sweet blush cotton candy pink solid color nail design";
+    } else if (nailLower.includes('black') || nailLower.includes('goth glossy black')) {
+        designDesc = "edgy glossy solid jet black nail design";
+    } else {
+        const match = nailStyle.match(/^([^.,]+)/);
+        if (match && match[1]) {
+            designDesc = `${match[1].trim()} nail design`;
+        } else {
+            designDesc = "manicure nail design";
+        }
+    }
+
+    // 2. Detect Shape
+    let shapeDesc = "";
+    if (nailLower.includes('almond')) {
+        shapeDesc = "elegant tapered almond-shaped nails";
+    } else if (nailLower.includes('coffin')) {
+        shapeDesc = "long flat-tipped coffin-shaped square-ended acrylic nails";
+    } else if (nailLower.includes('stiletto')) {
+        shapeDesc = "long sharp pointed stiletto-shaped nails";
+    } else if (nailLower.includes('square')) {
+        shapeDesc = "neat straight-edged flat square-shaped nails";
+    } else if (nailLower.includes('round')) {
+        shapeDesc = "natural looking short round-shaped nails";
+    } else {
+        const match = nailStyle.match(/Shape:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            shapeDesc = `${match[1].trim()} nails`;
+        }
+    }
+
+    // 3. Detect Texture/Finish
+    let textureDesc = "";
+    if (nailLower.includes('liquid chrome') || nailLower.includes('liquid-chrome')) {
+        textureDesc = "ultra-reflective high-shine liquid metallic chrome finish";
+    } else if (nailLower.includes('glazed donut') || nailLower.includes('glazed-donut')) {
+        textureDesc = "pearly iridescent glazed donut shimmer top coat finish";
+    } else if (nailLower.includes('marble foil') || nailLower.includes('marble-foil')) {
+        textureDesc = "swirled multi-tonal marble texture with metallic foil accents";
+    } else if (nailLower.includes('glossy gel') || nailLower.includes('glossy-gel')) {
+        textureDesc = "plump high-gloss gel top coat shine finish";
+    } else if (nailLower.includes('velvet matte') || nailLower.includes('velvet-matte')) {
+        textureDesc = "velvety soft-touch matte finish with zero shine";
+    } else {
+        const match = nailStyle.match(/Texture:\s*([^.]+)/i);
+        if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
+            textureDesc = `${match[1].trim()} finish`;
+        }
+    }
+
+    let finalDesc = designDesc;
+    if (shapeDesc) {
+        finalDesc += ` on ${shapeDesc}`;
+    }
+    if (textureDesc) {
+        finalDesc += ` with a ${textureDesc}`;
+    }
+    return finalDesc;
+}
 
 async function callNanoBanana(imagePath, options) {
     // Read local file into base64 data URI
@@ -309,24 +579,7 @@ async function callNanoBanana(imagePath, options) {
 
     if (options.taskType === 'makeup') {
         const makeupStyle = options.makeup || 'Natural';
-        let makeupPrompt = '';
-        if (makeupStyle.toLowerCase().includes('natural')) {
-            makeupPrompt = "no-makeup makeup look, very natural skin texture, light mascara, sheer nude lip gloss, subtle dewy skin glow, clean natural eyebrows";
-        } else if (makeupStyle.toLowerCase().includes('glam')) {
-            makeupPrompt = "glamorous makeup, dramatic smokey eyeshadow, bold defined winged black eyeliner, contoured cheekbones, full matte nude lips, glowing highlight";
-        } else if (makeupStyle.toLowerCase().includes('korean')) {
-            makeupPrompt = "Korean style glass skin makeup, gradient cherry lips, subtle puppy eyeliner, soft coral blush, clean straight eyebrows, youthful aesthetic";
-        } else if (makeupStyle.toLowerCase().includes('soft girl')) {
-            makeupPrompt = "soft girl makeup look, pink tones, rosy cheeks, cute faux freckles, glossy pink lips, fluffy brows";
-        } else if (makeupStyle.toLowerCase().includes('bridal')) {
-            makeupPrompt = "bridal makeup, soft champagne gold eyes, long fluttery eyelashes, nude-pink lipstick, soft contour, glowing skin, romantic classic aesthetic";
-        } else if (makeupStyle.toLowerCase().includes('euphoria')) {
-            makeupPrompt = "Euphoria style makeup, glittery rhinestones around eyes, colorful graphic eyeliner, glossy lip gloss, artistic bold aesthetic";
-        } else if (makeupStyle.toLowerCase().includes('matte')) {
-            makeupPrompt = "matte makeup look, full-coverage matte foundation, nude matte lips, clean brow, soft warm bronze contour, no shine";
-        } else {
-            makeupPrompt = `custom makeup style: ${makeupStyle}`;
-        }
+        const makeupPrompt = parseMakeupDescription(makeupStyle);
         promptText = `A highly realistic close-up photo of the same ${genderWord} from the input image.
 Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
 Modify only the makeup: apply ${makeupPrompt}.
@@ -334,22 +587,7 @@ Ensure the makeup looks professionally applied, photorealistic, and blends natur
 
     } else if (options.taskType === 'beard') {
         const beardStyle = options.beard || 'stubble';
-        let beardPrompt = '';
-        if (beardStyle.toLowerCase().includes('stubble')) {
-            beardPrompt = "a light stubble beard, 3-day stubble growth, neatly trimmed along the jawline and upper lip";
-        } else if (beardStyle.toLowerCase().includes('full beard') || beardStyle.toLowerCase().includes('full-beard')) {
-            beardPrompt = "a full thick beard, well-groomed, covering the jaw, chin, and cheeks, with a matching mustache";
-        } else if (beardStyle.toLowerCase().includes('viking')) {
-            beardPrompt = "a long thick Viking-style beard, full and rugged, extending down below the chin";
-        } else if (beardStyle.toLowerCase().includes('goatee')) {
-            beardPrompt = "a neat goatee beard on the chin, with a disconnected mustache";
-        } else if (beardStyle.toLowerCase().includes('mustache')) {
-            beardPrompt = "a clean-shaven face except for a prominent neatly styled classic mustache on the upper lip";
-        } else if (beardStyle.toLowerCase().includes('clean shave') || beardStyle.toLowerCase().includes('clean_shave')) {
-            beardPrompt = "completely clean-shaven face, smooth skin on cheeks, jaw, and chin, no facial hair whatsoever";
-        } else {
-            beardPrompt = `facial hair style: ${beardStyle}`;
-        }
+        const beardPrompt = parseBeardDescription(beardStyle);
         promptText = `A highly realistic photo of the same ${genderWord} from the input image.
 Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
 Modify only the facial hair: add or modify to ${beardPrompt}.
@@ -357,24 +595,7 @@ Ensure the facial hair looks natural and realistic, matching the lighting and sk
 
     } else if (options.taskType === 'nails') {
         const nailStyle = options.nails || 'French nails';
-        let nailsPrompt = '';
-        if (nailStyle.toLowerCase().includes('french')) {
-            nailsPrompt = "classic French manicure nails with pink bases and clean white tips";
-        } else if (nailStyle.toLowerCase().includes('chrome')) {
-            nailsPrompt = "metallic silver chrome nails, high-shine reflective finish";
-        } else if (nailStyle.toLowerCase().includes('acrylic')) {
-            nailsPrompt = "long coffin-shaped acrylic nails with marble nail art";
-        } else if (nailStyle.toLowerCase().includes('luxury')) {
-            nailsPrompt = "luxury nails decorated with subtle gold foil accents and gemstone details";
-        } else if (nailStyle.toLowerCase().includes('minimal')) {
-            nailsPrompt = "minimalist nude gel nails with a clean glossy finish";
-        } else if (nailStyle.toLowerCase().includes('pink')) {
-            nailsPrompt = "sweet pastel pink glossy nails";
-        } else if (nailStyle.toLowerCase().includes('black')) {
-            nailsPrompt = "edgy high-gloss shiny black nails";
-        } else {
-            nailsPrompt = `nail art style: ${nailStyle}`;
-        }
+        const nailsPrompt = parseNailsDescription(nailStyle);
         promptText = `A highly realistic photo showing the hands of the same person from the input image.
 Modify only the fingernails: apply ${nailsPrompt}.
 Ensure the nails look professionally done, photorealistic, matching the hand's natural skin texture and lighting.`;
@@ -389,6 +610,8 @@ Ensure the nails look professionally done, photorealistic, matching the hand's n
             if (sliders.faceSymmetry > 20) retouchDetails.push("perfectly balanced and symmetric facial features");
             if (sliders.acneRemoval) retouchDetails.push("complete removal of temporary acne, spots, and skin blemishes");
             if (sliders.skinGlow > 20) retouchDetails.push("radiant dewy skin glow with subtle highlighting");
+            if (sliders.skinTexturePreservation > 30) retouchDetails.push(`high preservation of natural skin pores and realistic skin texture (strength: ${sliders.skinTexturePreservation}%)`);
+            if (sliders.poreRefiner) retouchDetails.push("smart pore refining to smooth skin without any plastic look");
         } catch (_) {
             retouchDetails.push("smooth clear skin, blemishes removed, teeth whitened, eyes enhanced, radiant skin glow");
         }

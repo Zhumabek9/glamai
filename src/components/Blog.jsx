@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, ArrowRight, ArrowLeft, Tag, Sparkles, Star, Users } from 'lucide-react';
 
 const BLOG_ARTICLES = [
@@ -517,12 +517,53 @@ export default function Blog({ onStartClick }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [openArticle, setOpenArticle] = useState(null);
 
+  const handleOpenArticle = (article) => {
+    setOpenArticle(article);
+    window.history.pushState({ articleSlug: article.slug }, '', `/blog/${article.slug}`);
+    document.title = `${article.title} | GlamAI`;
+  };
+
+  const handleBack = () => {
+    setOpenArticle(null);
+    window.history.pushState(null, '', '/blog');
+    document.title = 'GlamAI Magazine — Hairstyle Tips, Trends & Expert Advice';
+  };
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/blog/')) {
+      const slug = path.split('/blog/')[1];
+      const article = BLOG_ARTICLES.find(a => a.slug === slug);
+      if (article) {
+        setOpenArticle(article);
+        document.title = `${article.title} | GlamAI`;
+        window.history.replaceState({ articleSlug: slug }, '', path);
+      }
+    }
+
+    const handlePopState = (e) => {
+      if (e.state && e.state.articleSlug) {
+        const article = BLOG_ARTICLES.find(a => a.slug === e.state.articleSlug);
+        if (article) {
+          setOpenArticle(article);
+          document.title = `${article.title} | GlamAI`;
+        }
+      } else {
+        setOpenArticle(null);
+        document.title = 'GlamAI Magazine — Hairstyle Tips, Trends & Expert Advice';
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const filtered = activeCategory === 'All'
     ? BLOG_ARTICLES
     : BLOG_ARTICLES.filter(a => a.category === activeCategory);
 
   if (openArticle) {
-    return <ArticlePage article={openArticle} onBack={() => setOpenArticle(null)} onStartClick={() => { setOpenArticle(null); onStartClick(); }} />;
+    return <ArticlePage article={openArticle} onBack={handleBack} onStartClick={() => { handleBack(); onStartClick(); }} />;
   }
 
   return (
@@ -579,7 +620,7 @@ export default function Blog({ onStartClick }) {
                 style={{ borderRadius: '20px', overflow: 'hidden', transition: 'transform 0.25s ease, box-shadow 0.25s ease', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 20px 50px rgba(255,46,147,0.1)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = ''; }}
-                onClick={() => setOpenArticle(article)}
+                onClick={() => handleOpenArticle(article)}
               >
                 {/* Cover image */}
                 <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
@@ -589,6 +630,8 @@ export default function Blog({ onStartClick }) {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', transition: 'transform 0.4s ease' }}
                     onMouseEnter={e => e.target.style.transform = 'scale(1.04)'}
                     onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%)' }} />
                   <span style={{ position: 'absolute', top: '1rem', left: '1rem', background: 'var(--gradient-pink-purple)', color: '#fff', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>

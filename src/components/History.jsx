@@ -14,6 +14,11 @@ export default function History({ history, onClearItem, onStartClick }) {
   };
 
   const getFilterStyle = (item) => {
+    if (item && item.colorFilter) {
+      return {
+        filter: `hue-rotate(${item.colorFilter.hue}deg) saturate(${item.colorFilter.saturate}%) brightness(${item.colorFilter.brightness}%)`
+      };
+    }
     return {};
   };
 
@@ -71,12 +76,13 @@ export default function History({ history, onClearItem, onStartClick }) {
       ) : (
         <div className="history-grid">
           {history.map(item => (
-            <div 
+            <button 
               key={item.id} 
               className="history-card"
               onClick={() => setSelectedItem(item)}
+              style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: 0 }}
             >
-              <img src={item.result} alt={item.style} style={getFilterStyle(item)} />
+              <img src={item.result} alt={item.style} style={getFilterStyle(item)} loading="lazy" />
               
               <div className="history-card-overlay">
                 <div className="history-card-info">
@@ -104,9 +110,10 @@ export default function History({ history, onClearItem, onStartClick }) {
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
+
       )}
 
       {/* Lightbox / Side-by-Side Comparison Modal */}
@@ -132,23 +139,25 @@ export default function History({ history, onClearItem, onStartClick }) {
             <div 
               style={{ 
                 display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
+                gridTemplateColumns: selectedItem.original ? '1fr 1fr' : '1fr', 
                 gap: '1.5rem', 
                 marginBottom: '2rem' 
               }}
             >
-              <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                  Before (Original)
+              {selectedItem.original && (
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                    Before (Original)
+                  </div>
+                  <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', height: '300px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <img src={selectedItem.original} alt="Original input" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
                 </div>
-                <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', height: '300px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <img src={selectedItem.original} alt="Original input" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              </div>
+              )}
 
               <div>
                 <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-pink-primary)', marginBottom: '0.5rem' }}>
-                  After (AI Styled)
+                  {selectedItem.original ? 'After (AI Styled)' : 'AI Generated Result'}
                 </div>
                 <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', height: '300px', border: '1px solid rgba(255, 46, 147, 0.2)' }}>
                   <img src={selectedItem.result} alt="AI output" style={{ width: '100%', height: '100%', objectFit: 'cover', ...getFilterStyle(selectedItem) }} />

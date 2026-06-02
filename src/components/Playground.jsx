@@ -186,12 +186,17 @@ const COLORS = [
   { id: "blue", name: "Blue", hex: "#0066cc", hue: 165, saturate: 160, brightness: 90 },
   { id: "purple", name: "Purple", hex: "#6600cc", hue: 225, saturate: 150, brightness: 80 },
   { id: "pink", name: "Pink", hex: "#ff69b4", hue: 285, saturate: 160, brightness: 110 },
-  { id: "green", name: "Green", hex: "#22aa22", hue: 75, saturate: 140, brightness: 95 }
+  { id: "green", name: "Green", hex: "#22aa22", hue: 75, saturate: 140, brightness: 95 },
+  { id: "balayage-blonde", name: "Balayage Blonde", hex: "linear-gradient(135deg, #4a3728, #f5d376)", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "rose-gold-highlights", name: "Rose Gold Highlights", hex: "linear-gradient(135deg, #7b4a2d, #e8a598)", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "split-pink-black", name: "Split-dye Pink & Black", hex: "linear-gradient(90deg, #ff69b4 50%, #1a1a1a 50%)", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "pastel-lilac", name: "Pastel Lilac", hex: "#d6cadd", hue: 0, saturate: 100, brightness: 100 },
+  { id: "sunset-copper", name: "Sunset Copper", hex: "linear-gradient(135deg, #b87333, #e8192c)", hot: true, hue: 0, saturate: 100, brightness: 100 }
 ];
 
 const GENDERS = [
-  { id: 'female', name: 'Female' },
-  { id: 'male', name: 'Male' }
+  { id: 'female', name: 'Feminine' },
+  { id: 'male', name: 'Masculine' }
 ];
 
 export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
@@ -236,6 +241,9 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   const activeColorObj = COLORS.find(c => c.id === selectedColor);
   const colorFilterStyle = {};
+  if (activeColorObj && activeColorObj.id !== 'ai-recommended' && activeColorObj.id !== 'no-change') {
+    colorFilterStyle.filter = `hue-rotate(${activeColorObj.hue}deg) saturate(${activeColorObj.saturate}%) brightness(${activeColorObj.brightness}%)`;
+  }
 
 
   
@@ -511,14 +519,15 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           <hr style={{ border: 'none', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }} />
 
-          {/* GENDER selection */}
+          {/* COLLECTION selection */}
           <div className="selector-group">
-            <span className="selector-title">GENDER</span>
+            <span className="selector-title">COLLECTION</span>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {GENDERS.map(g => (
                 <button
                   key={g.id}
                   className={`btn ${selectedGender === g.id ? 'btn-primary' : 'btn-secondary'}`}
+                  aria-pressed={selectedGender === g.id}
                   style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                   onClick={() => {
                     setSelectedGender(g.id);
@@ -534,12 +543,13 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* CATEGORY filter */}
           <div className="selector-group">
-            <span className="selector-title">CATEGORY</span>
+            <span className="selector-title">HAIRSTYLE CATEGORY</span>
             <div className="category-chips">
               {activeCategories.map(cat => (
                 <button
                   key={cat}
                   className={`category-chip ${selectedCategory === cat ? 'active' : ''}`}
+                  aria-pressed={selectedCategory === cat}
                   onClick={() => {
                     setSelectedCategory(cat);
                   }}
@@ -552,21 +562,25 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Hairstyle options */}
           <div className="selector-group">
-            <span className="selector-title">Hairstyle Selection ({filteredHairstyles.length})</span>
+            <span className="selector-title">HAIRSTYLE TEMPLATE ({filteredHairstyles.length})</span>
             {image && selectedStyles.every(s => s === 'no_change') && (
               <div className="onboarding-hint">
                 <TrendingUp size={15} />
-                <span>👆 Select a hairstyle below to get started!</span>
+                <span>👆 Select a style template below to begin customizer render!</span>
               </div>
             )}
             <div className="style-cards-grid">
               {filteredHairstyles.map(h => {
                 const isSelected = selectedStyles.includes(h.id);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={h.id}
                     className={`style-card ${h.isSpecial ? 'no-change-card' : ''} ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    aria-label={`Select style: ${h.name}`}
                     onClick={() => handleSelectStyle(h.id)}
+                    style={{ border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%' }}
                   >
                     {isSelected && (
                       <div className="selected-badge">
@@ -589,28 +603,32 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                           <span className="no-change-dot" style={{ background: '#161e31' }}></span>
                         </div>
                       ) : (
-                        <img src={h.image} className="style-card-image" alt={h.name} />
+                        <img src={h.image} className="style-card-image" alt={h.name} loading="lazy" decoding="async" />
                       )}
                     </div>
                     <div className="style-card-footer">
                       {h.name}
                     </div>
-                  </div>
+                  </button>
+
                 );
               })}
             </div>
           </div>
 
-          {/* Color options */}
+          {/* Color Shade selection */}
           <div className="selector-group">
-            <span className="selector-title">Color Shade Selection</span>
-            <div className="pill-grid">
+            <span className="selector-title">COLOR SHADE SELECTION</span>
+            <div className="pill-options-grid">
               {COLORS.map(c => (
-                <div
+                <button
+                  type="button"
                   key={c.id}
                   className={`pill-option ${selectedColor === c.id ? 'selected' : ''}`}
+                  aria-pressed={selectedColor === c.id}
+                  aria-label={`Select color shade: ${c.name}`}
                   onClick={() => setSelectedColor(c.id)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', position: 'relative' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', position: 'relative', border: 'none', font: 'inherit', cursor: 'pointer' }}
                 >
                   {c.hot && (
                     <span 
@@ -643,7 +661,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     }} 
                   />
                   <span>{c.name}</span>
-                </div>
+                </button>
+
               ))}
             </div>
           </div>
@@ -686,13 +705,17 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={triggerUpload}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerUpload(); } }}
+              aria-label="Upload photo: drag and drop a front-facing selfie here, or press enter to browse files"
             >
               <div className="dropzone-icon">
                 <Upload size={24} />
               </div>
               <h3>Upload Your Portrait</h3>
-              <p>Drag & drop a front-facing selfie here, or click to browse files.</p>
-              <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
+              <p>Drag & drop a front-facing selfie here, or press enter to browse files.</p>
+              <button className="btn btn-secondary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
                 Browse Files
               </button>
               <input 
@@ -821,23 +844,35 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
             ) : (
               <div style={{ width: '100%' }}>
-                <div className="preview-container">
-                  <img 
-                    src={resultImage || image} 
-                    alt="Hairstyle Preview"
-                    style={colorFilterStyle}
-                  />
-                  
-                  {!isGenerating && !resultImage && (
-                    <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
-                      <RefreshCw size={16} />
-                    </button>
-                  )}
-
-                  {resultImage && (
-                    <div className="slider-label after" style={{ top: '1rem', bottom: 'auto' }}>AI GENERATED</div>
-                  )}
-                </div>
+                {resultImage ? (
+                  <div className="before-after-grid">
+                    <div className="before-after-col">
+                      <span className="before-after-label before">Before</span>
+                      <div className="preview-container">
+                        <img src={image} alt="Before Hairstyle" />
+                      </div>
+                    </div>
+                    <div className="before-after-col">
+                      <span className="before-after-label after">After</span>
+                      <div className="preview-container">
+                        <img src={resultImage} alt="After Hairstyle" style={colorFilterStyle} />
+                        <div className="slider-label after" style={{ top: '1rem', bottom: 'auto' }}>AI GENERATED</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="preview-container" style={{ maxWidth: '450px', margin: '0 auto' }}>
+                    <img 
+                      src={image} 
+                      alt="Hairstyle Preview"
+                    />
+                    {!isGenerating && (
+                      <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
+                        <RefreshCw size={16} />
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {resultImages.length > 0 && (
                   <div className="batch-thumbnails-container">
@@ -848,6 +883,9 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                       {resultImages.map((res, index) => {
                         const isActive = index === activeResultIndex;
                         const thumbColorFilter = {};
+                        if (res.colorFilter) {
+                          thumbColorFilter.filter = `hue-rotate(${res.colorFilter.hue}deg) saturate(${res.colorFilter.saturate}%) brightness(${res.colorFilter.brightness}%)`;
+                        }
                         return (
                           <div
                             key={res.id}

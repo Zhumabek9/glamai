@@ -1,50 +1,21 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, CheckCircle2, Loader2 } from 'lucide-react';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-} from 'firebase/auth';
-import { auth, googleProvider } from '../firebase';
+import { useSignIn, useSignUp } from '@clerk/react';
 
-// Map Firebase error codes to human-readable messages
-function firebaseError(code) {
-  console.error('[Firebase Auth Error Code]:', code); // ← visible in browser DevTools (F12 → Console)
-  switch (code) {
-    case 'auth/email-already-in-use':    return 'An account with this email already exists.';
-    case 'auth/invalid-email':           return 'Please enter a valid email address.';
-    case 'auth/weak-password':           return 'Password must be at least 6 characters long.';
-    case 'auth/user-not-found':          return 'No account found with this email.';
-    case 'auth/wrong-password':          return 'Incorrect password. Please try again.';
-    case 'auth/invalid-credential':      return 'Invalid email or password.';
-    case 'auth/popup-closed-by-user':    return 'Google sign-in was cancelled.';
-    case 'auth/popup-blocked':           return 'Popup was blocked by browser. Please allow popups for this site.';
-    case 'auth/network-request-failed':  return 'Network error. Please check your connection.';
-    case 'auth/operation-not-allowed':   return 'Google Sign-In is not enabled. Please enable it in Firebase Console → Authentication → Sign-in method.';
-    case 'auth/unauthorized-domain':     return 'This domain is not authorized in Firebase Console. Add "localhost" to Authorized Domains.';
-    case 'auth/internal-error':          return 'Firebase internal error. Check browser console for details.';
-    case 'auth/cancelled-popup-request': return null; // silent — another popup already open
-    default:                             return `Error: ${code || 'unknown'}. Check browser console (F12) for details.`;
+// Map Clerk error arrays to human-readable messages
+function clerkError(err) {
+  console.error('[Clerk Auth Error]:', err);
+  const errors = err?.errors || [];
+  if (errors.length > 0) {
+    return errors[0].longMessage || errors[0].message;
   }
+  return err?.message || 'Authentication failed. Please try again.';
 }
 
-// After Firebase auth succeeds, sync user with our backend and get credits
-async function syncWithBackend(firebaseUser) {
-  const idToken = await firebaseUser.getIdToken();
-  const baseUrl = import.meta.env.VITE_API_URL || '';
-  const res = await fetch(baseUrl + '/api/auth/firebase', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'Backend sync failed');
-  }
-  return res.json(); // { user: { id, email, credits } }
-}
+export default function AuthModal({ onClose }) {
+  const { isLoaded: isSignInLoaded, signIn, setActive: setSignInActive } = useSignIn();
+  const { isLoaded: isSignUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
 
-export default function AuthModal({ onClose, onAuthSuccess }) {
   const [activeTab, setActiveTab]           = useState('login');
   const [email, setEmail]                   = useState('');
   const [password, setPassword]             = useState('');
@@ -69,8 +40,10 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
     setError('');
     setSuccessMsg('');
 
+    if (!isSignInLoaded || !isSignUpLoaded) return;
+
     if (!email || !password) { setError('Please fill in all fields.'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     if (activeTab === 'signup' && password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -78,19 +51,33 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
 
     setLoading(true);
     try {
-      let credential;
       if (activeTab === 'signup') {
-        credential = await createUserWithEmailAndPassword(auth, email, password);
+        const result = await signUp.create({
+          emailAddress: email,
+          password: password,
+        });
+        if (result.status === 'complete') {
+          await setSignUpActive({ session: result.createdSessionId });
+          setSuccessMsg('Account created! Welcome to GlamAI 🎉');
+          setTimeout(() => { onClose(); }, 900);
+        } else {
+          setError(`Registration status: ${result.status}. Requirements are incomplete.`);
+        }
       } else {
-        credential = await signInWithEmailAndPassword(auth, email, password);
+        const result = await signIn.create({
+          identifier: email,
+          password: password,
+        });
+        if (result.status === 'complete') {
+          await setSignInActive({ session: result.createdSessionId });
+          setSuccessMsg('Login successful!');
+          setTimeout(() => { onClose(); }, 900);
+        } else {
+          setError(`Sign in status: ${result.status}. Requirements are incomplete.`);
+        }
       }
-
-      const { user: backendUser } = await syncWithBackend(credential.user);
-      setSuccessMsg(activeTab === 'signup' ? 'Account created! Welcome to GlamAI 🎉' : 'Login successful!');
-      setTimeout(() => { onAuthSuccess(backendUser); onClose(); }, 900);
-
     } catch (err) {
-      setError(firebaseError(err.code) || err.message);
+      setError(clerkError(err));
     } finally {
       setLoading(false);
     }
@@ -98,18 +85,17 @@ export default function AuthModal({ onClose, onAuthSuccess }) {
 
   // ── Google Sign-In ────────────────────────────────────────────
   const handleGoogle = async () => {
+    if (!isSignInLoaded) return;
     setError('');
     setGoogleLoading(true);
     try {
-      const credential = await signInWithPopup(auth, googleProvider);
-      const { user: backendUser } = await syncWithBackend(credential.user);
-      setSuccessMsg('Signed in with Google! Welcome 🎉');
-      setTimeout(() => { onAuthSuccess(backendUser); onClose(); }, 900);
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: window.location.origin,
+        redirectUrlComplete: window.location.origin,
+      });
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError(firebaseError(err.code) || err.message);
-      }
-    } finally {
+      setError(clerkError(err));
       setGoogleLoading(false);
     }
   };

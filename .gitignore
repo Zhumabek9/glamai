@@ -52,3 +52,9 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firebase/
+
+# Temporary scratch files and test scripts
+scratch/
+backend/test-*.js
+backend/test-*.cjs
+backend/test_*.png

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Eye, Settings as SettingsIcon, CreditCard } from 'lucide-react';
+import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Eye, Settings as SettingsIcon, CreditCard, BookOpen } from 'lucide-react';
 import { t } from '../utils/i18n';
 
 export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
@@ -24,86 +24,95 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
 
           {/* Desktop nav-links */}
           <div className="nav-links desktop-nav" style={{ gap: '0.8rem' }}>
-            <button 
+            <a 
+              href="/"
               className={`nav-item ${activeTab === 'playground' ? 'active' : ''}`}
-              onClick={() => navigate('playground')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('playground'); }}
             >
               <Scissors size={14} />
               <span>Hair</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/makeup"
               className={`nav-item ${activeTab === 'makeup' ? 'active' : ''}`}
-              onClick={() => navigate('makeup')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('makeup'); }}
             >
               <Sparkle size={14} />
               <span>Makeup</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/beard"
               className={`nav-item ${activeTab === 'beard' ? 'active' : ''}`}
-              onClick={() => navigate('beard')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('beard'); }}
             >
               <Smile size={14} />
               <span>Beard</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/nails"
               className={`nav-item ${activeTab === 'nails' ? 'active' : ''}`}
-              onClick={() => navigate('nails')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('nails'); }}
             >
               <Sparkles size={14} />
               <span>Nails</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/retouch"
               className={`nav-item ${activeTab === 'retouch' ? 'active' : ''}`}
-              onClick={() => navigate('retouch')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('retouch'); }}
             >
               <Eye size={14} />
               <span>Retouch</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/analysis"
               className={`nav-item ${activeTab === 'analysis' ? 'active' : ''}`}
-              onClick={() => navigate('analysis')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('analysis'); }}
             >
               <User size={14} />
               <span>Face Scan</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/trending"
               className={`nav-item ${activeTab === 'trending' ? 'active' : ''}`}
-              onClick={() => navigate('trending')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('trending'); }}
             >
               <Compass size={14} />
               <span>Trending</span>
-            </button>
+            </a>
 
-            <button 
+            <a 
+              href="/blog"
+              className={`nav-item ${activeTab === 'blog' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); navigate('blog'); }}
+            >
+              <BookOpen size={14} />
+              <span>Blog</span>
+            </a>
+
+            <a 
+              href="/pricing"
               className={`nav-item ${activeTab === 'pricing' ? 'active' : ''}`}
-              onClick={() => navigate('pricing')}
-              style={{ background: 'transparent', border: 'none' }}
+              onClick={(e) => { e.preventDefault(); navigate('pricing'); }}
             >
               <CreditCard size={14} />
               <span>Pricing</span>
-            </button>
+            </a>
 
             {user && (
-              <button 
+              <a 
+                href="/dashboard"
                 className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => navigate('dashboard')}
-                style={{ background: 'transparent', border: 'none' }}
+                onClick={(e) => { e.preventDefault(); navigate('dashboard'); }}
               >
                 <span>Dashboard</span>
-              </button>
+              </a>
             )}
 
             {user ? (
@@ -174,17 +183,17 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             {!isPremium && !user && guestTokens > 0 && (
               <div className="token-pill" style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', background: 'rgba(255,46,147,0.12)', border: '1px solid rgba(255,46,147,0.3)' }}>
                 <Coins size={13} color="var(--color-pink-primary)" />
-                <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{guestTokens}</span>
+                <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{guestTokens} Free</span>
               </div>
             )}
             {!isPremium && user && (
-              <div className="token-pill" style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem' }}>
-                <Coins size={13} />
-                <span>{user.tokens}</span>
+              <div className="token-pill" style={{ fontSize: '0.85rem', padding: '0.35rem 0.8rem', background: 'rgba(255,46,147,0.1)', border: '1px solid rgba(255,46,147,0.25)' }}>
+                <Coins size={14} color="var(--color-pink-primary)" />
+                <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{user.tokens} {t('nav.credits')}</span>
               </div>
             )}
             {isPremium && (
-              <span className="vip-badge-mini" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>PRO</span>
+              <span className="vip-badge-mini" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>PRO ∞</span>
             )}
             <button
               className="hamburger-btn"
@@ -199,39 +208,61 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
           <div className="mobile-drawer">
-            <button className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={() => navigate('playground')}>Hair Transformation</button>
-            <button className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={() => navigate('makeup')}>AI Makeup Salon</button>
-            <button className={`mobile-nav-item ${activeTab === 'beard' ? 'active' : ''}`} onClick={() => navigate('beard')}>AI Beard Styler</button>
-            <button className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={() => navigate('nails')}>AI Nails Studio</button>
-            <button className={`mobile-nav-item ${activeTab === 'retouch' ? 'active' : ''}`} onClick={() => navigate('retouch')}>Beauty Retouch</button>
-            <button className={`mobile-nav-item ${activeTab === 'analysis' ? 'active' : ''}`} onClick={() => navigate('analysis')}>AI Face Scanner</button>
-            <button className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={() => navigate('trending')}>Trending Feed</button>
-            <button className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={() => navigate('pricing')}>Pricing Plans</button>
+            <a href="/" className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('playground'); }}>Hair Transformation</a>
+            <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>AI Makeup Salon</a>
+            <a href="/beard" className={`mobile-nav-item ${activeTab === 'beard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('beard'); }}>AI Beard Styler</a>
+            <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>AI Nails Studio</a>
+            <a href="/retouch" className={`mobile-nav-item ${activeTab === 'retouch' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('retouch'); }}>Beauty Retouch</a>
+            <a href="/analysis" className={`mobile-nav-item ${activeTab === 'analysis' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('analysis'); }}>AI Face Scanner</a>
+            <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>Trending Feed</a>
+            <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog & Trends</a>
+            <a href="/pricing" className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('pricing'); }}>Pricing Plans</a>
             {user && (
               <>
-                <button className={`mobile-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => navigate('dashboard')}>Dashboard</button>
-                <button className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => navigate('settings')}>Settings</button>
+                <a href="/dashboard" className={`mobile-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('dashboard'); }}>Dashboard</a>
+                <a href="/settings" className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('settings'); }}>Settings</a>
               </>
             )}
             <div className="mobile-drawer-footer">
               {user ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gradient-pink-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <User size={16} color="#fff" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                  {/* Credits row */}
+                  {!isPremium && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,46,147,0.06)', borderRadius: '12px', padding: '0.6rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Coins size={16} color="var(--color-pink-primary)" />
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-pink-primary)' }}>{user.tokens} {t('nav.credits')}</span>
+                      </div>
+                      <button className="btn btn-primary" style={{ padding: '0.3rem 0.7rem', fontSize: '0.75rem' }} onClick={() => { navigate('pricing'); }}>
+                        + {t('nav.buy')}
+                      </button>
                     </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {user.email.split('@')[0]}
-                    </span>
+                  )}
+                  {isPremium && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,46,147,0.06)', borderRadius: '12px', padding: '0.6rem 1rem' }}>
+                      <span className="vip-badge-mini">PRO</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('nav.unlimited')}</span>
+                    </div>
+                  )}
+                  {/* User row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gradient-pink-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={16} color="#fff" />
+                      </div>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {user.email.split('@')[0]}
+                      </span>
+                    </div>
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={() => { onLogout(); setMobileMenuOpen(false); }}
+                      style={{ padding: '0.4rem 0.8rem' }}
+                    >
+                      <LogOut size={15} />
+                      <span style={{ fontSize: '0.85rem' }}>{t('nav.signOut')}</span>
+                    </button>
                   </div>
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={() => { onLogout(); setMobileMenuOpen(false); }}
-                    style={{ padding: '0.4rem 0.8rem' }}
-                  >
-                    <LogOut size={15} />
-                    <span style={{ fontSize: '0.85rem' }}>{t('nav.signOut')}</span>
-                  </button>
                 </div>
               ) : (
                 <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { onOpenAuth(); setMobileMenuOpen(false); }}>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff } from 'lucide-react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff, ArrowRight, Star, ChevronDown, ChevronUp, Users, Lock, Palette } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 
@@ -13,12 +13,19 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
   const [faceSymmetry, setFaceSymmetry] = useState(0);
   const [acneRemoval, setAcneRemoval] = useState(true);
   const [skinGlow, setSkinGlow] = useState(30);
+  const [skinTexturePreservation, setSkinTexturePreservation] = useState(70);
+  const [poreRefiner, setPoreRefiner] = useState(true);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('');
   const [resultImage, setResultImage] = useState(null);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
 
   const fileInputRef = useRef(null);
 
@@ -84,7 +91,9 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
         eyeEnhancement,
         faceSymmetry,
         acneRemoval,
-        skinGlow
+        skinGlow,
+        skinTexturePreservation,
+        poreRefiner
       });
 
       const formData = new FormData();
@@ -136,14 +145,21 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
 
   return (
     <section className="playground-section container animate-fade-in">
-      <div className="mobile-playground-header">
-        <h2 className="section-title">
-          <Sparkles size={20} color="var(--color-pink-primary)" />
-          <span>Beauty Retouch</span>
-        </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          Smooth skin, whiten teeth, remove acne blemishes, and enhance eye details.
+      {/* Premium Feature Landing Page Hero */}
+      <div className="category-landing-hero">
+        <div className="glowing-orb pink-orb"></div>
+        <div className="glowing-orb purple-orb"></div>
+        <h1 className="landing-title">
+          <span className="gradient-text">Flawless Portraiture, Real Textures</span>. Try Premium AI Retouching
+        </h1>
+        <p className="landing-subtitle">
+          Experience editorial-grade skin and facial enhancements that preserve your authentic character. Smooth pigmentation, illuminate smiles, and define eyes without the synthetic plastic look. Powered by texture retention algorithms.
         </p>
+        <div className="landing-stats">
+          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>Texture-Preserving Smoothing</span></div>
+          <div className="stat-badge"><Coins size={14} color="var(--color-pink-primary)" /> <span>Subcellular Blemish Smart Erase</span></div>
+          <div className="stat-badge"><span>⚡ Professional Detail Retention</span></div>
+        </div>
       </div>
 
       <div className="playground-grid">
@@ -152,10 +168,10 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
           <div className="desktop-playground-header">
             <h2 className="section-title">
               <Sparkles size={20} color="var(--color-pink-primary)" />
-              <span>Beauty Retouch</span>
+              <span>Retouch Workspace</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Adjust sliders to apply retouch edits.
+              Adjust sliders below to customize the beauty filter intensity.
             </p>
           </div>
 
@@ -176,6 +192,10 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={smoothSkin} 
                 onChange={(e) => setSmoothSkin(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Smooth skin intensity percentage"
+                aria-valuenow={smoothSkin}
+                aria-valuemin="0"
+                aria-valuemax="100"
               />
             </div>
 
@@ -192,6 +212,10 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={teethWhitening} 
                 onChange={(e) => setTeethWhitening(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Teeth whitening percentage"
+                aria-valuenow={teethWhitening}
+                aria-valuemin="0"
+                aria-valuemax="100"
               />
             </div>
 
@@ -208,6 +232,10 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={eyeEnhancement} 
                 onChange={(e) => setEyeEnhancement(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Eye enhancement percentage"
+                aria-valuenow={eyeEnhancement}
+                aria-valuemin="0"
+                aria-valuemax="100"
               />
             </div>
 
@@ -224,6 +252,10 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={faceSymmetry} 
                 onChange={(e) => setFaceSymmetry(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Face symmetry enhancement percentage"
+                aria-valuenow={faceSymmetry}
+                aria-valuemin="0"
+                aria-valuemax="100"
               />
             </div>
 
@@ -240,11 +272,57 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={skinGlow} 
                 onChange={(e) => setSkinGlow(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Dewy skin glow percentage"
+                aria-valuenow={skinGlow}
+                aria-valuemin="0"
+                aria-valuemax="100"
               />
             </div>
 
+            {/* Skin Texture Preservation */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                <span>SKIN TEXTURE PRESERVATION</span>
+                <span>{skinTexturePreservation}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={skinTexturePreservation} 
+                onChange={(e) => setSkinTexturePreservation(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
+                aria-label="Skin texture preservation percentage"
+                aria-valuenow={skinTexturePreservation}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              />
+            </div>
+
+            {/* Pore Refiner Checkbox */}
+            <div 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', outline: 'none' }} 
+              onClick={() => setPoreRefiner(!poreRefiner)}
+              role="checkbox"
+              aria-checked={poreRefiner}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPoreRefiner(!poreRefiner); } }}
+            >
+              <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid var(--color-pink-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: poreRefiner ? 'var(--color-pink-primary)' : 'transparent', transition: 'all 0.15s ease' }}>
+                {poreRefiner && <Check size={12} color="#fff" />}
+              </div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>PORE REFINER (SMART PRESERVE)</span>
+            </div>
+
             {/* Acne Removal Checkbox */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => setAcneRemoval(!acneRemoval)}>
+            <div 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', outline: 'none' }} 
+              onClick={() => setAcneRemoval(!acneRemoval)}
+              role="checkbox"
+              aria-checked={acneRemoval}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAcneRemoval(!acneRemoval); } }}
+            >
               <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid var(--color-pink-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: acneRemoval ? 'var(--color-pink-primary)' : 'transparent', transition: 'all 0.15s ease' }}>
                 {acneRemoval && <Check size={12} color="#fff" />}
               </div>
@@ -284,13 +362,17 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             <div 
               className="dropzone"
               onClick={() => fileInputRef.current.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current.click(); } }}
+              aria-label="Upload photo: drag and drop a face photo here or press Enter to browse files"
             >
               <div className="dropzone-icon">
                 <Upload size={24} />
               </div>
               <h3>Upload a Portrait Photo</h3>
               <p>Upload a selfie or headshot to retouch and polish.</p>
-              <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}>
+              <button className="btn btn-secondary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}>
                 Browse Files
               </button>
               <input 
@@ -303,32 +385,31 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             </div>
           ) : (
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div className="preview-container" style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#000' }}>
-                <img 
-                  src={showOriginal ? image : (resultImage || image)} 
-                  alt="Retouch Preview"
-                  style={{ maxWidth: '100%', height: 'auto', display: 'block', maxHeight: '500px', objectFit: 'contain' }}
-                />
-                
-                {resultImage && (
-                  <button
-                    className="btn btn-secondary"
-                    style={{ position: 'absolute', bottom: '1rem', right: '1rem', padding: '0.5rem', borderRadius: '50%', minWidth: '40px', height: '40px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff' }}
-                    onMouseDown={() => setShowOriginal(true)}
-                    onMouseUp={() => setShowOriginal(false)}
-                    onTouchStart={() => setShowOriginal(true)}
-                    onTouchEnd={() => setShowOriginal(false)}
-                  >
-                    {showOriginal ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                )}
-                
-                {resultImage && (
-                  <div className="slider-label after" style={{ top: '1rem', right: '1rem' }}>
-                    {showOriginal ? 'ORIGINAL' : 'AI RETOUCHED'}
+              {resultImage ? (
+                <div className="before-after-grid">
+                  <div className="before-after-col">
+                    <span className="before-after-label before">Before</span>
+                    <div className="preview-container">
+                      <img src={image} alt="Before Retouch" />
+                    </div>
                   </div>
-                )}
-              </div>
+                  <div className="before-after-col">
+                    <span className="before-after-label after">After</span>
+                    <div className="preview-container">
+                      <img src={resultImage} alt="After Retouch" />
+                      <div className="slider-label after" style={{ top: '1rem', right: '1rem', bottom: 'auto' }}>AI RETOUCHED</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="preview-container" style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#000', maxWidth: '450px', margin: '0 auto' }}>
+                  <img 
+                    src={image} 
+                    alt="Retouch Preview"
+                    style={{ maxWidth: '100%', height: 'auto', display: 'block', maxHeight: '500px', objectFit: 'contain' }}
+                  />
+                </div>
+              )}
 
               <div className="preview-controls" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', width: '100%', justifyContent: 'center' }}>
                 {resultImage ? (
@@ -355,6 +436,191 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* --- Real Transformations --- */}
+      <div className="landing-section transformations-section">
+        <div className="section-header">
+          <span className="section-badge">✨ Showcase</span>
+          <h2>Real Transformations</h2>
+          <p>See how our AI smart brushes clear blemishes while preserving skin porosity.</p>
+        </div>
+        <div className="transformations-grid">
+          {[
+            { id: 1, title: 'Blemish Clearance', path: '/styles/makeup_matte.png', hot: true },
+            { id: 2, title: 'Velvet Skin Smoothing', path: '/styles/makeup_natural.png' },
+            { id: 3, title: 'Dewy Skin Glow', path: '/styles/makeup_bridal.png' },
+            { id: 4, title: 'Symmetry Enhancements', path: '/styles/makeup_korean.png' },
+          ].map(tData => (
+            <div key={tData.id} className="transformation-card-outer">
+              <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
+                <div className="transformation-image-wrapper" style={{ height: '220px', borderRadius: '12px', overflow: 'hidden' }}>
+                  {tData.hot && <span className="transformation-hot-badge">POPULAR</span>}
+                  <img src={tData.path} alt={tData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              </div>
+              <div className="transformation-card-title-bottom" style={{ marginTop: '0.5rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                {tData.title}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Simple Process --- */}
+      <div className="landing-section process-section">
+        <div className="section-header">
+          <span className="section-badge">⚡ Simple Process</span>
+          <h2>4 Steps to Flawless Skin</h2>
+          <p>Easily edit and polish headshots with intuitive slider controls.</p>
+        </div>
+        <div className="process-timeline">
+          {[
+            { num: '01', title: 'Upload Photo', desc: 'Drag and drop your headshot or portrait photo.', icon: <Upload size={24} /> },
+            { num: '02', title: 'Tune Sliders', desc: 'Adjust skin smoothing, teeth whitening, and glows.', icon: <Palette size={24} /> },
+            { num: '03', title: 'Smart Erase', desc: 'Check blemish removal to automatically clear spots.', icon: <Sparkles size={24} /> },
+            { num: '04', title: 'Download HD', desc: 'Save your retouched portrait with natural lighting.', icon: <Download size={24} /> },
+          ].map((step, idx) => (
+            <div key={idx} className="process-card glass-panel">
+              <div className="process-step-num">{step.num}</div>
+              <div className="process-icon-box">{step.icon}</div>
+              <h3>{step.title}</h3>
+              <p>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Real Stories --- */}
+      <div className="landing-section testimonials-section">
+        <div className="section-header">
+          <span className="section-badge">💬 Real Stories</span>
+          <h2>Loved by Professionals</h2>
+          <p>Read why users use GlamAI for clean profile photos and passport shots.</p>
+        </div>
+        <div className="testimonials-grid">
+          {[
+            { name: 'Emma G.', meta: 'Skin Smooth & Acne Clear', avatar: '👩', text: 'Unlike standard filters that make your skin look like a flat blur, GlamAI preserves actual pore detail while clearing stubborn acne spots. Incredible.' },
+            { name: 'Chris D.', meta: 'Smile Whitener', avatar: '👨', text: 'The teeth whitening is beautiful. It is not glowing neon white, it looks like real healthy dental enamel under natural sunlight.' },
+            { name: 'Rita W.', meta: 'Face Symmetry', avatar: '✨', text: 'My passport photo was slightly asymmetrical due to bad lighting. Adjusting the symmetry slider balanced it out perfectly.' }
+          ].map((review, i) => (
+            <div key={i} className="testimonial-card glass-panel">
+              <div className="testimonial-stars">
+                {[...Array(5)].map((_, si) => (
+                  <Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />
+                ))}
+              </div>
+              <p className="testimonial-text">{review.text}</p>
+              <div className="testimonial-author">
+                <div className="testimonial-avatar" style={{ background: 'var(--gradient-pink-purple)', color: '#fff' }}>
+                  {review.avatar}
+                </div>
+                <div className="testimonial-author-info">
+                  <span className="testimonial-name">{review.name}</span>
+                  <span className="testimonial-meta">{review.meta}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Why Choose Us --- */}
+      <div className="landing-section why-choose-section">
+        <div className="section-header">
+          <span className="section-badge">🏆 Why Choose Us</span>
+          <h2>Pore-Safe Retouching Algorithms</h2>
+          <p>Our engine targets only blemishes, retaining genuine skin textures.</p>
+        </div>
+        <div className="benefits-grid">
+          {[
+            { title: 'Pore Preservation', desc: 'Retains natural skin patterns, avoiding flat cosmetic blurs.', icon: <Sparkles size={24} /> },
+            { title: 'Blemish Patching', desc: 'Auto-detects pigmentation deviations to patch spots seamlessly.', icon: <Palette size={24} /> },
+            { title: 'Enamel Whitening', desc: 'Isolates teeth boundaries for subtle, natural whitening.', icon: <Check size={24} /> },
+            { title: 'Data Privacy', desc: 'Processes photos securely. No personal image data is stored.', icon: <Lock size={24} /> },
+          ].map((b, idx) => (
+            <div key={idx} className="benefit-card glass-panel">
+              <div className="benefit-icon-wrapper">{b.icon}</div>
+              <h3>{b.title}</h3>
+              <p>{b.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- Got Questions? --- */}
+      <div className="landing-section faq-section" style={{ background: 'transparent' }}>
+        <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="section-header">
+            <span className="section-badge">❓ Got Questions?</span>
+            <h2>Common Retouch Inquiries</h2>
+            <p>Common questions about our beauty retouch filter.</p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+            {[
+              { q: 'Will my face look plastic or fake?', a: 'No. Our model uses a texture overlay logic to smooth pigmentation while keeping fine pores and natural skin texture fully intact.' },
+              { q: 'Can it clear severe acne?', a: 'Yes! The Acne & Blemish Removal toggle uses patch-fill neural networks to detect and erase spots, blemishes, and scars in one click.' },
+              { q: 'Can I adjust the strength of the filters?', a: 'Absolutely, you have full slider control (0-100%) over smoothing, whitening, eye enhancement, and face symmetry.' }
+            ].map((item, idx) => {
+              const isOpened = openFaq === idx;
+              return (
+                <div 
+                  key={idx}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid rgba(255, 46, 147, 0.08)',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: isOpened ? '0 10px 25px rgba(255, 46, 147, 0.04)' : 'none'
+                  }}
+                >
+                  <button
+                    onClick={() => toggleFaq(idx)}
+                    style={{
+                      width: '100%',
+                      padding: '1.25rem 1.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
+                      {item.q}
+                    </span>
+                    {isOpened ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
+                  </button>
+                  {isOpened && (
+                    <div style={{ padding: '0 1.5rem 1.25rem 2.5rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', borderTop: '1px solid rgba(0,0,0,0.02)' }}>
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* --- Bottom CTA --- */}
+      <div className="landing-section bottom-cta-section" style={{ background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center' }}>
+        <div className="container" style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem' }}>
+            Ready to Find Your Perfect style?
+          </h2>
+          <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: '1.6' }}>
+            Unlock your best look. Smooth skin textures, whiten teeth, and create stunning headshots online.
+          </p>
+          <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 380, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1.05rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
+            <span>Retouch Your Photo Now</span>
+            <ArrowRight size={18} />
+          </button>
         </div>
       </div>
     </section>
