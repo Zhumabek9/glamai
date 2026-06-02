@@ -59,8 +59,8 @@ const TRENDING_POSTS = [
     targetTab: 'playground',
     presetId: 'angled-bob',
     category: '✂️ Hair',
-    beforeImg: '/styles/female_straight.webp',
-    afterImg: '/styles/female_angled-bob.webp',
+    beforeImg: '/trending_bob_before.png',
+    afterImg: '/trending_bob_after.png',
     isSingleImage: false,
   },
   {
@@ -71,8 +71,8 @@ const TRENDING_POSTS = [
     targetTab: 'makeup',
     presetId: 'siren-eyes',
     category: '💄 Makeup',
-    beforeImg: '/styles/female_straight.webp',
-    afterImg: '/styles/makeup_siren_eyes.png',
+    beforeImg: '/trending_siren_before.png',
+    afterImg: '/trending_siren_after.png',
     isSingleImage: false,
   },
 ];
