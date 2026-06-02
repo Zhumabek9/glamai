@@ -12,7 +12,6 @@ import CookieBanner from './components/CookieBanner';
 // Lazy loaded components for code splitting & better LCP
 const Playground = lazy(() => import('./components/Playground'));
 const Makeup = lazy(() => import('./components/Makeup'));
-const Beard = lazy(() => import('./components/Beard'));
 const Nails = lazy(() => import('./components/Nails'));
 const TrendingFeed = lazy(() => import('./components/TrendingFeed'));
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -33,7 +32,7 @@ export default function App() {
     const cleanPath = path.replace(/^\//, '');
     if (!cleanPath) return 'playground';
     const validTabs = [
-      'playground', 'makeup', 'beard', 'nails',
+      'playground', 'makeup', 'nails',
       'trending', 'dashboard', 'settings', 
       'pricing', 'blog', 'privacy', 'terms', 'history'
     ];
@@ -344,17 +343,6 @@ export default function App() {
 
             {activeTab === 'makeup' && (
               <Makeup
-                user={effectiveUser}
-                guestTokens={guestTokens}
-                onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={handleOpenAuth}
-                onAddHistory={handleAddHistory}
-                setActiveTab={navigateToTab}
-              />
-            )}
-
-            {activeTab === 'beard' && (
-              <Beard
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}

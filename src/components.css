@@ -3719,3 +3719,134 @@
   border: 1.5px solid rgba(255, 46, 147, 0.2);
   box-shadow: 0 8px 32px rgba(255, 46, 147, 0.15);
 }
+
+/* ============================================================
+   TRENDING MAGIC GRID — 6 items in one row on desktop
+   ============================================================ */
+.magic-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .magic-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .magic-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .magic-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+}
+
+/* ============================================================
+   GLOBAL MOBILE IMPROVEMENTS
+   ============================================================ */
+@media (max-width: 768px) {
+  .playground-section {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    padding-bottom: 6rem;
+  }
+
+  .playground-grid {
+    gap: 1rem;
+  }
+
+  .control-panel, .preview-panel {
+    padding: 1rem 0.85rem;
+  }
+
+  .selector-group {
+    margin-bottom: 1rem;
+  }
+
+  .smart-presets-row {
+    gap: 0.4rem;
+  }
+
+  .preset-chip {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .category-landing-hero {
+    padding: 2rem 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .landing-stats {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .transformations-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .process-timeline {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .process-timeline {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile nav item styles */
+.mobile-nav-item {
+  display: block;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item.active {
+  background: rgba(255, 46, 147, 0.08);
+  color: var(--color-pink-primary);
+}
+
+@media (max-width: 600px) {
+  .dropzone {
+    padding: 2rem 1rem;
+    min-height: 200px;
+  }
+}

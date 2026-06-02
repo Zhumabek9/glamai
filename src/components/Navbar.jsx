@@ -42,14 +42,6 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               <span>Makeup</span>
             </a>
 
-            <a 
-              href="/beard"
-              className={`nav-item ${activeTab === 'beard' ? 'active' : ''}`}
-              onClick={(e) => { e.preventDefault(); navigate('beard'); }}
-            >
-              <Smile size={14} />
-              <span>Beard</span>
-            </a>
 
             <a 
               href="/nails"
@@ -192,7 +184,6 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
           <div className="mobile-drawer">
             <a href="/" className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('playground'); }}>Hair Transformation</a>
             <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>AI Makeup Salon</a>
-            <a href="/beard" className={`mobile-nav-item ${activeTab === 'beard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('beard'); }}>AI Beard Styler</a>
             <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>AI Nails Studio</a>
             <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>Trending Feed</a>
             <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog & Trends</a>
