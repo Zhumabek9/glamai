@@ -14,8 +14,6 @@ const Playground = lazy(() => import('./components/Playground'));
 const Makeup = lazy(() => import('./components/Makeup'));
 const Beard = lazy(() => import('./components/Beard'));
 const Nails = lazy(() => import('./components/Nails'));
-const Retouch = lazy(() => import('./components/Retouch'));
-const FaceAnalysis = lazy(() => import('./components/FaceAnalysis'));
 const TrendingFeed = lazy(() => import('./components/TrendingFeed'));
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const Settings = lazy(() => import('./components/Settings'));
@@ -35,8 +33,8 @@ export default function App() {
     const cleanPath = path.replace(/^\//, '');
     if (!cleanPath) return 'playground';
     const validTabs = [
-      'playground', 'makeup', 'beard', 'nails', 'retouch', 
-      'analysis', 'trending', 'dashboard', 'settings', 
+      'playground', 'makeup', 'beard', 'nails',
+      'trending', 'dashboard', 'settings', 
       'pricing', 'blog', 'privacy', 'terms', 'history'
     ];
     return validTabs.includes(cleanPath) ? cleanPath : 'playground';
@@ -373,25 +371,6 @@ export default function App() {
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
                 onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
-                setActiveTab={navigateToTab}
-              />
-            )}
-
-            {activeTab === 'retouch' && (
-              <Retouch
-                user={effectiveUser}
-                guestTokens={guestTokens}
-                onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={handleOpenAuth}
-                onAddHistory={handleAddHistory}
-                setActiveTab={navigateToTab}
-              />
-            )}
-
-            {activeTab === 'analysis' && (
-              <FaceAnalysis
-                user={effectiveUser}
-                onOpenAuth={handleOpenAuth}
                 setActiveTab={navigateToTab}
               />
             )}

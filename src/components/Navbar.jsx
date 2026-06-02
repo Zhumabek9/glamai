@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Eye, Settings as SettingsIcon, CreditCard, BookOpen } from 'lucide-react';
+import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen } from 'lucide-react';
 import { t } from '../utils/i18n';
 
 export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
@@ -58,24 +58,6 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             >
               <Sparkles size={14} />
               <span>Nails</span>
-            </a>
-
-            <a 
-              href="/retouch"
-              className={`nav-item ${activeTab === 'retouch' ? 'active' : ''}`}
-              onClick={(e) => { e.preventDefault(); navigate('retouch'); }}
-            >
-              <Eye size={14} />
-              <span>Retouch</span>
-            </a>
-
-            <a 
-              href="/analysis"
-              className={`nav-item ${activeTab === 'analysis' ? 'active' : ''}`}
-              onClick={(e) => { e.preventDefault(); navigate('analysis'); }}
-            >
-              <User size={14} />
-              <span>Face Scan</span>
             </a>
 
             <a 
@@ -212,8 +194,6 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>AI Makeup Salon</a>
             <a href="/beard" className={`mobile-nav-item ${activeTab === 'beard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('beard'); }}>AI Beard Styler</a>
             <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>AI Nails Studio</a>
-            <a href="/retouch" className={`mobile-nav-item ${activeTab === 'retouch' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('retouch'); }}>Beauty Retouch</a>
-            <a href="/analysis" className={`mobile-nav-item ${activeTab === 'analysis' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('analysis'); }}>AI Face Scanner</a>
             <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>Trending Feed</a>
             <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog & Trends</a>
             <a href="/pricing" className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('pricing'); }}>Pricing Plans</a>
@@ -292,14 +272,11 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
           <span>Makeup</span>
         </button>
         <button 
-          className={`dock-item ${activeTab === 'analysis' ? 'active' : ''}`}
-          style={{ position: 'relative' }}
-          onClick={() => navigate('analysis')}
+          className={`dock-item ${activeTab === 'nails' ? 'active' : ''}`}
+          onClick={() => navigate('nails')}
         >
-          <div className="dock-scan-btn">
-            <User size={22} color="#fff" />
-          </div>
-          <span style={{ marginTop: '16px' }}>Scan</span>
+          <Sparkles size={20} />
+          <span>Nails</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'trending' ? 'active' : ''}`}

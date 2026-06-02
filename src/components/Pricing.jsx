@@ -6,15 +6,15 @@ import { trackEvent } from '../utils/analytics';
 const PLANS = {
   subscription: [
     {
-      id: "weekly-vip",
-      name: "Weekly VIP",
-      badge: "Popular Trial",
-      price: "$4.99",
-      billingPeriod: "weekly",
-      tokens: "Unlimited*",
-      generations: "Unlimited VIP Generates",
+      id: "lite-monthly",
+      name: "Lite",
+      badge: "Good Start",
+      price: "$9.90",
+      billingPeriod: "monthly",
+      tokens: 200,
+      generations: "20 generations/month",
       features: [
-        "pricing.unlimitedGens",
+        "pricing.feat.liteGensOT",
         "pricing.hdExport",
         "pricing.fastSpeed",
         "pricing.allStyles",
@@ -23,15 +23,15 @@ const PLANS = {
       highlighted: false
     },
     {
-      id: "monthly-vip",
-      name: "Monthly VIP",
+      id: "pro-monthly",
+      name: "Pro",
       badge: "Best Value",
-      price: "$14.99",
+      price: "$19.60",
       billingPeriod: "monthly",
-      tokens: "Unlimited*",
-      generations: "Unlimited VIP Generates",
+      tokens: 3000,
+      generations: "300 generations/month",
       features: [
-        "pricing.unlimitedGens",
+        "pricing.feat.proGensOT",
         "pricing.hdExport",
         "pricing.fastSpeed",
         "pricing.allStyles",
@@ -41,13 +41,13 @@ const PLANS = {
       highlighted: true
     },
     {
-      id: "yearly-vip",
-      name: "Yearly VIP",
-      badge: "Save 60%",
-      price: "$99.99",
-      billingPeriod: "yearly",
+      id: "unlimited-monthly",
+      name: "Unlimited",
+      badge: "Power User",
+      price: "$29.90",
+      billingPeriod: "monthly",
       tokens: "Unlimited*",
-      generations: "Unlimited VIP Generates",
+      generations: "Unlimited generations",
       features: [
         "pricing.unlimitedGens",
         "pricing.hdExport",
@@ -61,10 +61,27 @@ const PLANS = {
   ],
   "one-time": [
     {
+      id: "starter-onetime",
+      name: "Starter Pack",
+      badge: null,
+      price: "$4.90",
+      tokens: 50,
+      generations: 5,
+      billingPeriod: "one-time",
+      features: [
+        "5 generations",
+        "pricing.feat.styles100",
+        "pricing.feat.highQuality",
+        "pricing.feat.instantDownload",
+        "pricing.feat.neverExpire"
+      ],
+      highlighted: false
+    },
+    {
       id: "lite-onetime",
       name: "Lite Pack",
-      badge: null,
-      price: "$14.50",
+      badge: "Most Popular",
+      price: "$9.90",
       tokens: 200,
       generations: 20,
       billingPeriod: "one-time",
@@ -76,13 +93,13 @@ const PLANS = {
         "pricing.feat.instantDownload",
         "pricing.feat.neverExpire"
       ],
-      highlighted: false
+      highlighted: true
     },
     {
       id: "pro-onetime",
       name: "Pro Pack",
-      badge: "Most Popular",
-      price: "$28.50",
+      badge: "Best Deal",
+      price: "$19.60",
       tokens: 3000,
       generations: 300,
       billingPeriod: "one-time",
@@ -95,24 +112,6 @@ const PLANS = {
         "pricing.feat.proGrade",
         "pricing.feat.neverExpire"
       ],
-      highlighted: true
-    },
-    {
-      id: "ultra-onetime",
-      name: "Ultra Pack",
-      badge: null,
-      price: "$40.00",
-      tokens: 6000,
-      generations: 600,
-      billingPeriod: "one-time",
-      features: [
-        "pricing.feat.ultraGensOT",
-        "pricing.feat.ultraCreditsOT",
-        "pricing.feat.stylesAllColors",
-        "pricing.feat.highestPriority",
-        "pricing.feat.vipSupport",
-        "pricing.feat.neverExpire"
-      ],
       highlighted: false
     }
   ]
@@ -121,7 +120,7 @@ const PLANS = {
 export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const [billingPeriod, setBillingPeriod] = useState('subscription');
   const [openFaq, setOpenFaq] = useState(null);
-  const monthlyPlan = PLANS.subscription.find((p) => p.id === 'monthly-vip');
+  const monthlyPlan = PLANS.subscription.find((p) => p.id === 'pro-monthly');
   const [recommendedPlanId, setRecommendedPlanId] = useState(null);
 
   const handleBuyClick = (plan) => {
@@ -174,9 +173,9 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
       return;
     }
     const credits = user?.tokens ?? 0;
-    if (credits <= 30) setRecommendedPlanId('pro-onetime');
-    else if (credits <= 100) setRecommendedPlanId('ultra-onetime');
-    else setRecommendedPlanId('monthly-vip');
+    if (credits <= 30) setRecommendedPlanId('lite-onetime');
+    else if (credits <= 200) setRecommendedPlanId('pro-monthly');
+    else setRecommendedPlanId('unlimited-monthly');
   }, [user]);
 
   return (

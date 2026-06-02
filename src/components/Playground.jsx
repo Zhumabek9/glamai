@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2 } from 'lucide-react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2, Award, Briefcase, Heart, Flame, Leaf } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { trackEvent } from '../utils/analytics';
+import SliderComparison from './SliderComparison';
+import { usePreferences } from '../utils/usePreferences';
+import { useAchievements } from '../utils/useAchievements';
 
 const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
 
@@ -158,46 +161,77 @@ const COLORS = [
   { id: "ai-recommended", name: "AI Recommended", hex: "linear-gradient(135deg, #f9d423, #e040fb, #00b4db)", hot: true, hue: 0, saturate: 100, brightness: 100 },
   { id: "no-change", name: "No Change", hex: "#888888", hue: 0, saturate: 100, brightness: 100 },
   { id: "jet-black", name: "Jet Black", hex: "#0a0a0a", hue: 0, saturate: 10, brightness: 25 },
-  { id: "blonde", name: "Blonde", hex: "#f5d376", hot: true, hue: 0, saturate: 110, brightness: 130 },
-  { id: "blue-highlights", name: "Blue Highlights", hex: "#4a90d9", hot: true, hue: 165, saturate: 150, brightness: 90 },
-  { id: "pastel-pink", name: "Pastel Pink", hex: "#f4a7b9", hot: true, hue: 295, saturate: 110, brightness: 120 },
-  { id: "black", name: "Black", hex: "#1a1a1a", hue: 0, saturate: 10, brightness: 40 },
-  { id: "blue-black", name: "Blue-Black", hex: "#1a1a2e", hue: 175, saturate: 25, brightness: 35 },
+  { id: "platinum-blonde", name: "Platinum Blonde", hex: "#e8e4d8", hue: 355, saturate: 25, brightness: 145 },
   { id: "dark-brown", name: "Dark Brown", hex: "#3b1f0e", hue: 340, saturate: 70, brightness: 50 },
   { id: "medium-brown", name: "Medium Brown", hex: "#7b4a2d", hue: 340, saturate: 90, brightness: 75 },
   { id: "light-brown", name: "Light Brown", hex: "#b07d56", hue: 340, saturate: 85, brightness: 105 },
   { id: "chestnut", name: "Chestnut", hex: "#954535", hue: 330, saturate: 90, brightness: 80 },
-  { id: "mahogany", name: "Mahogany", hex: "#6b2737", hue: 305, saturate: 80, brightness: 70 },
-  { id: "ash-brown", name: "Ash Brown", hex: "#7a6a5a", hue: 345, saturate: 35, brightness: 85 },
-  { id: "brunette", name: "Brunette", hex: "#4a3728", hue: 340, saturate: 60, brightness: 60 },
   { id: "caramel", name: "Caramel", hex: "#c68642", hue: 350, saturate: 110, brightness: 100 },
   { id: "golden-blonde", name: "Golden Blonde", hex: "#e8c84a", hue: 0, saturate: 120, brightness: 120 },
   { id: "honey-blonde", name: "Honey Blonde", hex: "#d4a853", hue: 355, saturate: 100, brightness: 110 },
   { id: "strawberry-blonde", name: "Strawberry Blonde", hex: "#e8a87c", hue: 340, saturate: 95, brightness: 115 },
-  { id: "platinum-blonde", name: "Platinum Blonde", hex: "#e8e4d8", hue: 355, saturate: 25, brightness: 145 },
-  { id: "ash-blonde", name: "Ash Blonde", hex: "#c4b99a", hue: 355, saturate: 40, brightness: 110 },
   { id: "auburn", name: "Auburn", hex: "#922b21", hue: 325, saturate: 120, brightness: 75 },
   { id: "copper", name: "Copper", hex: "#b87333", hue: 335, saturate: 130, brightness: 90 },
   { id: "burgundy", name: "Burgundy", hex: "#800020", hue: 300, saturate: 140, brightness: 60 },
-  { id: "silver", name: "Silver", hex: "#c0c0c0", hue: 0, saturate: 0, brightness: 130 },
-  { id: "white", name: "White", hex: "#f5f5f5", hue: 0, saturate: 0, brightness: 165 },
-  { id: "titanium", name: "Titanium", hex: "#878681", hue: 155, saturate: 10, brightness: 95 },
   { id: "rose-gold", name: "Rose Gold", hex: "#e8a598", hue: 335, saturate: 70, brightness: 120 },
+  { id: "pastel-pink", name: "Pastel Pink", hex: "#f4a7b9", hot: true, hue: 295, saturate: 110, brightness: 120 },
+  { id: "pastel-lilac", name: "Pastel Lilac", hex: "#d6cadd", hue: 0, saturate: 100, brightness: 100 },
+  { id: "silver", name: "Silver", hex: "#c0c0c0", hue: 0, saturate: 0, brightness: 130 },
   { id: "red", name: "Red", hex: "#e8192c", hue: 315, saturate: 180, brightness: 90 },
   { id: "blue", name: "Blue", hex: "#0066cc", hue: 165, saturate: 160, brightness: 90 },
-  { id: "purple", name: "Purple", hex: "#6600cc", hue: 225, saturate: 150, brightness: 80 },
-  { id: "pink", name: "Pink", hex: "#ff69b4", hue: 285, saturate: 160, brightness: 110 },
-  { id: "green", name: "Green", hex: "#22aa22", hue: 75, saturate: 140, brightness: 95 },
   { id: "balayage-blonde", name: "Balayage Blonde", hex: "linear-gradient(135deg, #4a3728, #f5d376)", hot: true, hue: 0, saturate: 100, brightness: 100 },
-  { id: "rose-gold-highlights", name: "Rose Gold Highlights", hex: "linear-gradient(135deg, #7b4a2d, #e8a598)", hot: true, hue: 0, saturate: 100, brightness: 100 },
   { id: "split-pink-black", name: "Split-dye Pink & Black", hex: "linear-gradient(90deg, #ff69b4 50%, #1a1a1a 50%)", hot: true, hue: 0, saturate: 100, brightness: 100 },
-  { id: "pastel-lilac", name: "Pastel Lilac", hex: "#d6cadd", hue: 0, saturate: 100, brightness: 100 },
   { id: "sunset-copper", name: "Sunset Copper", hex: "linear-gradient(135deg, #b87333, #e8192c)", hot: true, hue: 0, saturate: 100, brightness: 100 }
 ];
 
 const GENDERS = [
   { id: 'female', name: 'Feminine' },
   { id: 'male', name: 'Masculine' }
+];
+
+const PRESETS = [
+  {
+    id: 'office',
+    name: 'For Office',
+    icon: '💼',
+    female: { style: 'bob', color: 'no-change' },
+    male: { style: 'side-part', color: 'no-change' }
+  },
+  {
+    id: 'date',
+    name: 'For a Date',
+    icon: '💅',
+    female: { style: 'wavy', color: 'caramel' },
+    male: { style: 'quiff', color: 'medium-brown' }
+  },
+  {
+    id: 'bold',
+    name: 'Bold & Bright',
+    icon: '🔥',
+    female: { style: 'pixie-cut', color: 'sunset-copper' },
+    male: { style: 'buzz-cut', color: 'platinum-blonde' }
+  },
+  {
+    id: 'natural',
+    name: 'Natural Look',
+    icon: '🌸',
+    female: { style: 'layered', color: 'medium-brown' },
+    male: { style: 'textured-crop', color: 'no-change' }
+  }
+];
+
+const TOP_STYLES = {
+  female: ['wavy', 'bob', 'layered'],
+  male: ['french-crop', 'skin-fade', 'crew-cut']
+};
+
+const PROGRESS_STEPS = [
+  '⬆️ Uploading portrait...',
+  '🔍 Analyzing facial features...',
+  '✂️ Removing existing hair...',
+  '🎨 Running style transformation...',
+  '💇 Dyeing hair & matching lights...',
+  '✨ Refining details & upscaling...'
 ];
 
 export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
@@ -217,6 +251,51 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [lightboxImage, setLightboxImage] = useState(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [showUpsellBox, setShowUpsellBox] = useState(false);
+
+  // Custom states for new UX requirements
+  const [activePreset, setActivePreset] = useState(null);
+  const [showQuickStart, setShowQuickStart] = useState(false);
+  const [etaRemaining, setEtaRemaining] = useState(30);
+  const [feedback, setFeedback] = useState(null);
+  const [dislikeReason, setDislikeReason] = useState(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [showFixedCta, setShowFixedCta] = useState(true);
+
+  // Hook integrations
+  const { prefs, savePreference, saveLastStyle, saveLastColor } = usePreferences(user?.id || 'guest');
+  const { trigger: triggerAchievement, pendingToast, clearToast } = useAchievements();
+
+  // Load user last-used preferences on initialization
+  useEffect(() => {
+    if (prefs) {
+      if (prefs.lastColor) setSelectedColor(prefs.lastColor);
+      if (prefs.lastStyles && prefs.lastStyles.length > 0) setSelectedStyles(prefs.lastStyles);
+    }
+  }, [prefs]);
+
+  // Handle achievement notifications via toast
+  useEffect(() => {
+    if (pendingToast) {
+      toast.success(pendingToast);
+      clearToast();
+    }
+  }, [pendingToast, clearToast, toast]);
+
+  // Monitor scroll positioning to hide/show the mobile floating button appropriately
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!previewPanelRef.current) return;
+      const rect = previewPanelRef.current.getBoundingClientRect();
+      if (rect.top >= 0 && rect.top <= window.innerHeight * 0.7) {
+        setShowFixedCta(false);
+      } else {
+        setShowFixedCta(true);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const activeResult = resultImages.length > 0 ? resultImages[activeResultIndex] : null;
   const resultImage = activeResult && activeResult.status === 'success' ? activeResult.result : null;
   const tokenCost = selectedStyles.length * 10;
@@ -247,6 +326,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   }, [showUpsellBox, isGuest, selectedStyles, tokenCost, guestTokens, user]);
 
   const handleSelectStyle = (styleId) => {
+    setActivePreset(null); // Reset preset on manual style selection
     if (styleId === 'no_change') {
       setSelectedStyles(['no_change']);
       return;
@@ -266,6 +346,55 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         return [...filtered, styleId];
       }
     });
+
+    // Auto scroll up to generation preview on mobile when "applying" (selecting) a style
+    scrollToPreview();
+  };
+
+  const handleApplyPreset = (preset) => {
+    setActivePreset(preset.id);
+    const genderPreset = preset[selectedGender];
+    if (genderPreset) {
+      setSelectedStyles([genderPreset.style]);
+      setSelectedColor(genderPreset.color);
+      
+      // Select preset feedback
+      toast.success(`Preset "${preset.name}" applied!`);
+
+      // Auto scroll up to generation preview on mobile when applying a preset
+      scrollToPreview();
+    }
+  };
+
+  const handleQuickStartSelect = (styleId) => {
+    setSelectedStyles([styleId]);
+    setShowQuickStart(false);
+    // Trigger generation instantly
+    handleGenerate([styleId]);
+  };
+
+  const handleFeedback = (type) => {
+    setFeedback(type);
+    if (type === 'like') {
+      try {
+        const feedbackLog = JSON.parse(localStorage.getItem('glamai_feedback') || '[]');
+        feedbackLog.push({ style: selectedStyles[0], color: selectedColor, type: 'like', timestamp: Date.now() });
+        localStorage.setItem('glamai_feedback', JSON.stringify(feedbackLog));
+      } catch {}
+      setFeedbackSubmitted(true);
+      toast.success("Thank you for your rating!");
+    }
+  };
+
+  const handleFeedbackReason = (reason) => {
+    setDislikeReason(reason);
+    try {
+      const feedbackLog = JSON.parse(localStorage.getItem('glamai_feedback') || '[]');
+      feedbackLog.push({ style: selectedStyles[0], color: selectedColor, type: 'dislike', reason, timestamp: Date.now() });
+      localStorage.setItem('glamai_feedback', JSON.stringify(feedbackLog));
+    } catch {}
+    setFeedbackSubmitted(true);
+    toast.success("Thank you for helping us improve!");
   };
 
   const activeColorObj = COLORS.find(c => c.id === selectedColor);
@@ -274,8 +403,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     colorFilterStyle.filter = `hue-rotate(${activeColorObj.hue}deg) saturate(${activeColorObj.saturate}%) brightness(${activeColorObj.brightness}%)`;
   }
 
-
-  
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const previewPanelRef = useRef(null);
@@ -307,6 +434,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setResultImages([]);
       setActiveResultIndex(0);
       setShowUpsellBox(false);
+      // Auto-trigger Quick Start modal
+      setShowQuickStart(true);
     };
     reader.readAsDataURL(file);
   };
@@ -359,25 +488,32 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (stylesToUse) => {
+    const activeStyles = stylesToUse || selectedStyles;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
+    const calculatedCost = activeStyles.length * 10;
+
+    // Reset feedback
+    setFeedback(null);
+    setDislikeReason(null);
+    setFeedbackSubmitted(false);
 
     // Guest with no tokens left — ask to sign up
-    if (isGuest && availableTokens < tokenCost) {
+    if (isGuest && availableTokens < calculatedCost) {
       toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
     // Logged-in user with no tokens — redirect to pricing
-    if (!isGuest && availableTokens < tokenCost) {
-      toast.error(`You need at least ${tokenCost} token${tokenCost > 1 ? 's' : ''} to generate these styles!`);
+    if (!isGuest && availableTokens < calculatedCost) {
+      toast.error(`You need at least ${calculatedCost} token${calculatedCost > 1 ? 's' : ''} to generate these styles!`);
       setActiveTab('pricing');
       return;
     }
 
     // Guest: only 1 style allowed per free generation
-    if (isGuest && selectedStyles.filter(s => s !== 'no_change').length > 1) {
+    if (isGuest && activeStyles.filter(s => s !== 'no_change').length > 1) {
       toast.error('Free generation allows only 1 style. Sign up to generate multiple!');
       openPricingWithRecommendation();
       return;
@@ -386,6 +522,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     setIsGenerating(true);
     setProgress(0);
     setLoadingText('Uploading portrait to AI engine...');
+    setEtaRemaining(30 * activeStyles.length);
 
     const steps = [
       { prg: 10, txt: 'Uploading portrait to AI engine...' },
@@ -396,6 +533,13 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       { prg: 95, txt: 'Refining details and upscaling...' }
     ];
 
+    const etaInterval = setInterval(() => {
+      setEtaRemaining(prev => {
+        if (prev <= 1) return 1;
+        return prev - 1;
+      });
+    }, 1000);
+
     try {
       const colorObj = COLORS.find(c => c.id === selectedColor);
       const colorFilterVal = (colorObj && colorObj.id !== 'ai-recommended' && colorObj.id !== 'no-change') ? {
@@ -405,7 +549,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       } : null;
 
       // Initialize progressive result list with 'pending' and first one as 'generating'
-      const initialResults = selectedStyles.map((styleId, idx) => {
+      const initialResults = activeStyles.map((styleId, idx) => {
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         return {
           id: `gen-${Date.now()}-${idx}`,
@@ -422,8 +566,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setResultImages(initialResults);
       setActiveResultIndex(0);
 
-      for (let i = 0; i < selectedStyles.length; i++) {
-        const styleId = selectedStyles[i];
+      for (let i = 0; i < activeStyles.length; i++) {
+        const styleId = activeStyles[i];
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
         const styleName = styleObj ? styleObj.name : 'Custom Style';
 
@@ -470,6 +614,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               toast.error('Your free generation is used up! Sign up to continue.');
               onOpenAuth();
               setIsGenerating(false);
+              clearInterval(etaInterval);
               return;
             }
             throw new Error(errData.error || `Failed to generate style "${styleName}"`);
@@ -487,6 +632,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           // Deduct credits immediately
           onDeductToken(10);
+
+          // Save personalized preferences and trigger win achievement
+          saveLastStyle(styleId);
+          saveLastColor(selectedColor);
+          triggerAchievement('first_generation');
 
           // Add to history
           const newHistoryItem = {
@@ -517,7 +667,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         }
 
         // Add 3.0s delay between requests to avoid burst rate limits (429) on Replicate
-        if (i < selectedStyles.length - 1) {
+        if (i < activeStyles.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
@@ -526,7 +676,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setProgress(100);
       setLoadingText('Generation complete!');
       toast.success("AI Hairstyle rendering finished!");
-      if (isGuest || (!isGuest && (availableTokens - tokenCost) <= 20)) {
+      if (isGuest || (!isGuest && (availableTokens - calculatedCost) <= 20)) {
         setShowUpsellBox(true);
       }
 
@@ -534,6 +684,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setIsGenerating(false);
       console.error(err);
       toast.error(err.message || "Failed to generate hairstyles. Please try again.");
+    } finally {
+      clearInterval(etaInterval);
     }
   };
 
@@ -617,6 +769,27 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   {g.name}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* SMART PRESETS */}
+          <div className="selector-group">
+            <span className="selector-title">⚡ QUICK PRESETS</span>
+            <div className="smart-presets-row">
+              {PRESETS.map(preset => {
+                const isActive = activePreset === preset.id;
+                return (
+                  <button
+                    type="button"
+                    key={preset.id}
+                    className={`preset-chip ${isActive ? 'active' : ''}`}
+                    onClick={() => handleApplyPreset(preset)}
+                  >
+                    <span>{preset.icon}</span>
+                    <span>{preset.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -763,53 +936,107 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               <div className="spinner-outer">
                 <div className="spinner-inner"></div>
               </div>
+              
+              <div className="eta-badge">
+                <span>⏱️ Estimated time remaining: {etaRemaining}s</span>
+              </div>
+
               <div className="progress-track">
                 <div className="progress-bar" style={{ width: `${progress}%` }}></div>
               </div>
+
+              <div className="progress-steps">
+                {PROGRESS_STEPS.map((step, idx) => {
+                  const isActive = Math.floor(progress / 17) === idx;
+                  const isDone = Math.floor(progress / 17) > idx;
+                  return (
+                    <div key={idx} className={`progress-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
+                      <div className="step-dot"></div>
+                      <span>{step}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
               <span className="loading-text">{loadingText}</span>
               <span className="loading-subtext">{progress}% Completed</span>
             </div>
           )}
 
           {!image ? (
-            /* Empty State: File Upload */
-            <div 
-              className="dropzone"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              role="presentation"
-              aria-label="Upload photo area"
-            >
-              <div className="dropzone-icon">
-                <Upload size={24} />
+            <div style={{ width: '100%' }}>
+              {/* Empty State: File Upload */}
+              <div 
+                className="dropzone"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                role="presentation"
+                aria-label="Upload photo area"
+              >
+                <div className="dropzone-icon">
+                  <Upload size={24} />
+                </div>
+                <h3>Upload Your Portrait</h3>
+                <p>Take a selfie or upload a front-facing photo.</p>
+                <div className="dropzone-actions">
+                  <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }}>
+                    <Camera size={16} />
+                    <span>Take Photo</span>
+                  </button>
+                  <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
+                    <Upload size={16} />
+                    <span>Upload File</span>
+                  </button>
+                </div>
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  className="file-input" 
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  className="file-input"
+                  accept="image/*"
+                  capture="user"
+                  onChange={handleCameraCapture}
+                />
               </div>
-              <h3>Upload Your Portrait</h3>
-              <p>Take a selfie or upload a front-facing photo.</p>
-              <div className="dropzone-actions">
-                <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }}>
-                  <Camera size={16} />
-                  <span>Take Photo</span>
-                </button>
-                <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
-                  <Upload size={16} />
-                  <span>Upload File</span>
-                </button>
+
+              {/* Horizontal Social Proof Cases */}
+              <div className="social-proof-scroll">
+                <div className="social-proof-card">
+                  <span className="social-proof-stars">★★★★★</span>
+                  <span className="social-proof-name">Julia K.</span>
+                  <span className="social-proof-style">Bob / Caramel</span>
+                  <p className="social-proof-text">"Matches my face shape perfectly! Saved me from a bad salon decision."</p>
+                </div>
+                <div className="social-proof-card">
+                  <span className="social-proof-stars">★★★★★</span>
+                  <span className="social-proof-name">Alex M.</span>
+                  <span className="social-proof-style">French Crop / Blonde</span>
+                  <p className="social-proof-text">"Fast, high quality, and looks very natural. Recommending to my friends!"</p>
+                </div>
+                <div className="social-proof-card">
+                  <span className="social-proof-stars">★★★★★</span>
+                  <span className="social-proof-name">Sarah L.</span>
+                  <span className="social-proof-style">Wavy / Ash Blonde</span>
+                  <p className="social-proof-text">"Love the interactive comparison slider. Excellent accuracy."</p>
+                </div>
+                <div className="social-proof-card">
+                  <span className="social-proof-stars">★★★★★</span>
+                  <span className="social-proof-name">Daniel T.</span>
+                  <span className="social-proof-style">Buzz Cut / Titanium</span>
+                  <p className="social-proof-text">"Insanely realistic render. Worth every token!"</p>
+                </div>
               </div>
-              <input 
-                ref={fileInputRef}
-                type="file" 
-                className="file-input" 
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                className="file-input"
-                accept="image/*"
-                capture="user"
-                onChange={handleCameraCapture}
-              />
+
+              {/* Privacy Trust Badge */}
+              <div className="privacy-trust-badge" style={{ justifyContent: 'center' }}>
+                <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+              </div>
             </div>
           ) : (
             /* Active State: Preview & Result */
@@ -930,31 +1157,100 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             ) : (
               <div style={{ width: '100%' }}>
                 {resultImage ? (
-                  <div className="before-after-grid">
-                    <div className="before-after-col">
-                      <span className="before-after-label before">Before</span>
-                      <div className="preview-container">
-                        <img src={image} alt="Before Hairstyle" />
+                  <div style={{ width: '100%' }}>
+                    <SliderComparison
+                      beforeSrc={image}
+                      afterSrc={resultImage}
+                      title={(resultImages[activeResultIndex]?.styleName === 'No Change' ? resultImages[activeResultIndex]?.colorName : resultImages[activeResultIndex]?.styleName) || 'hairstyle'}
+                      onShare={() => {
+                        handleShare(resultImage);
+                        triggerAchievement('share_result');
+                      }}
+                      onDownload={() => {
+                        triggerAchievement('first_save');
+                      }}
+                      colorFilter={colorFilterStyle}
+                    />
+
+                    {/* 👍/👎 Feedback Panel */}
+                    {!feedbackSubmitted ? (
+                      <div className="feedback-panel">
+                        <span className="feedback-title">Did you like the result?</span>
+                        <div className="feedback-buttons">
+                          <button
+                            type="button"
+                            className={`feedback-btn positive ${feedback === 'like' ? 'active' : ''}`}
+                            onClick={() => handleFeedback('like')}
+                          >
+                            👍 Yes
+                          </button>
+                          <button
+                            type="button"
+                            className={`feedback-btn negative ${feedback === 'dislike' ? 'active' : ''}`}
+                            onClick={() => handleFeedback('dislike')}
+                          >
+                            👎 No
+                          </button>
+                        </div>
+                        {feedback === 'dislike' && (
+                          <div className="feedback-reasons">
+                            {[
+                              "Style didn't fit",
+                              "Poor image quality",
+                              "Expected something else"
+                            ].map(reason => (
+                              <button
+                                type="button"
+                                key={reason}
+                                className="feedback-reason-btn"
+                                onClick={() => handleFeedbackReason(reason)}
+                              >
+                                {reason}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="before-after-col">
-                      <span className="before-after-label after">After</span>
-                      <div className="preview-container">
-                        <img src={resultImage} alt="After Hairstyle" style={colorFilterStyle} />
-                        <div className="slider-label after" style={{ top: '1rem', bottom: 'auto' }}>AI GENERATED</div>
+                    ) : (
+                      <div className="feedback-panel">
+                        <span className="feedback-thanks">Thank you for your feedback! ❤️</span>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="preview-container" style={{ maxWidth: '450px', margin: '0 auto' }}>
-                    <img 
-                      src={image} 
-                      alt="Hairstyle Preview"
-                    />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div className="preview-container" style={{ maxWidth: '450px', margin: '0 auto' }}>
+                      <img 
+                        src={image} 
+                        alt="Hairstyle Preview"
+                      />
+                      {!isGenerating && (
+                        <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
+                          <RefreshCw size={16} />
+                        </button>
+                      )}
+                    </div>
+                    
                     {!isGenerating && (
-                      <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
-                        <RefreshCw size={16} />
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.25rem', gap: '0.6rem', width: '100%' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }} style={{ fontSize: '0.78rem', padding: '0.45rem 0.75rem' }}>
+                            <Camera size={14} style={{ marginRight: '0.25rem' }} />
+                            <span>Retake Photo</span>
+                          </button>
+                          <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }} style={{ fontSize: '0.78rem', padding: '0.45rem 0.75rem' }}>
+                            <Upload size={14} style={{ marginRight: '0.25rem' }} />
+                            <span>Change Photo</span>
+                          </button>
+                        </div>
+                        
+                        <div className="privacy-trust-badge" style={{ margin: 0 }}>
+                          <span>🔒 Photo automatically deleted in 1 hour.</span>
+                        </div>
+                        <button type="button" className="btn btn-secondary" onClick={handleReset} style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', color: '#ff4d4d', borderColor: 'rgba(255, 77, 77, 0.2)' }}>
+                          Delete Photo Now
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1001,24 +1297,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
                 <div className="preview-controls">
                   {resultImage ? (
-                    <>
-                      <a 
-                        href={resultImage} 
-                        download={`glamai_${(resultImages[activeResultIndex]?.styleName === 'No Change' ? resultImages[activeResultIndex]?.colorName : resultImages[activeResultIndex]?.styleName) || 'hairstyle'}.png`} 
-                        className="btn btn-primary"
-                      >
-                        <Download size={16} />
-                        <span>Download HD</span>
-                      </a>
-                      <button className="btn btn-secondary" onClick={() => handleShare(resultImage)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Share2 size={16} />
-                        <span>Share</span>
-                      </button>
-                      <button className="btn btn-secondary" onClick={handleReset}>
-                        <RefreshCw size={16} />
-                        <span>Reset</span>
-                      </button>
-                    </>
+                    <button type="button" className="btn btn-secondary" onClick={handleReset} style={{ margin: '0 auto' }}>
+                      <RefreshCw size={16} />
+                      <span>Try another style</span>
+                    </button>
                   ) : (
                     <div style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
                       <HelpCircle size={12} />
@@ -1131,6 +1413,70 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               &times;
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Quick Start Modal */}
+      {showQuickStart && (
+        <div className="modal-backdrop" onClick={() => setShowQuickStart(false)}>
+          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
+            <button type="button" className="modal-close-btn" onClick={() => setShowQuickStart(false)} aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 850, background: 'var(--gradient-pink-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                ⚡ Quick Start
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Select one of the top styles to render instantly!
+              </p>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              {(selectedGender === 'female' ? TOP_STYLES.female : TOP_STYLES.male).map(id => HAIRSTYLES.find(h => h.id === id)).filter(Boolean).map(h => (
+                <button
+                  type="button"
+                  key={h.id}
+                  className="style-card"
+                  onClick={() => handleQuickStartSelect(h.id)}
+                  style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', textAlign: 'center' }}
+                >
+                  <div className="style-card-image-wrapper" style={{ height: '90px' }}>
+                    <img src={h.image} className="style-card-image" alt={h.name} style={{ height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div className="style-card-footer" style={{ fontSize: '0.7rem', padding: '0.4rem 0.2rem' }}>
+                    {h.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '0.7rem' }}
+              onClick={() => setShowQuickStart(false)}
+            >
+              Customize manually
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Fixed CTA */}
+      {image && !isGenerating && showFixedCta && (
+        <div className="mobile-generate-cta">
+          <button 
+            type="button"
+            className="btn btn-primary"
+            onClick={() => { handleGenerate(); scrollToPreview(); }}
+          >
+            <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
+            <span>Render AI Hairstyle</span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
+              (-{selectedStyles.length * 10} Tokens)
+            </span>
+          </button>
         </div>
       )}
     </section>
