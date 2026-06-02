@@ -24,7 +24,7 @@ export default function History({ history, onClearItem, onStartClick }) {
 
   return (
     <section className="history-section container animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
         <div>
           <h2 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <HistoryIcon size={24} color="var(--color-pink-primary)" />
@@ -76,11 +76,14 @@ export default function History({ history, onClearItem, onStartClick }) {
       ) : (
         <div className="history-grid">
           {history.map(item => (
-            <button 
+            <div 
               key={item.id} 
               className="history-card"
               onClick={() => setSelectedItem(item)}
-              style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: 0 }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setSelectedItem(item); } }}
+              role="button"
+              tabIndex={0}
+              style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: 0, cursor: 'pointer', outline: 'none' }}
             >
               <img src={item.result} alt={item.style} style={getFilterStyle(item)} loading="lazy" />
               
@@ -110,7 +113,7 @@ export default function History({ history, onClearItem, onStartClick }) {
                   </div>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
 
@@ -136,14 +139,7 @@ export default function History({ history, onClearItem, onStartClick }) {
             </div>
 
             {/* Side-by-Side Images */}
-            <div 
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: selectedItem.original ? '1fr 1fr' : '1fr', 
-                gap: '1.5rem', 
-                marginBottom: '2rem' 
-              }}
-            >
+            <div className={`before-after-grid ${selectedItem.original ? 'two-columns' : ''}`}>
               {selectedItem.original && (
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>

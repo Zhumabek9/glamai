@@ -94,7 +94,7 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
         </div>
       </div>
 
-      <div className="glass-panel" style={{ padding: '2rem', display: 'grid', gridTemplateColumns: image ? '1fr 1fr' : '1fr', gap: '2rem', minHeight: '400px' }}>
+      <div className={`glass-panel analysis-main-grid ${image ? 'has-image' : ''}`} style={{ padding: '2rem' }}>
         
         {/* Left Side: Upload / Scanner View */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -194,7 +194,7 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
                 </div>
 
                 {/* Characteristics */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="analysis-characteristics-grid">
                   <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)', padding: '1rem', borderRadius: '16px' }}>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>Face Shape</span>
                     <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{analysisResult.faceShape}</span>

@@ -296,3 +296,78 @@ button, .btn {
     scroll-behavior: auto !important;
   }
 }
+
+/* Cookie Consent Banner centering & responsive layout overrides */
+.cookie-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  width: calc(100% - 48px);
+  max-width: 640px;
+  z-index: 9999;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 46, 147, 0.2);
+  background: rgba(252, 246, 250, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  animation: cookieSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cookieSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  .cookie-banner {
+    bottom: 80px; /* Offset to clear the mobile bottom dock */
+  }
+}
+
+/* Face Analysis Responsive Grid Layouts */
+.analysis-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  min-height: 400px;
+}
+
+@media (min-width: 641px) {
+  .analysis-main-grid.has-image {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.analysis-characteristics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 480px) {
+  .analysis-characteristics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Lightbox Modal Side-by-Side Images Responsive Grid */
+.before-after-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 641px) {
+  .before-after-grid.two-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}

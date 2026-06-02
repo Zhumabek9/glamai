@@ -28,24 +28,12 @@ export default function CookieBanner() {
 
   return (
     <div 
-      className="glass-panel animate-slide-up"
+      className="glass-panel cookie-banner"
       style={{
-        position: 'fixed',
-        bottom: '24px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 'calc(100% - 48px)',
-        maxWidth: '640px',
-        zIndex: 9999,
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.25rem',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
-        border: '1px solid rgba(255, 46, 147, 0.2)',
-        background: 'rgba(252, 246, 250, 0.85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
       }}
     >
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
