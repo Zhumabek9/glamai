@@ -4,14 +4,12 @@
       "root": ".",
       "entrypoint": ".",
       "routePrefix": "/",
-      "framework": "vite",
-      "buildCommand": "npm install && npm run build"
+      "framework": "vite"
     },
     "api": {
-      "root": ".",
-      "entrypoint": "api/index.js",
-      "routePrefix": "/api",
-      "buildCommand": "cd backend && npm install"
+      "root": "backend",
+      "entrypoint": "server.js",
+      "routePrefix": "/api"
     }
   },
   "rewrites": [
