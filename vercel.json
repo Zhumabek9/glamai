@@ -1,4 +1,12 @@
 {
+  "buildCommand": "npm install && npm run build && cd backend && npm install",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": "backend/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -16,13 +24,5 @@
       "source": "/((?!api|assets|favicon|og_image|.*\\..*).*)$",
       "destination": "/index.html"
     }
-  ],
-  "experimentalServices": {
-    "glamai": {
-      "type": "web",
-      "routePrefix": "/",
-      "framework": "vite",
-      "buildCommand": "npm install && npm run build && cd backend && npm install"
-    }
-  }
+  ]
 }
