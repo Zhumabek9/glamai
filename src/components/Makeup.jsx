@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Smile, Flame, Heart, Wind } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { useFavorites } from './Favorites';
+import ShareStoriesModal from './ShareStoriesModal';
 
 const MAKEUP_PRESETS = [
   { id: 'bronze', name: 'Sunkissed Bronze', image: '/styles/makeup_bronze.png', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
@@ -80,6 +82,8 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
   const [imageFile, setImageFile] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState('bronze');
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
+  const [showStoriesModal, setShowStoriesModal] = useState(null);
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const [selectedLipstick, setSelectedLipstick] = useState('none');
   const [selectedEyeliner, setSelectedEyeliner] = useState('none');
   const [selectedEyeshadow, setSelectedEyeshadow] = useState('none');
@@ -513,8 +517,19 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
                     <a href={resultImage} download="glamai_makeup.png" className="btn btn-primary" style={{ flex: 1, minWidth: '120px', maxWidth: '160px' }}>
                       <Download size={15} /><span>Download</span>
                     </a>
-                    <button className="btn btn-secondary" onClick={handleShare} style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}>
-                      <Share2 size={15} /><span>Share</span>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ flex: 1, minWidth: '100px', maxWidth: '130px', color: isFavorite('makeup-result') ? '#ff2e93' : undefined }}
+                      onClick={() => {
+                        const id = 'makeup-' + Date.now();
+                        if (isFavorite(id)) { removeFavorite(id); toast.success('Removed from favourites'); }
+                        else { addFavorite({ id, result: resultImage, style: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup', category: '💄 Makeup', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) }); toast.success('Saved to favourites ❤️'); }
+                      }}
+                    >
+                      <Heart size={15} /><span>Save</span>
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name || 'Makeup Look' : 'Makeup Look' })} style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}>
+                      <Share2 size={15} /><span>Stories</span>
                     </button>
                     <button className="btn btn-secondary" onClick={handleReset} style={{ flex: 1, minWidth: '80px', maxWidth: '110px' }}>
                       <RefreshCw size={15} /><span>Reset</span>
@@ -667,6 +682,14 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
           </button>
         </div>
       </div>
+
+      {showStoriesModal && (
+        <ShareStoriesModal
+          imageUrl={showStoriesModal.url}
+          styleName={showStoriesModal.styleName}
+          onClose={() => setShowStoriesModal(null)}
+        />
+      )}
     </section>
   );
 }

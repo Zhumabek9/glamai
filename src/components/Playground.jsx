@@ -6,6 +6,8 @@ import { trackEvent } from '../utils/analytics';
 import SliderComparison from './SliderComparison';
 import { usePreferences } from '../utils/usePreferences';
 import { useAchievements } from '../utils/useAchievements';
+import { useFavorites } from './Favorites';
+import ShareStoriesModal from './ShareStoriesModal';
 
 const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
 
@@ -260,6 +262,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [dislikeReason, setDislikeReason] = useState(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [showFixedCta, setShowFixedCta] = useState(true);
+  const [showStoriesModal, setShowStoriesModal] = useState(null); // { url, styleName }
+
+  // Favorites
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   // Hook integrations
   const { prefs, savePreference, saveLastStyle, saveLastColor } = usePreferences(user?.id || 'guest');
@@ -774,7 +780,28 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* SMART PRESETS */}
           <div className="selector-group">
-            <span className="selector-title">⚡ QUICK PRESETS</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span className="selector-title" style={{ marginBottom: 0 }}>⚡ QUICK PRESETS</span>
+              <button
+                type="button"
+                title="Random hairstyle"
+                onClick={() => {
+                  const eligible = HAIRSTYLES.filter(h => h.gender === selectedGender && h.id !== 'no_change');
+                  if (eligible.length === 0) return;
+                  const random = eligible[Math.floor(Math.random() * eligible.length)];
+                  const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+                  setSelectedStyles([random.id]);
+                  setSelectedColor(randomColor.id);
+                  setActivePreset(null);
+                  toast.success(`🎲 ${random.name} + ${randomColor.name}`);
+                }}
+                style={{ background: 'rgba(255,46,147,0.1)', border: '1px solid rgba(255,46,147,0.25)', borderRadius: '8px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,46,147,0.2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,46,147,0.1)'}
+              >
+                🎲 Random
+              </button>
+            </div>
             <div className="smart-presets-row">
               {PRESETS.map(preset => {
                 const isActive = activePreset === preset.id;
@@ -1127,6 +1154,29 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                               >
                                 <Download size={14} />
                               </a>
+                              <button
+                                className="generation-card-btn"
+                                title={isFavorite(res.id) ? 'Remove from favourites' : 'Save to favourites'}
+                                onClick={() => {
+                                  if (isFavorite(res.id)) {
+                                    removeFavorite(res.id);
+                                    toast.success('Removed from favourites');
+                                  } else {
+                                    addFavorite({ id: res.id, result: res.result, style: res.styleName, color: res.colorName, category: '✂️ Hair', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) });
+                                    toast.success('Saved to favourites ❤️');
+                                  }
+                                }}
+                                style={{ color: isFavorite(res.id) ? '#ff2e93' : 'inherit' }}
+                              >
+                                <Heart size={14} fill={isFavorite(res.id) ? '#ff2e93' : 'none'} />
+                              </button>
+                              <button
+                                className="generation-card-btn"
+                                title="Share to Stories"
+                                onClick={() => setShowStoriesModal({ url: res.result, styleName: res.styleName })}
+                              >
+                                <Share2 size={14} />
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1478,6 +1528,15 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             </span>
           </button>
         </div>
+      )}
+
+      {/* Share to Stories Modal */}
+      {showStoriesModal && (
+        <ShareStoriesModal
+          imageUrl={showStoriesModal.url}
+          styleName={showStoriesModal.styleName}
+          onClose={() => setShowStoriesModal(null)}
+        />
       )}
     </section>
   );

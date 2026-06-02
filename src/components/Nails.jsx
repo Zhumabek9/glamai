@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette } from 'lucide-react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { useFavorites } from './Favorites';
+import ShareStoriesModal from './ShareStoriesModal';
 
 const NAIL_PRESETS = [
   { id: 'french', name: 'French Tip', image: '/styles/nails_french.png', desc: 'Classic nude pink base with clean, crisp white crescent tips.' },
@@ -60,6 +62,8 @@ export default function Nails({ user, guestTokens, onDeductToken, onOpenAuth, on
   const [imageFile, setImageFile] = useState(null);
   const [selectedPreset, setSelectedPreset] = useState('french');
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
+  const [showStoriesModal, setShowStoriesModal] = useState(null);
+  const { addFavorite, isFavorite } = useFavorites();
   const [selectedShape, setSelectedShape] = useState('almond');
   const [selectedTexture, setSelectedTexture] = useState('glossy-gel');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -457,8 +461,19 @@ export default function Nails({ user, guestTokens, onDeductToken, onOpenAuth, on
                     <a href={resultImage} download="glamai_nails.png" className="btn btn-primary" style={{ flex: 1, minWidth: '120px', maxWidth: '160px' }}>
                       <Download size={15} /><span>Download</span>
                     </a>
-                    <button className="btn btn-secondary" onClick={handleShare} style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}>
-                      <Share2 size={15} /><span>Share</span>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}
+                      onClick={() => {
+                        const id = 'nails-' + Date.now();
+                        addFavorite({ id, result: resultImage, style: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nail Art', category: '💅 Nails', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) });
+                        toast.success('Saved to favourites ❤️');
+                      }}
+                    >
+                      <Heart size={15} /><span>Save</span>
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name || 'Nail Art' : 'Nail Art' })} style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}>
+                      <Share2 size={15} /><span>Stories</span>
                     </button>
                     <button className="btn btn-secondary" onClick={handleReset} style={{ flex: 1, minWidth: '80px', maxWidth: '110px' }}>
                       <RefreshCw size={15} /><span>Reset</span>
@@ -605,6 +620,14 @@ export default function Nails({ user, guestTokens, onDeductToken, onOpenAuth, on
           </button>
         </div>
       </div>
+
+      {showStoriesModal && (
+        <ShareStoriesModal
+          imageUrl={showStoriesModal.url}
+          styleName={showStoriesModal.styleName}
+          onClose={() => setShowStoriesModal(null)}
+        />
+      )}
     </section>
   );
 }

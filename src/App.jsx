@@ -21,6 +21,7 @@ const History = lazy(() => import('./components/History'));
 const Blog = lazy(() => import('./components/Blog'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./components/TermsOfService'));
+const Favorites = lazy(() => import('./components/Favorites'));
 
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
@@ -34,7 +35,7 @@ export default function App() {
     const validTabs = [
       'playground', 'makeup', 'nails',
       'trending', 'dashboard', 'settings', 
-      'pricing', 'blog', 'privacy', 'terms', 'history'
+      'pricing', 'blog', 'privacy', 'terms', 'history', 'favorites'
     ];
     return validTabs.includes(cleanPath) ? cleanPath : 'playground';
   };
@@ -408,6 +409,10 @@ export default function App() {
 
             {activeTab === 'terms' && (
               <TermsOfService setActiveTab={navigateToTab} />
+            )}
+
+            {activeTab === 'favorites' && (
+              <Favorites setActiveTab={navigateToTab} />
             )}
           </Suspense>
         </main>
