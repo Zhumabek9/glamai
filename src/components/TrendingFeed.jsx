@@ -185,14 +185,7 @@ export default function TrendingFeed({ setActiveTab }) {
             <h2>AI Transformations Gallery</h2>
             <p>Watch how GlamAI transforms everyday looks into stunning results instantly.</p>
           </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, 1fr)',
-            gap: '1rem',
-            overflowX: 'auto',
-          }}
-          className="magic-grid"
-          >
+          <div className="magic-grid">
             {ACTION_GIFS.map(item => (
               <div
                 key={item.id}

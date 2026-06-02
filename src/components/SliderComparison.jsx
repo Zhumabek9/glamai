@@ -82,7 +82,6 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
             alt="After"
             className="slider-img slider-img-after"
             draggable={false}
-            style={colorFilter}
           />
         </div>
 

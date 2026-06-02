@@ -97,11 +97,27 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
   const [feedback, setFeedback] = useState(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [sliderPosition, setSliderPosition] = useState(50);
+  const [showFixedCta, setShowFixedCta] = useState(true);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const previewPanelRef = useRef(null);
   const sliderRef = useRef(null);
+
+  // Monitor scroll positioning to hide/show the mobile floating button appropriately
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!previewPanelRef.current) return;
+      const rect = previewPanelRef.current.getBoundingClientRect();
+      if (rect.top >= 0 && rect.top <= window.innerHeight * 0.7) {
+        setShowFixedCta(false);
+      } else {
+        setShowFixedCta(true);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -374,7 +390,7 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
                     aria-pressed={isSelected}
                     aria-label={`Select: ${p.name}`}
                     onClick={() => { setSelectedPreset(p.id); setActiveQuickPreset(null); scrollToPreview(); }}
-                    style={{ border: 'none', background: 'transparent', padding: '0.5rem', cursor: 'pointer', display: 'block', width: '100%', textAlign: 'left' }}
+                    style={{ border: 'none', background: 'transparent', padding: '0.5rem', cursor: 'pointer', width: '100%', textAlign: 'left' }}
                   >
                     {isSelected && <div className="selected-badge"><Check size={12} /></div>}
                     <div className="style-card-image-wrapper">
@@ -682,6 +698,23 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
           </button>
         </div>
       </div>
+
+      {/* Mobile Fixed CTA */}
+      {image && !isGenerating && showFixedCta && (
+        <div className="mobile-generate-cta">
+          <button 
+            type="button"
+            className="btn btn-primary"
+            onClick={() => { handleGenerate(); scrollToPreview(); }}
+          >
+            <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
+            <span>Apply AI Makeup</span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
+              (-10 Tokens)
+            </span>
+          </button>
+        </div>
+      )}
 
       {showStoriesModal && (
         <ShareStoriesModal

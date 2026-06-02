@@ -859,7 +859,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     aria-pressed={isSelected}
                     aria-label={`Select style: ${h.name}`}
                     onClick={() => handleSelectStyle(h.id)}
-                    style={{ border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%' }}
+                    style={{ border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer', width: '100%' }}
                   >
                     {isSelected && (
                       <div className="selected-badge">
@@ -1313,10 +1313,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     <div className="batch-thumbnails-grid">
                       {resultImages.map((res, index) => {
                         const isActive = index === activeResultIndex;
-                        const thumbColorFilter = {};
-                        if (res.colorFilter) {
-                          thumbColorFilter.filter = `hue-rotate(${res.colorFilter.hue}deg) saturate(${res.colorFilter.saturate}%) brightness(${res.colorFilter.brightness}%)`;
-                        }
                         return (
                           <div
                             key={res.id}
@@ -1327,7 +1323,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                               <img
                                 src={res.result}
                                 alt={res.styleName}
-                                style={thumbColorFilter}
                                 className="batch-thumbnail-img"
                               />
                             ) : (

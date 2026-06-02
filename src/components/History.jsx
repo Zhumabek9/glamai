@@ -13,14 +13,6 @@ export default function History({ history, onClearItem, onStartClick }) {
     document.body.removeChild(link);
   };
 
-  const getFilterStyle = (item) => {
-    if (item && item.colorFilter) {
-      return {
-        filter: `hue-rotate(${item.colorFilter.hue}deg) saturate(${item.colorFilter.saturate}%) brightness(${item.colorFilter.brightness}%)`
-      };
-    }
-    return {};
-  };
 
   return (
     <section className="history-section container animate-fade-in">
@@ -85,7 +77,7 @@ export default function History({ history, onClearItem, onStartClick }) {
               tabIndex={0}
               style={{ display: 'block', width: '100%', border: 'none', background: 'transparent', textAlign: 'left', padding: 0, cursor: 'pointer', outline: 'none' }}
             >
-              <img src={item.result} alt={item.style} style={getFilterStyle(item)} loading="lazy" />
+              <img src={item.result} alt={item.style} loading="lazy" />
               
               <div className="history-card-overlay">
                 <div className="history-card-info">
@@ -156,7 +148,7 @@ export default function History({ history, onClearItem, onStartClick }) {
                   {selectedItem.original ? 'After (AI Styled)' : 'AI Generated Result'}
                 </div>
                 <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', height: '300px', border: '1px solid rgba(255, 46, 147, 0.2)' }}>
-                  <img src={selectedItem.result} alt="AI output" style={{ width: '100%', height: '100%', objectFit: 'cover', ...getFilterStyle(selectedItem) }} />
+                  <img src={selectedItem.result} alt="AI output" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
             </div>
