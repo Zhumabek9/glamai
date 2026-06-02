@@ -618,51 +618,30 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Color Shade selection */}
           <div className="selector-group">
-            <span className="selector-title">COLOR SHADE SELECTION</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="selector-title">COLOR SHADE SELECTION</span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--color-pink-primary)', fontWeight: '600' }}>
+                {COLORS.find(c => c.id === selectedColor)?.name || ''}
+              </span>
+            </div>
             <div className="pill-options-grid">
               {COLORS.map(c => (
                 <button
                   type="button"
                   key={c.id}
-                  className={`pill-option ${selectedColor === c.id ? 'selected' : ''}`}
+                  title={c.name}
+                  className={`color-swatch-option ${selectedColor === c.id ? 'selected' : ''}`}
                   aria-pressed={selectedColor === c.id}
                   aria-label={`Select color shade: ${c.name}`}
                   onClick={() => setSelectedColor(c.id)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', position: 'relative', border: 'none', font: 'inherit', cursor: 'pointer' }}
+                  style={{ background: c.hex }}
                 >
                   {c.hot && (
-                    <span 
-                      style={{
-                        position: 'absolute',
-                        top: '-6px',
-                        right: '-4px',
-                        background: 'var(--color-pink-primary)',
-                        color: '#fff',
-                        fontSize: '7px',
-                        lineHeight: '1',
-                        padding: '2px 4px',
-                        borderRadius: '4px',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        boxShadow: '0 0 4px rgba(255, 46, 147, 0.4)',
-                        zIndex: 10
-                      }}
-                    >
+                    <span className="color-swatch-hot-badge">
                       hot
                     </span>
                   )}
-                  <span 
-                    style={{ 
-                      width: '10px', 
-                      height: '10px', 
-                      borderRadius: '50%', 
-                      background: c.hex,
-                      boxShadow: c.hex.startsWith('linear-gradient') ? '0 0 6px #e040fb' : `0 0 6px ${c.hex}` 
-                    }} 
-                  />
-                  <span>{c.name}</span>
                 </button>
-
               ))}
             </div>
           </div>
