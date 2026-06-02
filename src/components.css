@@ -2883,6 +2883,201 @@
   content: '';
   position: absolute;
   top: 50%;
+  z-index: 1;
+}
+
+.landing-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-badge {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 46, 147, 0.15);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  padding: 0.45rem 1rem;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 12px rgba(255, 46, 147, 0.04);
+}
+
+.dark-mode .stat-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 46, 147, 0.25);
+}
+
+.style-card-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #fdfafd;
+  transition: border-color 0.2s ease;
+}
+
+.style-card:hover .style-card-image-wrapper {
+  border-color: var(--color-pink-primary);
+}
+
+.style-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.style-card:hover .style-card-img {
+  transform: scale(1.08);
+}
+
+.style-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.3) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.style-card:hover .style-card-overlay {
+  opacity: 1;
+}
+
+/* Face Scanner scanner area enhancement */
+.face-scan-hero {
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 46, 147, 0.1) 0%, rgba(255, 255, 255, 0) 75%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 46, 147, 0.05);
+  margin-bottom: 2.5rem;
+}
+
+.scan-laser-glow {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 1.5rem;
+}
+
+.scan-laser-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--color-pink-primary);
+  border-radius: 50%;
+  animation: pulseScan 2s infinite;
+}
+
+@keyframes pulseScan {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* Before/After Side-by-Side Preview Grid */
+.before-after-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.before-after-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.before-after-label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.before-after-label.before {
+  color: #a0aec0;
+}
+
+.before-after-label.after {
+  color: #ff2e93; /* Premium pink */
+}
+
+@media (max-width: 640px) {
+  .before-after-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* COLOR SHADE SELECTION 4X6 grid */
+.pill-options-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .pill-options-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.color-swatch-option {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-fast);
+  background-clip: padding-box;
+}
+
+.color-swatch-option:hover {
+  transform: scale(1.15);
+  border-color: var(--color-pink-primary);
+  box-shadow: 0 0 8px rgba(255, 46, 147, 0.2);
+  z-index: 5;
+}
+
+.color-swatch-option.selected {
+  border-color: var(--color-pink-primary);
+  box-shadow: 0 0 10px rgba(255, 46, 147, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  transform: scale(1.08);
+  z-index: 4;
+}
+
+/* Selected indicator dot inside the swatch */
+.color-swatch-option.selected::before {
+  content: '';
+  position: absolute;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 8px;
@@ -2909,4 +3104,172 @@
   box-shadow: 0 1px 3px rgba(255, 46, 147, 0.4);
   z-index: 10;
   pointer-events: none;
+}
+
+/* ============================================================
+   COLOR SHADE SELECTION — 4-column grid with dot + name
+   ============================================================ */
+.color-grid-4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.color-grid-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  font-family: var(--font-body);
+}
+
+.color-grid-item:hover {
+  border-color: rgba(255, 46, 147, 0.3);
+  background: rgba(255, 46, 147, 0.04);
+  transform: translateY(-1px);
+}
+
+.color-grid-item.selected {
+  border-color: var(--color-pink-primary);
+  background: rgba(255, 46, 147, 0.1);
+  box-shadow: 0 0 8px rgba(255, 46, 147, 0.15);
+}
+
+.color-grid-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: block;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.color-grid-name {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.color-grid-item.selected .color-grid-name {
+  color: var(--color-pink-primary);
+  font-weight: 700;
+}
+
+.color-grid-hot {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  background: var(--color-pink-primary);
+  color: #fff;
+  font-size: 6px;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 3px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ============================================================
+   DROPZONE — Camera + Upload actions row
+   ============================================================ */
+.dropzone-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.dropzone-actions .btn {
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Keep dropzone cursor default since buttons handle interaction */
+.dropzone {
+  cursor: default;
+}
+
+/* ============================================================
+   FIX: Style-card-footer visible on all sizes — ensure min height
+   ============================================================ */
+.style-card-footer {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.35rem 0.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+/* Mobile style-card-footer — ensure names show even at 4-col */
+@media (max-width: 768px) {
+  .color-grid-4col {
+    gap: 0.25rem;
+  }
+
+  .color-grid-dot {
+    width: 14px;
+    height: 14px;
+  }
+
+  .color-grid-name {
+    font-size: 0.52rem;
+  }
+
+  .style-cards-grid {
+    grid-auto-rows: 115px;
+    max-height: calc(3 * 115px + 2 * 0.6rem);
+  }
+
+  .style-card-footer {
+    font-size: 0.58rem;
+    padding: 0.22rem 0.1rem;
+    min-height: 22px;
+  }
+
+  .dropzone-actions {
+    gap: 0.5rem;
+  }
+
+  .dropzone-actions .btn {
+    font-size: 0.82rem;
+    padding: 0.5rem 0.85rem;
+  }
 }

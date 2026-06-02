@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { trackEvent } from '../utils/analytics';
 
 const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
 
@@ -201,6 +202,7 @@ const GENDERS = [
 
 export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
   const toast = useToast();
+  const isGuest = !user;
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [selectedGender, setSelectedGender] = useState('female');
@@ -214,8 +216,35 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [activeResultIndex, setActiveResultIndex] = useState(0);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
+  const [showUpsellBox, setShowUpsellBox] = useState(false);
   const activeResult = resultImages.length > 0 ? resultImages[activeResultIndex] : null;
   const resultImage = activeResult && activeResult.status === 'success' ? activeResult.result : null;
+  const tokenCost = selectedStyles.length * 10;
+
+  const openPricingWithRecommendation = () => {
+    const selectedCount = selectedStyles.filter((s) => s !== 'no_change').length;
+    const isHeavyUse = selectedCount >= 3;
+    const suggestedPlanId = isHeavyUse ? 'monthly-vip' : 'pro-onetime';
+    trackEvent('recommended_plan_click', {
+      source: 'playground_upsell',
+      suggestedPlanId,
+      selectedStyles: selectedCount,
+      isGuest,
+    });
+    window.localStorage.setItem('glamai_recommended_plan', suggestedPlanId);
+    setActiveTab('pricing');
+  };
+
+  useEffect(() => {
+    if (!showUpsellBox) return;
+    trackEvent('paywall_view', {
+      source: 'playground_result',
+      isGuest,
+      selectedStyles: selectedStyles.filter((s) => s !== 'no_change').length,
+      tokenCost,
+      creditsLeft: isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0),
+    });
+  }, [showUpsellBox, isGuest, selectedStyles, tokenCost, guestTokens, user]);
 
   const handleSelectStyle = (styleId) => {
     if (styleId === 'no_change') {
@@ -248,6 +277,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const previewPanelRef = useRef(null);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -275,6 +306,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setImage(event.target.result);
       setResultImages([]);
       setActiveResultIndex(0);
+      setShowUpsellBox(false);
     };
     reader.readAsDataURL(file);
   };
@@ -283,9 +315,51 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     fileInputRef.current.click();
   };
 
+  const triggerCamera = () => {
+    cameraInputRef.current.click();
+  };
+
+  const handleCameraCapture = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      loadImage(file);
+    }
+  };
+
+  const handleShare = async (imgUrl) => {
+    const shareData = {
+      title: 'My AI Hairstyle — GlamAI',
+      text: 'Check out my AI hairstyle transformation by GlamAI!',
+      url: 'https://glamai.app'
+    };
+    if (navigator.share && imgUrl) {
+      try {
+        const response = await fetch(imgUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'glamai_hairstyle.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: shareData.title, text: shareData.text });
+          return;
+        }
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') toast.error('Sharing failed. Try downloading instead.');
+      }
+    } else {
+      try { await navigator.clipboard.writeText('https://glamai.app'); toast.success('Link copied to clipboard!'); }
+      catch { toast.error('Could not copy link.'); }
+    }
+  };
+
+  const scrollToPreview = () => {
+    if (window.innerWidth <= 900 && previewPanelRef.current) {
+      setTimeout(() => {
+        previewPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
   const handleGenerate = async () => {
-    const tokenCost = selectedStyles.length * 10;
-    const isGuest = !user;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
 
     // Guest with no tokens left — ask to sign up
@@ -305,6 +379,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     // Guest: only 1 style allowed per free generation
     if (isGuest && selectedStyles.filter(s => s !== 'no_change').length > 1) {
       toast.error('Free generation allows only 1 style. Sign up to generate multiple!');
+      openPricingWithRecommendation();
       return;
     }
 
@@ -451,6 +526,9 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setProgress(100);
       setLoadingText('Generation complete!');
       toast.success("AI Hairstyle rendering finished!");
+      if (isGuest || (!isGuest && (availableTokens - tokenCost) <= 20)) {
+        setShowUpsellBox(true);
+      }
 
     } catch (err) {
       setIsGenerating(false);
@@ -480,6 +558,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     setImageFile(null);
     setResultImages([]);
     setActiveResultIndex(0);
+    setShowUpsellBox(false);
   };
 
 
@@ -618,40 +697,55 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Color Shade selection */}
           <div className="selector-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="selector-title">COLOR SHADE SELECTION</span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-pink-primary)', fontWeight: '600' }}>
-                {COLORS.find(c => c.id === selectedColor)?.name || ''}
-              </span>
-            </div>
-            <div className="pill-options-grid">
+            <span className="selector-title">COLOR SHADE SELECTION</span>
+            <div className="color-grid-4col">
               {COLORS.map(c => (
                 <button
                   type="button"
                   key={c.id}
                   title={c.name}
-                  className={`color-swatch-option ${selectedColor === c.id ? 'selected' : ''}`}
+                  className={`color-grid-item ${selectedColor === c.id ? 'selected' : ''}`}
                   aria-pressed={selectedColor === c.id}
                   aria-label={`Select color shade: ${c.name}`}
                   onClick={() => setSelectedColor(c.id)}
-                  style={{ background: c.hex }}
                 >
-                  {c.hot && (
-                    <span className="color-swatch-hot-badge">
-                      hot
-                    </span>
-                  )}
+                  {c.hot && <span className="color-grid-hot">HOT</span>}
+                  <span
+                    className="color-grid-dot"
+                    style={{ background: c.hex }}
+                  />
+                  <span className="color-grid-name">{c.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
+            <div style={{ marginBottom: '0.85rem', padding: '0.75rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,46,147,0.14)', background: 'rgba(255,46,147,0.04)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
+                  This render: {selectedStyles.length * 10}
+                </span>
+              </div>
+              {(isGuest || (user?.tokens ?? 0) < selectedStyles.length * 10) && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: '0.6rem', width: '100%', padding: '0.55rem 0.85rem', fontSize: '0.8rem' }}
+                  onClick={() => setActiveTab('pricing')}
+                >
+                  Get more credits
+                </button>
+              )}
+            </div>
             <button 
               className="btn btn-primary" 
               style={{ width: '100%', padding: '0.9rem' }}
               disabled={!image || isGenerating}
-              onClick={handleGenerate}
+              onClick={() => { handleGenerate(); scrollToPreview(); }}
             >
               <Sparkles size={18} />
               <span>Render AI Hairstyle</span>
@@ -663,7 +757,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         </div>
 
         {/* Right Side: Upload and Result Viewer */}
-        <div className="preview-panel glass-panel">
+        <div className="preview-panel glass-panel" ref={previewPanelRef}>
           {isGenerating && resultImages.length <= 1 && (
             <div className="loading-overlay">
               <div className="spinner-outer">
@@ -683,26 +777,38 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               className="dropzone"
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              onClick={triggerUpload}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerUpload(); } }}
-              aria-label="Upload photo: drag and drop a front-facing selfie here, or press enter to browse files"
+              role="presentation"
+              aria-label="Upload photo area"
             >
               <div className="dropzone-icon">
                 <Upload size={24} />
               </div>
               <h3>Upload Your Portrait</h3>
-              <p>Drag & drop a front-facing selfie here, or press enter to browse files.</p>
-              <button className="btn btn-secondary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
-                Browse Files
-              </button>
+              <p>Take a selfie or upload a front-facing photo.</p>
+              <div className="dropzone-actions">
+                <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }}>
+                  <Camera size={16} />
+                  <span>Take Photo</span>
+                </button>
+                <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
+                  <Upload size={16} />
+                  <span>Upload File</span>
+                </button>
+              </div>
               <input 
                 ref={fileInputRef}
                 type="file" 
                 className="file-input" 
                 accept="image/*"
                 onChange={handleFileChange}
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                className="file-input"
+                accept="image/*"
+                capture="user"
+                onChange={handleCameraCapture}
               />
             </div>
           ) : (
@@ -902,11 +1008,15 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                         className="btn btn-primary"
                       >
                         <Download size={16} />
-                        <span>Download HD Render</span>
+                        <span>Download HD</span>
                       </a>
+                      <button className="btn btn-secondary" onClick={() => handleShare(resultImage)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Share2 size={16} />
+                        <span>Share</span>
+                      </button>
                       <button className="btn btn-secondary" onClick={handleReset}>
                         <RefreshCw size={16} />
-                        <span>Try Another Style</span>
+                        <span>Reset</span>
                       </button>
                     </>
                   ) : (
@@ -916,6 +1026,18 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     </div>
                   )}
                 </div>
+                {showUpsellBox && (
+                  <div style={{ marginTop: '1rem', border: '1px solid rgba(255,46,147,0.2)', background: 'rgba(255,46,147,0.04)', borderRadius: '14px', padding: '0.9rem' }}>
+                    <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '0.65rem', lineHeight: 1.5 }}>
+                      {isGuest
+                        ? 'Like your result? Unlock multi-style batches, HD exports, and faster generation.'
+                        : 'Keep creating without interruptions. Upgrade now to avoid running out of credits.'}
+                    </p>
+                    <button className="btn btn-primary" style={{ width: '100%', padding: '0.7rem 0.9rem' }} onClick={openPricingWithRecommendation}>
+                      View recommended plan
+                    </button>
+                  </div>
+                )}
               </div>
             )
           )}

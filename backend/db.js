@@ -70,6 +70,25 @@ async function initDb() {
         id TEXT PRIMARY KEY,
         processed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id BIGSERIAL PRIMARY KEY,
+        event TEXT NOT NULL,
+        properties JSONB NOT NULL DEFAULT '{}'::jsonb,
+        path TEXT,
+        ip TEXT,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at
+      ON analytics_events (created_at DESC);
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_analytics_events_event_created_at
+      ON analytics_events (event, created_at DESC);
     `);
 
     // Migrate users table

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Coins, ShieldCheck, Sparkles, AlertCircle, HelpCircle, ChevronDown, ChevronUp, Star } from 'lucide-react';
 import { t } from '../utils/i18n';
+import { trackEvent } from '../utils/analytics';
 
 const PLANS = {
   subscription: [
@@ -120,8 +121,17 @@ const PLANS = {
 export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const [billingPeriod, setBillingPeriod] = useState('subscription');
   const [openFaq, setOpenFaq] = useState(null);
+  const monthlyPlan = PLANS.subscription.find((p) => p.id === 'monthly-vip');
+  const [recommendedPlanId, setRecommendedPlanId] = useState(null);
 
   const handleBuyClick = (plan) => {
+    trackEvent('upgrade_start', {
+      source: 'pricing_cta',
+      planId: plan.id,
+      billingPeriod: plan.billingPeriod,
+      recommended: recommendedPlanId === plan.id,
+      isGuest: !user,
+    });
     if (!user) {
       onOpenAuth();
     } else {
@@ -133,6 +143,21 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
     setOpenFaq(openFaq === index ? null : index);
   };
 
+  const parsePrice = (price) => Number(String(price).replace(/[^0-9.]/g, '')) || 0;
+  const getEquivalentMonthly = (plan) => {
+    const price = parsePrice(plan.price);
+    if (plan.billingPeriod === 'yearly') return (price / 12).toFixed(2);
+    if (plan.billingPeriod === 'weekly') return (price * 4).toFixed(2);
+    return price.toFixed(2);
+  };
+  const getSavingsVsMonthly = (plan) => {
+    if (plan.billingPeriod !== 'yearly' || !monthlyPlan) return null;
+    const yearlyPrice = parsePrice(plan.price);
+    const monthlyYearCost = parsePrice(monthlyPlan.price) * 12;
+    const saved = Math.max(0, monthlyYearCost - yearlyPrice);
+    return Math.round(saved);
+  };
+
   const activePlans = PLANS[billingPeriod];
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
@@ -141,6 +166,18 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
+
+  useEffect(() => {
+    const fromSession = window.localStorage.getItem('glamai_recommended_plan');
+    if (fromSession) {
+      setRecommendedPlanId(fromSession);
+      return;
+    }
+    const credits = user?.tokens ?? 0;
+    if (credits <= 30) setRecommendedPlanId('pro-onetime');
+    else if (credits <= 100) setRecommendedPlanId('ultra-onetime');
+    else setRecommendedPlanId('monthly-vip');
+  }, [user]);
 
   return (
     <div style={{ background: 'var(--bg-primary)', padding: '5rem 0 6rem' }}>
@@ -156,6 +193,11 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
         <p className="pricing-subtitle" style={{ maxWidth: '600px', margin: '0 auto 3rem', color: 'var(--text-secondary)' }}>
           {t('pricing.subtitle')}
         </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <span style={{ background: 'rgba(255,46,147,0.08)', border: '1px solid rgba(255,46,147,0.15)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-pink-primary)' }}>Cancel anytime</span>
+          <span style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#059669' }}>No hidden fees</span>
+          <span style={{ background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>Instant access after payment</span>
+        </div>
 
         {/* Tab Switcher */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3.5rem' }}>
@@ -224,7 +266,9 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
             gap: '2rem',
           }}
         >
-          {activePlans.map((plan) => (
+          {activePlans.map((plan) => {
+            const isRecommended = recommendedPlanId === plan.id;
+            return (
             <div 
               key={plan.id}
               className={`pricing-card glass-panel ${plan.highlighted ? 'featured' : ''}`}
@@ -232,8 +276,8 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 padding: isMobile ? '2.5rem 1.5rem 2rem' : '3.5rem 2.25rem 3rem',
                 borderRadius: '24px',
                 position: 'relative',
-                border: plan.highlighted ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.12)',
-                boxShadow: plan.highlighted ? '0 16px 40px rgba(255, 46, 147, 0.12)' : 'var(--glass-shadow)',
+                border: isRecommended ? '2px solid #10b981' : (plan.highlighted ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.12)'),
+                boxShadow: isRecommended ? '0 16px 40px rgba(16,185,129,0.16)' : (plan.highlighted ? '0 16px 40px rgba(255, 46, 147, 0.12)' : 'var(--glass-shadow)'),
                 background: plan.highlighted ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.04) 0%, rgba(255, 255, 255, 0.98) 100%)' : 'rgba(255, 255, 255, 0.8)',
                 ...(isMobile ? {
                   flex: '0 0 85vw',
@@ -242,6 +286,11 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 } : {})
               }}
             >
+              {isRecommended && (
+                <div style={{ position: 'absolute', top: '-14px', right: '14px', background: '#10b981', color: '#fff', padding: '0.3rem 0.65rem', borderRadius: '9999px', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  Recommended
+                </div>
+              )}
               {plan.badge && (
                 <div className="featured-badge" style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: plan.highlighted ? 'var(--gradient-pink-purple)' : 'rgba(255, 46, 147, 0.12)', color: plan.highlighted ? '#fff' : 'var(--color-pink-primary)', boxShadow: plan.highlighted ? '0 4px 10px var(--color-pink-glow)' : 'none', padding: '0.4rem 1.25rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {plan.badge}
@@ -260,6 +309,12 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                   {plan.billingPeriod === 'one-time' ? '' : `/${plan.billingPeriod}`}
                 </span>
               </div>
+              {plan.billingPeriod !== 'one-time' && (
+                <p style={{ margin: '-0.75rem 0 1.2rem', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  Equals ~${getEquivalentMonthly(plan)}/month
+                  {getSavingsVsMonthly(plan) ? ` • Save about $${getSavingsVsMonthly(plan)}/year` : ''}
+                </p>
+              )}
 
               {/* Credits Callout Box */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: plan.highlighted ? 'rgba(255, 46, 147, 0.06)' : 'rgba(0,0,0,0.02)', padding: '0.85rem 1.25rem', borderRadius: '16px', width: '100%', marginBottom: '2.25rem' }}>
@@ -286,13 +341,25 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
 
               <button 
                 className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => handleBuyClick(plan)}
+                onClick={() => {
+                  if (isRecommended) {
+                    trackEvent('recommended_plan_click', {
+                      source: 'pricing_recommended_card',
+                      planId: plan.id,
+                      billingPeriod: plan.billingPeriod,
+                    });
+                  }
+                  handleBuyClick(plan);
+                }}
                 style={{ width: '100%', padding: '0.9rem 0' }}
               >
-                {t('pricing.getStarted')}
+                {isRecommended ? 'Start with this plan' : t('pricing.getStarted')}
               </button>
+              <p style={{ marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Secure checkout. Start in under 30 seconds.
+              </p>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Feature Comparison Table */}

@@ -10,10 +10,17 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
   const [filterType, setFilterType] = useState('all');
   const [referralData, setReferralData] = useState({ referralCode: '', referralsCount: 0, referrals: [] });
   const [copied, setCopied] = useState(false);
+  const [analytics, setAnalytics] = useState({
+    loading: true,
+    summary: null,
+    winners: null,
+    error: null,
+  });
 
   useEffect(() => {
     fetchHistory();
     fetchReferrals();
+    fetchAnalytics();
   }, [filterType]);
 
   const fetchHistory = async () => {
@@ -39,6 +46,26 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
         setReferralData(data);
       }
     } catch (err) {}
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      setAnalytics((prev) => ({ ...prev, loading: true, error: null }));
+      const [summaryRes, winnersRes] = await Promise.all([
+        authFetch('/api/analytics/summary?limit=2000'),
+        authFetch('/api/analytics/top-winners?days=14&minPaywallViews=5&minRecommendedClicks=3'),
+      ]);
+
+      if (!summaryRes.ok || !winnersRes.ok) {
+        throw new Error('Failed to load analytics');
+      }
+
+      const summary = await summaryRes.json();
+      const winners = await winnersRes.json();
+      setAnalytics({ loading: false, summary, winners, error: null });
+    } catch (err) {
+      setAnalytics({ loading: false, summary: null, winners: null, error: err.message || 'Analytics unavailable' });
+    }
   };
 
   const handleCopyLink = () => {
@@ -192,6 +219,66 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Monetization Analytics</h3>
+              <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={fetchAnalytics}>
+                <RefreshCw size={14} />
+                Refresh
+              </button>
+            </div>
+
+            {analytics.loading ? (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading funnel metrics...</p>
+            ) : analytics.error ? (
+              <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>{analytics.error}</p>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Paywall Views</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.paywallView ?? 0}</div>
+                  </div>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Recommended Clicks</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.recommendedPlanClick ?? 0}</div>
+                  </div>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Upgrade Starts</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.upgradeStart ?? 0}</div>
+                  </div>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Paywall → Upgrade</div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+                      {analytics.summary?.conversion?.paywallToUpgradeStartPct ?? 0}%
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.85rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Top Source (Conversion)</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {analytics.winners?.winners?.topSourceByConversion?.source || 'n/a'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      {analytics.winners?.winners?.topSourceByConversion?.paywallToUpgradeStartPct ?? 0}% paywall to upgrade
+                    </div>
+                  </div>
+                  <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.85rem', background: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Top Plan (Conversion)</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {analytics.winners?.winners?.topPlanByConversion?.planId || 'n/a'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      {analytics.winners?.winners?.topPlanByConversion?.recommendedClickToUpgradeStartPct ?? 0}% click to upgrade
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -73,6 +73,8 @@ const PACKS = {
 };
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const ANALYTICS_MAX_EVENTS = 5000;
+const analyticsEvents = [];
 
 const app = express();
 
@@ -205,6 +207,312 @@ app.use(async (req, res, next) => {
 });
 
 app.get('/health', (_, res) => res.json({ ok: true }));
+
+app.post('/api/analytics', async (req, res) => {
+    const event = String(req.body?.event || '').trim();
+    if (!event) {
+        return res.status(400).json({ error: 'EVENT_REQUIRED' });
+    }
+    const safePayload = {
+        event,
+        properties: req.body?.properties && typeof req.body.properties === 'object' ? req.body.properties : {},
+        timestamp: req.body?.timestamp || new Date().toISOString(),
+        path: req.body?.path || '',
+        ip:
+            req.headers['x-forwarded-for']?.split(',')[0]?.trim?.() ||
+            req.socket.remoteAddress ||
+            'unknown',
+    };
+
+    analyticsEvents.push(safePayload);
+    if (analyticsEvents.length > ANALYTICS_MAX_EVENTS) {
+        analyticsEvents.splice(0, analyticsEvents.length - ANALYTICS_MAX_EVENTS);
+    }
+
+    try {
+        await db.query(
+            `INSERT INTO analytics_events (event, properties, path, ip, user_id, created_at)
+             VALUES ($1, $2::jsonb, $3, $4, $5, $6::timestamptz)`,
+            [
+                safePayload.event,
+                JSON.stringify(safePayload.properties || {}),
+                safePayload.path || null,
+                safePayload.ip || null,
+                req.userFromCookie?.id || null,
+                safePayload.timestamp || new Date().toISOString(),
+            ]
+        );
+    } catch (err) {
+        console.warn('[analytics] failed to persist event:', err.message);
+    }
+
+    // Lightweight first-party analytics logging for CRO iteration.
+    console.log('[analytics]', JSON.stringify(safePayload));
+    return res.status(204).end();
+});
+
+app.get('/api/analytics/summary', async (req, res) => {
+    const limit = Math.min(Math.max(Number(req.query.limit || 1000), 1), ANALYTICS_MAX_EVENTS);
+    let recent = analyticsEvents.slice(-limit);
+    let counts = recent.reduce((acc, item) => {
+        acc[item.event] = (acc[item.event] || 0) + 1;
+        return acc;
+    }, {});
+    let lastEventAt = recent.length ? recent[recent.length - 1].timestamp : null;
+
+    try {
+        const rowsRes = await db.query(
+            `WITH recent AS (
+                SELECT event, created_at
+                FROM analytics_events
+                ORDER BY created_at DESC
+                LIMIT $1
+            )
+            SELECT event, COUNT(*)::int AS count
+            FROM recent
+            GROUP BY event`,
+            [limit]
+        );
+        const metaRes = await db.query(
+            `WITH recent AS (
+                SELECT created_at
+                FROM analytics_events
+                ORDER BY created_at DESC
+                LIMIT $1
+            )
+            SELECT COUNT(*)::int AS total, MAX(created_at) AS last_event_at
+            FROM recent`,
+            [limit]
+        );
+
+        counts = rowsRes.rows.reduce((acc, row) => {
+            acc[row.event] = row.count;
+            return acc;
+        }, {});
+        const total = metaRes.rows[0]?.total ?? 0;
+        lastEventAt = metaRes.rows[0]?.last_event_at || null;
+        recent = new Array(total);
+    } catch (err) {
+        console.warn('[analytics] summary DB query failed, using in-memory fallback:', err.message);
+    }
+
+    const funnel = {
+        paywallView: counts.paywall_view || 0,
+        recommendedPlanClick: counts.recommended_plan_click || 0,
+        upgradeStart: counts.upgrade_start || 0,
+    };
+
+    const toPercent = (numerator, denominator) =>
+        denominator > 0 ? Number(((numerator / denominator) * 100).toFixed(2)) : 0;
+
+    res.json({
+        windowSize: recent.length,
+        counts,
+        funnel,
+        conversion: {
+            paywallToRecommendedClickPct: toPercent(funnel.recommendedPlanClick, funnel.paywallView),
+            paywallToUpgradeStartPct: toPercent(funnel.upgradeStart, funnel.paywallView),
+            recommendedClickToUpgradeStartPct: toPercent(funnel.upgradeStart, funnel.recommendedPlanClick),
+        },
+        lastEventAt,
+    });
+});
+
+app.get('/api/analytics/breakdown', async (req, res) => {
+    const days = Math.min(Math.max(Number(req.query.days || 14), 1), 90);
+    const sinceExpr = `NOW() - ($1::int || ' days')::interval`;
+
+    try {
+        const dailyRes = await db.query(
+            `SELECT
+                DATE_TRUNC('day', created_at) AS day,
+                event,
+                COUNT(*)::int AS count
+             FROM analytics_events
+             WHERE created_at >= ${sinceExpr}
+             GROUP BY 1, 2
+             ORDER BY 1 DESC, 2 ASC`,
+            [days]
+        );
+
+        const sourceRes = await db.query(
+            `SELECT
+                COALESCE(NULLIF(properties->>'source', ''), 'unknown') AS source,
+                event,
+                COUNT(*)::int AS count
+             FROM analytics_events
+             WHERE created_at >= ${sinceExpr}
+             GROUP BY 1, 2
+             ORDER BY count DESC
+             LIMIT 200`,
+            [days]
+        );
+
+        const planRes = await db.query(
+            `SELECT
+                COALESCE(NULLIF(properties->>'planId', ''), 'unknown') AS plan_id,
+                event,
+                COUNT(*)::int AS count
+             FROM analytics_events
+             WHERE created_at >= ${sinceExpr}
+             GROUP BY 1, 2
+             ORDER BY count DESC
+             LIMIT 200`,
+            [days]
+        );
+
+        const funnelRes = await db.query(
+            `SELECT
+                COALESCE(NULLIF(properties->>'source', ''), 'unknown') AS source,
+                SUM(CASE WHEN event = 'paywall_view' THEN 1 ELSE 0 END)::int AS paywall_view,
+                SUM(CASE WHEN event = 'recommended_plan_click' THEN 1 ELSE 0 END)::int AS recommended_plan_click,
+                SUM(CASE WHEN event = 'upgrade_start' THEN 1 ELSE 0 END)::int AS upgrade_start
+             FROM analytics_events
+             WHERE created_at >= ${sinceExpr}
+             GROUP BY 1
+             ORDER BY paywall_view DESC, recommended_plan_click DESC`,
+            [days]
+        );
+
+        const toPct = (n, d) => (d > 0 ? Number(((n / d) * 100).toFixed(2)) : 0);
+        const funnelBySource = funnelRes.rows.map((row) => ({
+            source: row.source,
+            paywallView: row.paywall_view,
+            recommendedPlanClick: row.recommended_plan_click,
+            upgradeStart: row.upgrade_start,
+            paywallToRecommendedClickPct: toPct(row.recommended_plan_click, row.paywall_view),
+            paywallToUpgradeStartPct: toPct(row.upgrade_start, row.paywall_view),
+            recommendedClickToUpgradeStartPct: toPct(row.upgrade_start, row.recommended_plan_click),
+        }));
+
+        return res.json({
+            days,
+            daily: dailyRes.rows.map((r) => ({
+                day: r.day,
+                event: r.event,
+                count: r.count,
+            })),
+            bySource: sourceRes.rows.map((r) => ({
+                source: r.source,
+                event: r.event,
+                count: r.count,
+            })),
+            byPlan: planRes.rows.map((r) => ({
+                planId: r.plan_id,
+                event: r.event,
+                count: r.count,
+            })),
+            funnelBySource,
+        });
+    } catch (err) {
+        console.error('[analytics] breakdown query failed:', err.message);
+        return res.status(500).json({ error: 'ANALYTICS_BREAKDOWN_FAILED' });
+    }
+});
+
+app.get('/api/analytics/top-winners', async (req, res) => {
+    const days = Math.min(Math.max(Number(req.query.days || 14), 1), 90);
+    const minPaywallViews = Math.max(Number(req.query.minPaywallViews || 5), 1);
+    const minRecommendedClicks = Math.max(Number(req.query.minRecommendedClicks || 3), 1);
+    const sinceExpr = `NOW() - ($1::int || ' days')::interval`;
+
+    try {
+        const sourceFunnelRes = await db.query(
+            `WITH source_funnel AS (
+                SELECT
+                    COALESCE(NULLIF(properties->>'source', ''), 'unknown') AS source,
+                    SUM(CASE WHEN event = 'paywall_view' THEN 1 ELSE 0 END)::int AS paywall_view,
+                    SUM(CASE WHEN event = 'recommended_plan_click' THEN 1 ELSE 0 END)::int AS recommended_plan_click,
+                    SUM(CASE WHEN event = 'upgrade_start' THEN 1 ELSE 0 END)::int AS upgrade_start
+                FROM analytics_events
+                WHERE created_at >= ${sinceExpr}
+                GROUP BY 1
+            )
+            SELECT * FROM source_funnel
+            WHERE paywall_view >= $2
+            ORDER BY upgrade_start DESC, paywall_view DESC`,
+            [days, minPaywallViews]
+        );
+
+        const planUpgradeRes = await db.query(
+            `WITH plan_clicks AS (
+                SELECT
+                    COALESCE(NULLIF(properties->>'planId', ''), 'unknown') AS plan_id,
+                    COUNT(*)::int AS recommended_clicks
+                FROM analytics_events
+                WHERE created_at >= ${sinceExpr}
+                  AND event = 'recommended_plan_click'
+                GROUP BY 1
+            ),
+            plan_upgrades AS (
+                SELECT
+                    COALESCE(NULLIF(properties->>'planId', ''), 'unknown') AS plan_id,
+                    COUNT(*)::int AS upgrade_starts
+                FROM analytics_events
+                WHERE created_at >= ${sinceExpr}
+                  AND event = 'upgrade_start'
+                GROUP BY 1
+            )
+            SELECT
+                COALESCE(c.plan_id, u.plan_id) AS plan_id,
+                COALESCE(c.recommended_clicks, 0)::int AS recommended_clicks,
+                COALESCE(u.upgrade_starts, 0)::int AS upgrade_starts
+            FROM plan_clicks c
+            FULL OUTER JOIN plan_upgrades u ON c.plan_id = u.plan_id
+            WHERE COALESCE(c.recommended_clicks, 0) >= $2
+               OR COALESCE(u.upgrade_starts, 0) > 0
+            ORDER BY upgrade_starts DESC, recommended_clicks DESC`,
+            [days, minRecommendedClicks]
+        );
+
+        const toPct = (n, d) => (d > 0 ? Number(((n / d) * 100).toFixed(2)) : 0);
+
+        const sources = sourceFunnelRes.rows.map((row) => ({
+            source: row.source,
+            paywallView: row.paywall_view,
+            recommendedPlanClick: row.recommended_plan_click,
+            upgradeStart: row.upgrade_start,
+            paywallToRecommendedClickPct: toPct(row.recommended_plan_click, row.paywall_view),
+            paywallToUpgradeStartPct: toPct(row.upgrade_start, row.paywall_view),
+            recommendedClickToUpgradeStartPct: toPct(row.upgrade_start, row.recommended_plan_click),
+        }));
+
+        const plans = planUpgradeRes.rows.map((row) => ({
+            planId: row.plan_id,
+            recommendedClicks: row.recommended_clicks,
+            upgradeStarts: row.upgrade_starts,
+            recommendedClickToUpgradeStartPct: toPct(row.upgrade_starts, row.recommended_clicks),
+        }));
+
+        const topSourceByUpgradeStarts = [...sources].sort((a, b) => b.upgradeStart - a.upgradeStart)[0] || null;
+        const topSourceByConversion = [...sources]
+            .filter((s) => s.paywallView >= minPaywallViews)
+            .sort((a, b) => b.paywallToUpgradeStartPct - a.paywallToUpgradeStartPct)[0] || null;
+        const topPlanByUpgradeStarts = [...plans].sort((a, b) => b.upgradeStarts - a.upgradeStarts)[0] || null;
+        const topPlanByConversion = [...plans]
+            .filter((p) => p.recommendedClicks >= minRecommendedClicks)
+            .sort((a, b) => b.recommendedClickToUpgradeStartPct - a.recommendedClickToUpgradeStartPct)[0] || null;
+
+        return res.json({
+            days,
+            thresholds: {
+                minPaywallViews,
+                minRecommendedClicks,
+            },
+            winners: {
+                topSourceByUpgradeStarts,
+                topSourceByConversion,
+                topPlanByUpgradeStarts,
+                topPlanByConversion,
+            },
+            sources,
+            plans,
+        });
+    } catch (err) {
+        console.error('[analytics] top-winners query failed:', err.message);
+        return res.status(500).json({ error: 'ANALYTICS_TOP_WINNERS_FAILED' });
+    }
+});
 
 const sendPublicConfig = async (req, res) => {
     const ip =
