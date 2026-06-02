@@ -13,7 +13,8 @@ const auth = require('./auth');
 const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
-const upload = multer({ dest: path.join(__dirname, 'uploads') });
+const uploadsDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'uploads');
+const upload = multer({ dest: uploadsDir });
 
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/+$/, '');
 const GUEST_TRIALS_ALLOWED = Number(process.env.GUEST_FREE_TRIALS ?? '1');
@@ -739,8 +740,10 @@ app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
-const uploadsDir = path.join(__dirname, 'uploads');
-fs.mkdirSync(uploadsDir, { recursive: true });
+if (!process.env.VERCEL) {
+    const localUploadsDir = path.join(__dirname, 'uploads');
+    fs.mkdirSync(localUploadsDir, { recursive: true });
+}
 
 const PORT = process.env.PORT || 3000;
 
