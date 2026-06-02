@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { useAuth, useUser, useClerk } from '@clerk/react';
 import { authFetch } from './apiClient';
 import Navbar from './components/Navbar';
@@ -69,11 +69,8 @@ export default function App() {
     const titles = {
       playground: 'GlamAI — AI Hairstyle Changer & Virtual Hair Styler Online',
       makeup: 'GlamAI — AI Makeup Salon & Virtual Try-On Online',
-      beard: 'GlamAI — AI Beard Styler & Virtual Facial Hair Try-On',
       nails: 'GlamAI — AI Nails Studio & Virtual Nail Art Try-On',
-      retouch: 'GlamAI — AI Beauty Retouch & Face Enhancer Online',
-      analysis: 'GlamAI — AI Face Analyzer & Shape Detector',
-      trending: 'GlamAI — Trending Hairstyle Feed & Transformations',
+      trending: 'GlamAI — Trending Beauty Feed & Transformations',
       pricing: 'GlamAI Pricing — Simple & Transparent Plans',
       blog: 'GlamAI Magazine — Hairstyle Tips, Trends & Expert Advice',
       dashboard: 'GlamAI — User Dashboard',
@@ -225,13 +222,13 @@ export default function App() {
   };
 
   // Effective user object passed to components (real user or guest with tokens)
-  const effectiveUser = user || { 
+  const effectiveUser = useMemo(() => user || { 
     isGuest: true, 
     tokens: guestTokens, 
     email: 'guest',
     subscriptionTier: 'free',
     subscriptionStatus: 'inactive'
-  };
+  }, [user, guestTokens]);
 
   // 5. Payment completed (syncs state; actual increment happens via Stripe webhook/backend)
   const handlePaymentSuccess = (newTokens) => {

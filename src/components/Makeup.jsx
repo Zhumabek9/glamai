@@ -23,7 +23,7 @@ const MAKEUP_PRESETS = [
 const QUICK_PRESETS = [
   { id: 'office', name: 'Office Chic', icon: '💼', preset: 'clean-girl' },
   { id: 'date', name: 'Date Night', icon: '💅', preset: 'soft-glam' },
-  { id: 'bold', name: 'Bold & Bright', icon: '🔥', preset: 'siren-eyes' },
+  { id: 'bold', name: 'Bold & Bright', icon: '💋', preset: 'siren-eyes' },
   { id: 'natural', name: 'Natural Glow', icon: '🌸', preset: 'bronze' },
 ];
 
@@ -322,7 +322,25 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
 
           {/* QUICK PRESETS */}
           <div className="selector-group">
-            <span className="selector-title">⚡ QUICK PRESETS</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span className="selector-title" style={{ marginBottom: 0 }}>⚡ QUICK PRESETS</span>
+              <button
+                type="button"
+                title="Random preset"
+                onClick={() => {
+                  const random = MAKEUP_PRESETS[Math.floor(Math.random() * MAKEUP_PRESETS.length)];
+                  setSelectedPreset(random.id);
+                  setActiveQuickPreset(null);
+                  toast.success(`🎲 Random: ${random.name}`);
+                  scrollToPreview();
+                }}
+                style={{ background: 'rgba(255,46,147,0.1)', border: '1px solid rgba(255,46,147,0.25)', borderRadius: '8px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,46,147,0.2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,46,147,0.1)'}
+              >
+                🎲 Random
+              </button>
+            </div>
             <div className="smart-presets-row">
               {QUICK_PRESETS.map(qp => (
                 <button

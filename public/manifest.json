@@ -1,16 +1,20 @@
 {
-  "name": "GlamAI — AI Beauty & Hairstyle Studio",
+  "name": "GlamAI — AI Beauty Studio",
   "short_name": "GlamAI",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#fcf6fa",
   "theme_color": "#ff2e93",
-  "description": "Try on 100+ hairstyles, makeup, beard styles & nail designs on your photo with AI.",
+  "description": "Try 100+ hairstyles, makeup looks, and nail art styles on your own photo with AI.",
+  "categories": ["beauty", "lifestyle", "photo"],
+  "lang": "en",
   "icons": [
     {
       "src": "/favicon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

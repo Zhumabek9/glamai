@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen } from 'lucide-react';
+import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen, Paintbrush, Gem } from 'lucide-react';
 import { t } from '../utils/i18n';
 
 export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
@@ -259,14 +259,14 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
           className={`dock-item ${activeTab === 'makeup' ? 'active' : ''}`}
           onClick={() => navigate('makeup')}
         >
-          <Sparkle size={20} />
+          <Paintbrush size={20} />
           <span>Makeup</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'nails' ? 'active' : ''}`}
           onClick={() => navigate('nails')}
         >
-          <Sparkles size={20} />
+          <Gem size={20} />
           <span>Nails</span>
         </button>
         <button 
@@ -278,10 +278,10 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         </button>
         <button 
           className={`dock-item ${activeTab === 'dashboard' || activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => navigate(user ? 'dashboard' : 'pricing')}
+          onClick={() => user ? navigate('dashboard') : onOpenAuth()}
         >
-          {user ? <User size={20} /> : <CreditCard size={20} />}
-          <span>{user ? 'Me' : 'VIP'}</span>
+          {user ? <User size={20} /> : <LogIn size={20} />}
+          <span>{user ? 'Profile' : 'Sign In'}</span>
         </button>
       </div>
     </>

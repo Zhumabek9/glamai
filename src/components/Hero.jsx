@@ -252,7 +252,7 @@ export default function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.simpleProcess')}</span>
             <h2>{t('howItWorks.title')}</h2>
-            <p>Zero salon regrets, zero waste. Preview your perfect hair, makeup, beard, and nail styles instantly.</p>
+            <p>Zero salon regrets, zero waste. Preview your perfect hair, makeup, and nail styles instantly.</p>
           </div>
 
           <div className="process-timeline">
@@ -300,7 +300,7 @@ export default function Hero({
         <div className="container">
           <div className="section-header">
             <span className="section-badge">💬 Real Stories</span>
-            <h2>Loved by over 50,000+ Users</h2>
+            <h2>Loved by over 52,000+ Users</h2>
             <p>Read how GlamAI helped users discover their signature look and prevent costly salon disasters.</p>
           </div>
 
@@ -320,7 +320,7 @@ export default function Hero({
                 avatar: '🧔',
                 bg: 'linear-gradient(135deg,#3b82f6,#06b6d4)',
                 text: 'Finally found the perfect fade style without spending $50 on a cut I might hate. The AI results looked super realistic.',
-                stars: 5
+                stars: 4
               },
               {
                 name: 'Aisha K.',
@@ -344,7 +344,7 @@ export default function Hero({
                 avatar: '🧑🏽',
                 bg: 'linear-gradient(135deg,#10b981,#3b82f6)',
                 text: 'Showed the results to my barber and he was impressed. Using GlamAI before every appointment now — saves so much time explaining.',
-                stars: 5
+                stars: 4
               },
               {
                 name: 'Lena P.',
@@ -457,7 +457,7 @@ export default function Hero({
                 <div 
                   key={index}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--bg-surface, #ffffff)',
                     border: '1px solid rgba(255, 46, 147, 0.08)',
                     borderRadius: '16px',
                     overflow: 'hidden',

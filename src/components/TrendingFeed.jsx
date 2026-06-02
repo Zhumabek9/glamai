@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Compass, Sparkles, Flame, Eye, Share2, TrendingUp } from 'lucide-react';
+import { useToast } from './Toast';
 
 const TRENDING_POSTS = [
   {
@@ -10,9 +11,9 @@ const TRENDING_POSTS = [
     targetTab: 'playground',
     presetId: 'wavy',
     category: '✂️ Hair',
-    beforeImg: '/trending_hair.png',
+    beforeImg: '/trending_hair_before.png',
     afterImg: '/trending_hair.png',
-    isSingleImage: true,
+    isSingleImage: false,
   },
   {
     id: 2,
@@ -22,9 +23,9 @@ const TRENDING_POSTS = [
     targetTab: 'makeup',
     presetId: 'clean-girl',
     category: '💄 Makeup',
-    beforeImg: '/trending_makeup.png',
+    beforeImg: '/trending_makeup_before.png',
     afterImg: '/trending_makeup.png',
-    isSingleImage: true,
+    isSingleImage: false,
   },
   {
     id: 3,
@@ -34,9 +35,9 @@ const TRENDING_POSTS = [
     targetTab: 'playground',
     presetId: 'pixie-cut',
     category: '✂️ Hair',
-    beforeImg: '/trending_pixie.png',
+    beforeImg: '/trending_pixie_before.png',
     afterImg: '/trending_pixie.png',
-    isSingleImage: true,
+    isSingleImage: false,
   },
   {
     id: 4,
@@ -46,9 +47,9 @@ const TRENDING_POSTS = [
     targetTab: 'nails',
     presetId: 'acrylic',
     category: '💅 Nails',
-    beforeImg: '/trending_nails.png',
+    beforeImg: '/trending_nails_before.png',
     afterImg: '/trending_nails.png',
-    isSingleImage: true,
+    isSingleImage: false,
   },
   {
     id: 5,
@@ -71,7 +72,7 @@ const TRENDING_POSTS = [
     presetId: 'siren-eyes',
     category: '💄 Makeup',
     beforeImg: '/styles/female_straight.webp',
-    afterImg: '/styles/makeup_matte.png',
+    afterImg: '/styles/makeup_siren_eyes.png',
     isSingleImage: false,
   },
 ];
@@ -86,6 +87,7 @@ const ACTION_GIFS = [
 ];
 
 export default function TrendingFeed({ setActiveTab }) {
+  const toast = useToast();
   return (
     <div style={{ background: 'var(--bg-primary)', padding: '2rem 0 6rem' }}>
       <div className="container animate-fade-in" style={{ maxWidth: '1100px' }}>
@@ -98,7 +100,7 @@ export default function TrendingFeed({ setActiveTab }) {
             <span className="gradient-text">Trending Beauty</span> Feed
           </h1>
           <p className="landing-subtitle">
-            Explore viral AI transformations blowing up on TikTok and Instagram. See real side-by-side community creations and try on your favorite looks with a single tap.
+            Discover AI-powered beauty transformations from our community. Drag the slider to see real before &amp; after results and try your favourite look instantly.
           </p>
           <div className="landing-stats">
             <div className="stat-badge"><Flame size={14} color="var(--color-pink-primary)" style={{ fill: 'currentColor' }} /> <span>15,000+ Daily Creations</span></div>
@@ -163,8 +165,8 @@ export default function TrendingFeed({ setActiveTab }) {
                     style={{ flex: 1, padding: '0.6rem 0', fontSize: '0.8rem' }}
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.origin + '?try=' + post.presetId)
-                        .then(() => alert('Link to try this look copied!'))
-                        .catch(() => {});
+                        .then(() => toast.success('Link copied! Share it with friends ✓'))
+                        .catch(() => toast.error('Could not copy link'));
                     }}
                   >
                     <Share2 size={13} />
@@ -225,7 +227,7 @@ export default function TrendingFeed({ setActiveTab }) {
           <div style={{ fontSize: '1.8rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.75rem' }}>
             Start Your Transformation Today
           </div>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Join 15,000+ users discovering their best look with GlamAI.</p>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Join 52,000+ users discovering their best look with GlamAI.</p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-primary" onClick={() => setActiveTab('playground')} style={{ padding: '0.8rem 1.5rem' }}>✂️ Try Hair Styles</button>
             <button className="btn btn-secondary" onClick={() => setActiveTab('makeup')} style={{ padding: '0.8rem 1.5rem' }}>💄 Try Makeup</button>

@@ -95,7 +95,7 @@ export default function Footer({ setActiveTab }) {
               maxWidth: '280px',
               margin: '0 0 1.5rem',
             }}>
-              Try 100+ hairstyles and 20+ hair colors on your own photo with AI. Photorealistic results in seconds — free to start.
+              Try 100+ hairstyles, makeup looks, and nail art styles on your own photo with AI. Photorealistic results in seconds — free to start.
             </p>
             {/* Social icons */}
             <div style={{ display: 'flex', gap: '0.6rem' }}>
