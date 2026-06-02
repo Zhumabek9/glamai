@@ -58,3 +58,5 @@ scratch/
 backend/test-*.js
 backend/test-*.cjs
 backend/test_*.png
+
+.vercel
