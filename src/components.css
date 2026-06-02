@@ -3266,21 +3266,27 @@
   }
 
   .style-cards-grid {
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 120px;
-    max-height: calc(3 * 120px + 2 * 0.6rem);
-    overflow-y: auto;
-    overflow-x: hidden;
-    gap: 0.6rem;
-    padding-bottom: 0;
-    padding-right: 0.25rem;
-    align-content: start;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-auto-rows: 125px !important;
+    max-height: calc(4 * 125px + 3 * 0.6rem) !important; /* 3x4 grid visible on mobile screen */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    gap: 0.6rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-right: 0.25rem !important;
+    align-content: start !important;
   }
 
   .style-card-footer {
-    font-size: 0.65rem;
-    padding: 0.25rem 0.15rem;
-    min-height: 26px;
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.15rem !important;
+    min-height: 32px !important; /* Increased height for readable labels */
+    white-space: normal !important; /* Allow name wrapping */
+    line-height: 1.15 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
   }
 
   .dropzone-actions {
