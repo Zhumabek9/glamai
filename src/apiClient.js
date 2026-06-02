@@ -22,7 +22,7 @@ export async function getAuthHeaders() {
 }
 
 /**
- * Authenticated fetch — wraps fetch() with Firebase Bearer token.
+ * Authenticated fetch — wraps fetch() with Clerk Bearer token.
  */
 export async function authFetch(url, options = {}) {
   const authHeaders = await getAuthHeaders();

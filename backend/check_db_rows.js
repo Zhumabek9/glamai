@@ -10,9 +10,13 @@ async function main() {
   });
   
   try {
-    const res = await pool.query('SELECT * FROM generations ORDER BY id DESC LIMIT 10');
+    const resGen = await pool.query('SELECT * FROM generations ORDER BY id DESC LIMIT 10');
     console.log("Last 10 generations:");
-    console.log(JSON.stringify(res.rows, null, 2));
+    console.log(JSON.stringify(resGen.rows, null, 2));
+
+    const resUsers = await pool.query('SELECT id, email, credits, created_at FROM users ORDER BY id DESC LIMIT 10');
+    console.log("Last 10 users:");
+    console.log(JSON.stringify(resUsers.rows, null, 2));
   } catch (err) {
     console.error("Database query failed:", err);
   } finally {
