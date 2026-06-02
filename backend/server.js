@@ -76,6 +76,14 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 
 const app = express();
 
+// Ensure all API calls have /api prefix (Vercel strips it in experimentalServices)
+app.use((req, res, next) => {
+    if (!req.url.startsWith('/api') && req.url !== '/health' && !req.url.startsWith('/assets') && !req.url.startsWith('/favicon') && !req.url.startsWith('/og-image')) {
+        req.url = '/api' + req.url;
+    }
+    next();
+});
+
 if (process.env.TRUST_PROXY === '1') {
     app.set('trust proxy', 1);
 }
