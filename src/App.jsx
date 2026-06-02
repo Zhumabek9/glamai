@@ -28,7 +28,7 @@ const TermsOfService = lazy(() => import('./components/TermsOfService'));
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
   const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openSignIn } = useClerk();
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
@@ -49,6 +49,20 @@ export default function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+
+  const handleOpenAuth = () => {
+    if (openSignIn) {
+      openSignIn({
+        appearance: {
+          variables: {
+            colorPrimary: '#ff2e93',
+          }
+        }
+      });
+    } else {
+      setIsAuthOpen(true);
+    }
+  };
 
   const navigateToTab = (tab) => {
     setActiveTab(tab);
@@ -307,7 +321,7 @@ export default function App() {
           user={user}
           guestTokens={guestTokens}
           onLogout={handleLogout}
-          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenAuth={handleOpenAuth}
         />
 
         <main style={{ flex: 1 }}>
@@ -323,7 +337,7 @@ export default function App() {
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
                 playgroundRef={playgroundRef}
@@ -335,7 +349,7 @@ export default function App() {
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
               />
@@ -346,7 +360,7 @@ export default function App() {
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
               />
@@ -357,7 +371,7 @@ export default function App() {
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
               />
@@ -368,7 +382,7 @@ export default function App() {
                 user={effectiveUser}
                 guestTokens={guestTokens}
                 onDeductToken={user ? handleDeductToken : handleGuestDeductToken}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
               />
@@ -377,7 +391,7 @@ export default function App() {
             {activeTab === 'analysis' && (
               <FaceAnalysis
                 user={effectiveUser}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
                 setActiveTab={navigateToTab}
               />
             )}
@@ -408,7 +422,7 @@ export default function App() {
               <Pricing
                 user={effectiveUser}
                 onSelectPlan={handleSelectPlan}
-                onOpenAuth={() => setIsAuthOpen(true)}
+                onOpenAuth={handleOpenAuth}
               />
             )}
 
