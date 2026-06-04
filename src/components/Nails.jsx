@@ -80,6 +80,8 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const previewPanelRef = useRef(null);
   const sliderRef = useRef(null);
 
+  const isGuest = !user || user.isGuest;
+
   useEffect(() => {
     if (!sliderRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -336,7 +338,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       </div>
 
       <div className="playground-grid">
-        {/* Right Side: Customizer Controls */}
+        {/* Left Side: Customizer Controls */}
         <div className="control-panel glass-panel">
           <div className="desktop-playground-header">
             <h2 className="section-title">
@@ -346,173 +348,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Pick a quick preset or customize your nail look.
             </p>
-    
-        {/* Left Side: Upload and Result Viewer */}
-        <div className="preview-panel glass-panel" ref={previewPanelRef}>
-          <div className="preview-header">
-            <span className="preview-title-uppercase">YOUR NEW AI GENERATED NAILS</span>
           </div>
-
-          {isGenerating && (
-            <div className="loading-overlay">
-              <div className="spinner-outer">
-                <div className="spinner-inner"></div>
-              </div>
-              <div className="progress-track">
-                <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-              </div>
-              <span className="loading-text">{loadingText}</span>
-              <span className="loading-subtext">{progress}% • ~{etaRemaining}s remaining</span>
-            </div>
-          )}
-
-          {/* Comparison / Main Viewer Block */}
-          <div className="preview-viewer-area">
-            {!image ? (
-              /* Demo State: comparison slider using public nails images */
-              <div className="demo-comparison-wrapper">
-                <SliderComparison
-                  beforeSrc="/trending_nails_before.png"
-                  afterSrc="/trending_nails.png"
-                  title="Demo Nails"
-                  hideActions={true}
-                />
-              </div>
-            ) : resultImage ? (
-              <div style={{ width: '100%' }}>
-                <SliderComparison
-                  beforeSrc={image}
-                  afterSrc={resultImage}
-                  title={selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nails'}
-                  onShare={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name || 'Nail Art' : 'Nail Art' })}
-                  onDownload={() => {}}
-                  hideActions={false}
-                />
-
-                {/* Feedback */}
-                {!feedbackSubmitted && (
-                  <div className="feedback-panel">
-                    <span className="feedback-title">Did you like the result?</span>
-                    <div className="feedback-buttons">
-                      <button onClick={() => { setFeedback('like'); setFeedbackSubmitted(true); toast.success('Thank you! 💅'); }} className="feedback-btn positive">👍 Yes</button>
-                      <button onClick={() => { setFeedback('dislike'); setFeedbackSubmitted(true); toast.success('Thanks for helping us improve!'); }} className="feedback-btn negative">👎 No</button>
-                    </div>
-                  </div>
-                )}
-                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">Thank you for your feedback! ✨</span></div>}
-
-                {/* Additional Actions */}
-                <div className="preview-controls-row">
-                  <button
-                    className="btn btn-secondary"
-                    style={{ color: (currentResultId && isFavorite(currentResultId)) ? '#ff2e93' : undefined }}
-                    onClick={() => {
-                      if (!currentResultId) return;
-                      if (isFavorite(currentResultId)) {
-                        removeFavorite(currentResultId);
-                        toast.success('Removed from favourites');
-                      } else {
-                        addFavorite({ 
-                          id: currentResultId, 
-                          result: resultImage, 
-                          style: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nail Art', 
-                          category: '💅 Nails', 
-                          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
-                        });
-                        toast.success('Saved to favourites ❤️');
-                      }
-                    }}
-                  >
-                    <Heart size={15} /><span>Save Favourite</span>
-                  </button>
-                  <button className="btn btn-secondary" onClick={handleReset}>
-                    <RefreshCw size={15} /><span>Try Another Style</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                <div className="preview-container" style={{ maxWidth: '450px', width: '100%', margin: '0 auto' }}>
-                  <img src={image} alt="Nails Preview" style={{ width: '100%', display: 'block', borderRadius: '12px' }} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Upload dropzone (rendered below comparison image) */}
-          {!image ? (
-            <div 
-              className="dropzone-modern"
-              onClick={triggerUpload}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="dropzone-icon">
-                <Upload size={28} />
-              </div>
-              <h3>Upload a Photo of Your Hand</h3>
-              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
-              <p className="dropzone-hint">Drag & drop or click to upload</p>
-              
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
-            </div>
-          ) : (
-            !isGenerating && (
-              <div className="upload-actions-bar">
-                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
-                  <Camera size={14} />
-                  <span>Take Photo</span>
-                </button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
-                  <Upload size={14} />
-                  <span>Upload File</span>
-                </button>
-                <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
-                  <span>Delete Photo</span>
-                </button>
-                
-                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
-              </div>
-            )
-          )}
-
-          {/* Generate Button (positioned under upload dropzone) */}
-          {!resultImage && (
-            <div className="generate-action-box">
-              <button 
-                className="btn btn-primary generate-btn-large" 
-                disabled={!image || isGenerating}
-                onClick={() => { handleGenerate(); }}
-              >
-                <Sparkles size={18} />
-                <span>Apply AI Nails</span>
-                <span className="generate-btn-cost">
-                  (-10 Tokens)
-                </span>
-              </button>
-              
-              <div className="generate-helper-links">
-                {isGuest ? (
-                  <>
-                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
-                    <span className="helper-separator">·</span>
-                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
-                  </>
-                ) : (
-                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Privacy Trust Badge */}
-          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
-          </div>
-        </div>
-
-              </div>
 
           <hr style={{ border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', margin: '1rem 0' }} />
 
@@ -616,9 +452,169 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             </div>
           </div>
         </div>
+
+        {/* Right Side: Upload and Result Viewer */}
+        <div className="preview-panel glass-panel" ref={previewPanelRef}>
+          <div className="preview-header">
+            <span className="preview-title-uppercase">YOUR NEW AI GENERATED NAILS</span>
+          </div>
+
+          {isGenerating && (
+            <div className="loading-overlay">
+              <div className="spinner-outer">
+                <div className="spinner-inner"></div>
+              </div>
+              <div className="progress-track">
+                <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+              </div>
+              <span className="loading-text">{loadingText}</span>
+              <span className="loading-subtext">{progress}% • ~{etaRemaining}s remaining</span>
+            </div>
+          )}
+
+          {/* Comparison / Main Viewer Block */}
+          <div className="preview-viewer-area">
+            {!image ? (
+              <div className="demo-comparison-wrapper">
+                <SliderComparison
+                  beforeSrc="/trending_nails_before.png"
+                  afterSrc="/trending_nails.png"
+                  title="Demo Nails"
+                  hideActions={true}
+                />
+              </div>
+            ) : resultImage ? (
+              <div style={{ width: '100%' }}>
+                <SliderComparison
+                  beforeSrc={image}
+                  afterSrc={resultImage}
+                  title={selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nails'}
+                  onShare={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name || 'Nail Art' : 'Nail Art' })}
+                  onDownload={() => {}}
+                  hideActions={false}
+                />
+
+                {!feedbackSubmitted && (
+                  <div className="feedback-panel">
+                    <span className="feedback-title">Did you like the result?</span>
+                    <div className="feedback-buttons">
+                      <button onClick={() => { setFeedback('like'); setFeedbackSubmitted(true); toast.success('Thank you! 💅'); }} className="feedback-btn positive">👍 Yes</button>
+                      <button onClick={() => { setFeedback('dislike'); setFeedbackSubmitted(true); toast.success('Thanks for helping us improve!'); }} className="feedback-btn negative">👎 No</button>
+                    </div>
+                  </div>
+                )}
+                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">Thank you for your feedback! ✨</span></div>}
+
+                <div className="preview-controls-row">
+                  <button
+                    className="btn btn-secondary"
+                    style={{ color: (currentResultId && isFavorite(currentResultId)) ? '#ff2e93' : undefined }}
+                    onClick={() => {
+                      if (!currentResultId) return;
+                      if (isFavorite(currentResultId)) {
+                        removeFavorite(currentResultId);
+                        toast.success('Removed from favourites');
+                      } else {
+                        addFavorite({ 
+                          id: currentResultId, 
+                          result: resultImage, 
+                          style: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nail Art', 
+                          category: '💅 Nails', 
+                          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
+                        });
+                        toast.success('Saved to favourites ❤️');
+                      }
+                    }}
+                  >
+                    <Heart size={15} /><span>Save Favourite</span>
+                  </button>
+                  <button className="btn btn-secondary" onClick={handleReset}>
+                    <RefreshCw size={15} /><span>Try Another Style</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <div className="preview-container" style={{ maxWidth: '450px', width: '100%', margin: '0 auto' }}>
+                  <img src={image} alt="Nails Preview" style={{ width: '100%', display: 'block', borderRadius: '12px' }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upload dropzone */}
+          {!image ? (
+            <div 
+              className="dropzone-modern"
+              onClick={triggerUpload}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="dropzone-icon">
+                <Upload size={28} />
+              </div>
+              <h3>Upload a Photo of Your Hand</h3>
+              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
+              <p className="dropzone-hint">Drag & drop or click to upload</p>
+              
+              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
+            </div>
+          ) : (
+            !isGenerating && (
+              <div className="upload-actions-bar">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
+                  <Camera size={14} />
+                  <span>Take Photo</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
+                  <Upload size={14} />
+                  <span>Upload File</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
+                  <span>Delete Photo</span>
+                </button>
+                
+                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
+              </div>
+            )
+          )}
+
+          {/* Generate Button */}
+          {!resultImage && (
+            <div className="generate-action-box">
+              <button 
+                className="btn btn-primary generate-btn-large" 
+                disabled={!image || isGenerating}
+                onClick={() => { handleGenerate(); }}
+              >
+                <Sparkles size={18} />
+                <span>Apply AI Nails</span>
+                <span className="generate-btn-cost">
+                  (-10 Tokens)
+                </span>
+              </button>
+              
+              <div className="generate-helper-links">
+                {isGuest ? (
+                  <>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <span className="helper-separator">·</span>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  </>
+                ) : (
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Privacy Trust Badge */}
+          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
+            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+          </div>
+        </div>
       </div>
-
-
 
       {/* See the Magic in Action */}
       <div className="landing-section transformations-section">
@@ -666,9 +662,9 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
               return (
                 <div key={idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
                   <button onClick={() => toggleFaq(idx)} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
-                      {item.q}
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, paddingRight: '1rem', minWidth: '0' }}>
+                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
+                      <span style={{ flex: 1, minWidth: '0' }}>{item.q}</span>
                     </span>
                     {isOpened ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
                   </button>

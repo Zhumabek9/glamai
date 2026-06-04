@@ -920,39 +920,25 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
-            <div style={{ marginBottom: '0.85rem', padding: '0.75rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,46,147,0.14)', background: 'rgba(255,46,147,0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
-                  This render: {selectedStyles.length * 10}
-                </span>
-              </div>
-              {(isGuest || (user?.tokens ?? 0) < selectedStyles.length * 10) && (
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ marginTop: '0.6rem', width: '100%', padding: '0.55rem 0.85rem', fontSize: '0.8rem' }}
-                  onClick={() => setActiveTab('pricing')}
-                >
-                  Get more credits
-                </button>
-              )}
-            </div>
-            <button 
-              className="btn btn-primary" 
-              style={{ width: '100%', padding: '0.9rem' }}
-              disabled={!image || isGenerating}
-              onClick={() => { handleGenerate(); scrollToPreview(); }}
-            >
-              <Sparkles size={18} />
-              <span>Render AI Hairstyle</span>
-              <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
-                (-{selectedStyles.length * 10} Token{selectedStyles.length * 10 > 1 ? 's' : ''})
+          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
               </span>
-            </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
+                This render: {selectedStyles.length * 10} Tokens
+              </span>
+            </div>
+            {(isGuest || (user?.tokens ?? 0) < selectedStyles.length * 10) && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ marginTop: '0.6rem', width: '100%', padding: '0.55rem 0.85rem', fontSize: '0.8rem' }}
+                onClick={() => setActiveTab('pricing')}
+              >
+                Get more credits
+              </button>
+            )}
           </div>
         </div>
 
@@ -990,49 +976,22 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             </div>
           )}
 
-          {!image ? (
-            <div className="empty-state-wrapper">
-              {/* Empty State: File Upload */}
-              <div 
-                className="dropzone"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                role="presentation"
-                aria-label="Upload photo area"
-              >
-                <div className="dropzone-icon">
-                  <Upload size={24} />
-                </div>
-                <h3>Upload Your Portrait</h3>
-                <p>Take a selfie or upload a front-facing photo.</p>
-                <div className="dropzone-actions">
-                  <button className="btn btn-primary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }}>
-                    <Camera size={16} />
-                    <span>Take Photo</span>
-                  </button>
-                  <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
-                    <Upload size={16} />
-                    <span>Upload File</span>
-                  </button>
-                </div>
-                <input 
-                  ref={fileInputRef}
-                  type="file" 
-                  className="file-input" 
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  className="file-input"
-                  accept="image/*"
-                  capture="user"
-                  onChange={handleCameraCapture}
+          <div className="preview-header">
+            <span className="preview-title-uppercase">YOUR NEW AI GENERATED HAIR</span>
+          </div>
+
+          <div className="preview-viewer-area">
+            {!image ? (
+              <div className="demo-comparison-wrapper">
+                <SliderComparison
+                  beforeSrc="/hero-before.jpg"
+                  afterSrc="/hero-after.jpg"
+                  title="Demo Hairstyle"
+                  hideActions={true}
                 />
               </div>
-            </div>
-          ) : (
+            ) : (
+
             /* Active State: Preview & Result */
             resultImages.length > 1 ? (
               <div style={{ width: '100%' }}>
@@ -1235,40 +1194,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     )}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div className="preview-container" style={{ maxWidth: '450px', margin: '0 auto' }}>
-                      <img 
-                        src={image} 
-                        alt="Hairstyle Preview"
-                      />
-                      {!isGenerating && (
-                        <button className="delete-preview-btn" onClick={handleReset} title="Remove image">
-                          <RefreshCw size={16} />
-                        </button>
-                      )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                    <div className="preview-container" style={{ maxWidth: '450px', width: '100%', margin: '0 auto' }}>
+                      <img src={image} alt="Hairstyle Preview" style={{ width: '100%', display: 'block', borderRadius: '12px' }} />
                     </div>
-                    
-                    {!isGenerating && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.25rem', gap: '0.6rem', width: '100%' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                          <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerCamera(); }} style={{ fontSize: '0.78rem', padding: '0.45rem 0.75rem' }}>
-                            <Camera size={14} style={{ marginRight: '0.25rem' }} />
-                            <span>Retake Photo</span>
-                          </button>
-                          <button type="button" className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); triggerUpload(); }} style={{ fontSize: '0.78rem', padding: '0.45rem 0.75rem' }}>
-                            <Upload size={14} style={{ marginRight: '0.25rem' }} />
-                            <span>Change Photo</span>
-                          </button>
-                        </div>
-                        
-                        <div className="privacy-trust-badge" style={{ margin: 0 }}>
-                          <span>🔒 Photo automatically deleted in 1 hour.</span>
-                        </div>
-                        <button type="button" className="btn btn-secondary" onClick={handleReset} style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem', color: '#ff4d4d', borderColor: 'rgba(255, 77, 77, 0.2)' }}>
-                          Delete Photo Now
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -1308,16 +1237,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 )}
 
                 <div className="preview-controls">
-                  {resultImage ? (
+                  {resultImage && (
                     <button type="button" className="btn btn-secondary" onClick={handleReset} style={{ margin: '0 auto' }}>
                       <RefreshCw size={16} />
                       <span>Try another style</span>
                     </button>
-                  ) : (
-                    <div style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-                      <HelpCircle size={12} />
-                      <span>Ready to render. Click the 'Render AI Hairstyle' button on the left.</span>
-                    </div>
                   )}
                 </div>
                 {showUpsellBox && (
@@ -1335,37 +1259,79 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
             )
           )}
-
-          {/* Horizontal Social Proof Cases */}
-          <div className="social-proof-scroll" style={{ marginTop: '2rem' }}>
-            <div className="social-proof-card">
-              <span className="social-proof-stars">★★★★★</span>
-              <span className="social-proof-name">Julia K.</span>
-              <span className="social-proof-style">Bob / Caramel</span>
-              <p className="social-proof-text">"Matches my face shape perfectly! Saved me from a bad salon decision."</p>
-            </div>
-            <div className="social-proof-card">
-              <span className="social-proof-stars">★★★★★</span>
-              <span className="social-proof-name">Alex M.</span>
-              <span className="social-proof-style">French Crop / Blonde</span>
-              <p className="social-proof-text">"Fast, high quality, and looks very natural. Recommending to my friends!"</p>
-            </div>
-            <div className="social-proof-card">
-              <span className="social-proof-stars">★★★★★</span>
-              <span className="social-proof-name">Sarah L.</span>
-              <span className="social-proof-style">Wavy / Ash Blonde</span>
-              <p className="social-proof-text">"Love the interactive comparison slider. Excellent accuracy."</p>
-            </div>
-            <div className="social-proof-card">
-              <span className="social-proof-stars">★★★★★</span>
-              <span className="social-proof-name">Daniel T.</span>
-              <span className="social-proof-style">Buzz Cut / Titanium</span>
-              <p className="social-proof-text">"Insanely realistic render. Worth every token!"</p>
-            </div>
           </div>
 
+          {/* Upload dropzone */}
+          {!image ? (
+            <div 
+              className="dropzone-modern"
+              onClick={triggerUpload}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="dropzone-icon">
+                <Upload size={28} />
+              </div>
+              <h3>Upload Your Selfie</h3>
+              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
+              <p className="dropzone-hint">Drag & drop or click to upload</p>
+              
+              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
+            </div>
+          ) : (
+            !isGenerating && (
+              <div className="upload-actions-bar">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
+                  <Camera size={14} />
+                  <span>Take Photo</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
+                  <Upload size={14} />
+                  <span>Upload File</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
+                  <span>Delete Photo</span>
+                </button>
+                
+                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
+              </div>
+            )
+          )}
+
+          {/* Generate Button */}
+          {resultImages.length === 0 && (
+            <div className="generate-action-box">
+              <button 
+                className="btn btn-primary generate-btn-large" 
+                disabled={!image || isGenerating}
+                onClick={() => { handleGenerate(); }}
+              >
+                <Sparkles size={18} />
+                <span>Render AI Hairstyle</span>
+                <span className="generate-btn-cost">
+                  (-{selectedStyles.length * 10} Token{selectedStyles.length * 10 > 1 ? 's' : ''})
+                </span>
+              </button>
+              
+              <div className="generate-helper-links">
+                {isGuest ? (
+                  <>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <span className="helper-separator">·</span>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  </>
+                ) : (
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Privacy Trust Badge */}
-          <div className="privacy-trust-badge" style={{ justifyContent: 'center' }}>
+          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
             <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
           </div>
         </div>

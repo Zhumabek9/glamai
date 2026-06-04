@@ -401,9 +401,9 @@ function Hero({
                       textAlign: 'left'
                     }}
                   >
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
-                      {t(qKey)}
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, paddingRight: '1rem', minWidth: '0' }}>
+                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
+                      <span style={{ flex: 1, minWidth: '0' }}>{t(qKey)}</span>
                     </span>
                     {isOpened ? (
                       <ChevronUp size={18} color="var(--text-muted)" />

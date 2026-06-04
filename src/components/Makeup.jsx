@@ -102,6 +102,8 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const previewPanelRef = useRef(null);
   const sliderRef = useRef(null);
 
+  const isGuest = !user || user.isGuest;
+
   useEffect(() => {
     if (!sliderRef.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -697,8 +699,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
           </div>
         </div>
-
-              </div>
+      </div>
 
       {/* Real Transformations */}
       <div className="landing-section transformations-section">
@@ -746,9 +747,9 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
               return (
                 <div key={idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
                   <button onClick={() => toggleFaq(idx)} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
-                      {item.q}
+                    <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, paddingRight: '1rem', minWidth: '0' }}>
+                      <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
+                      <span style={{ flex: 1, minWidth: '0' }}>{item.q}</span>
                     </span>
                     {isOpened ? <ChevronUp size={18} color="var(--text-muted)" /> : <ChevronDown size={18} color="var(--text-muted)" />}
                   </button>
