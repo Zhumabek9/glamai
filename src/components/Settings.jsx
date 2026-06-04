@@ -70,16 +70,16 @@ export default function Settings({ user, onLogout, setActiveTab }) {
     if (!confirmDelete) return;
 
     try {
-      if (clerkUser) {
-        await clerkUser.delete();
-      }
+      await authFetch('/api/user/profile', {
+        method: 'DELETE'
+      }).catch((e) => console.warn("Backend profile delete failed", e));
       
       const emailKey = `glamai_history_${user.email.toLowerCase()}`;
       localStorage.removeItem(emailKey);
 
-      await authFetch('/api/user/profile', {
-        method: 'DELETE'
-      }).catch(() => {});
+      if (clerkUser) {
+        await clerkUser.delete();
+      }
 
       toast.success("Your account and history have been successfully deleted.");
       onLogout();

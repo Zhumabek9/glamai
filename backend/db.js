@@ -98,6 +98,12 @@ async function initDb() {
     await ensureColumn('users', 'subscription_end', "TEXT");
     await ensureColumn('users', 'referral_code', "TEXT");
     await ensureColumn('users', 'referred_by', "INTEGER");
+    await ensureColumn('users', 'role', "TEXT DEFAULT 'user'");
+    await pool.query(`
+      UPDATE users 
+      SET role = 'admin' 
+      WHERE lower(email) IN ('sigmastudiokg@gmail.com', 'juma99kg@gmail.com')
+    `);
 
     // Migrate generations table
     await ensureColumn('generations', 'task_type', "TEXT DEFAULT 'hairstyle'");

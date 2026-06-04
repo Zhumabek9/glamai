@@ -3,7 +3,7 @@ import { Upload, Sparkles, User, Check, RefreshCw, Scissors, Smile, Eye, Award, 
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 
-export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
+export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleContext }) {
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -216,7 +216,10 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
                     <span style={{ fontWeight: 700, minWidth: '80px' }}>Haircut:</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.hairstyles.map(h => (
-                        <button key={h} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setActiveTab('playground')}>
+                        <button key={h} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
+                          if (setStyleContext) setStyleContext({ taskType: 'hairstyle', style: h });
+                          setActiveTab('playground');
+                        }}>
                           {h}
                         </button>
                       ))}
@@ -229,7 +232,10 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
                     <span style={{ fontWeight: 700, minWidth: '80px' }}>Makeup:</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.makeup.map(m => (
-                        <button key={m} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setActiveTab('makeup')}>
+                        <button key={m} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
+                          if (setStyleContext) setStyleContext({ taskType: 'makeup', style: m });
+                          setActiveTab('makeup');
+                        }}>
                           {m}
                         </button>
                       ))}
@@ -242,7 +248,10 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
                     <span style={{ fontWeight: 700, minWidth: '80px' }}>Beard:</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.beards.map(b => (
-                        <button key={b} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => setActiveTab('beard')}>
+                        <button key={b} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
+                          if (setStyleContext) setStyleContext({ taskType: 'beard', style: b });
+                          setActiveTab('playground');
+                        }}>
                           {b}
                         </button>
                       ))}
@@ -318,39 +327,6 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab }) {
         </div>
       </div>
 
-      {/* --- Real Stories --- */}
-      <div className="landing-section testimonials-section">
-        <div className="section-header">
-          <span className="section-badge">💬 Real Stories</span>
-          <h2>Loved by Trendsetters</h2>
-          <p>See how our facial analytics help users select matching styles effortlessly.</p>
-        </div>
-        <div className="testimonials-grid">
-          {[
-            { name: 'Alice M.', meta: 'Heart Shape Scan', avatar: '🌸', text: 'I always thought I had a round face, but the scanner detected a heart shape. It recommended lob cuts and soft waves — changed my hairstyle and it looks amazing!' },
-            { name: 'Lucy F.', meta: 'Cool Undertone Scan', avatar: '👩', text: 'Helped me realize why warm gold makeup looked off on me. It recommended rosy pink and plum shades. Spot on, very useful profile report.' },
-            { name: 'Mia J.', meta: 'Oval Shape Scan', avatar: '✨', text: 'The scanner is super fast and high quality. Found my shape instantly and synced all recommended bob cuts directly in the salon.' }
-          ].map((review, i) => (
-            <div key={i} className="testimonial-card glass-panel">
-              <div className="testimonial-stars">
-                {[...Array(5)].map((_, si) => (
-                  <Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />
-                ))}
-              </div>
-              <p className="testimonial-text">{review.text}</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar" style={{ background: 'var(--gradient-pink-purple)', color: '#fff' }}>
-                  {review.avatar}
-                </div>
-                <div className="testimonial-author-info">
-                  <span className="testimonial-name">{review.name}</span>
-                  <span className="testimonial-meta">{review.meta}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* --- Why Choose Us --- */}
       <div className="landing-section why-choose-section">

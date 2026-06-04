@@ -416,6 +416,17 @@ const BLOG_ARTICLES = [
 
 const CATEGORIES = ['All', 'Guides', 'Trends', 'AI Tools', 'Styles', 'Hair Care', 'About Us'];
 
+const parseMarkdownBold = (text) => {
+  if (!text) return '';
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{part}</strong>;
+    }
+    return part;
+  });
+};
+
 function ArticlePage({ article, onBack, onStartClick }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', animation: 'fadeIn 0.35s ease' }}>
@@ -474,23 +485,23 @@ function ArticlePage({ article, onBack, onStartClick }) {
           {article.content.map((block, i) => {
             if (block.type === 'intro') return (
               <p key={i} style={{ fontSize: '1.12rem', color: 'var(--text-secondary)', lineHeight: 1.75, marginBottom: '2rem', fontWeight: 500, borderLeft: '3px solid var(--color-pink-primary)', paddingLeft: '1.25rem' }}>
-                {block.text}
+                {parseMarkdownBold(block.text)}
               </p>
             );
             if (block.type === 'h2') return (
               <h2 key={i} style={{ fontFamily: 'var(--font-heading)', fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: '2.25rem 0 0.85rem' }}>
-                {block.text}
+                {parseMarkdownBold(block.text)}
               </h2>
             );
             if (block.type === 'p') return (
               <p key={i} style={{ fontSize: '0.97rem', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: '1.25rem', whiteSpace: 'pre-line' }}>
-                {block.text}
+                {parseMarkdownBold(block.text)}
               </p>
             );
             if (block.type === 'tip') return (
               <div key={i} style={{ margin: '1.75rem 0', padding: '1.1rem 1.4rem', background: 'rgba(255,46,147,0.07)', border: '1px solid rgba(255,46,147,0.2)', borderRadius: '14px', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <Sparkles size={18} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.6 }}>{block.text}</p>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.6 }}>{parseMarkdownBold(block.text)}</p>
               </div>
             );
             if (block.type === 'cta') return (
@@ -499,7 +510,7 @@ function ArticlePage({ article, onBack, onStartClick }) {
                   {[...Array(5)].map((_, si) => <Star key={si} size={16} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />)}
                 </div>
                 <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.6rem' }}>Ready to try it yourself?</p>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.5rem', lineHeight: 1.6 }}>{block.text}</p>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.5rem', lineHeight: 1.6 }}>{parseMarkdownBold(block.text)}</p>
                 <button className="btn btn-primary" onClick={onStartClick} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
                   <Sparkles size={16} /> Try GlamAI for Free
                 </button>
@@ -524,9 +535,13 @@ export default function Blog({ onStartClick }) {
   };
 
   const handleBack = () => {
-    setOpenArticle(null);
-    window.history.pushState(null, '', '/blog');
-    document.title = 'GlamAI Magazine — Hairstyle Tips, Trends & Expert Advice';
+    if (window.history.state && window.history.state.articleSlug) {
+      window.history.back();
+    } else {
+      setOpenArticle(null);
+      window.history.pushState(null, '', '/blog');
+      document.title = 'GlamAI Magazine — Hairstyle Tips, Trends & Expert Advice';
+    }
   };
 
   useEffect(() => {
@@ -648,7 +663,20 @@ export default function Blog({ onStartClick }) {
                     <span>{article.minRead} min read</span>
                   </div>
 
-                  <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.35, margin: 0 }}>
+                  <h2 style={{ 
+                    fontFamily: 'var(--font-heading)', 
+                    fontSize: '1.1rem', 
+                    fontWeight: 700, 
+                    color: 'var(--text-primary)', 
+                    lineHeight: 1.35, 
+                    margin: 0,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    height: '2.7em' /* Ensure consistent height for all title areas (2 lines of 1.35 line-height) */
+                  }}>
                     {article.title}
                   </h2>
 

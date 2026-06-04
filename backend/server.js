@@ -570,7 +570,8 @@ app.post('/api/auth/register', async (req, res) => {
                 credits: user.credits,
                 referralCode: user.referralCode,
                 subscriptionTier: 'free',
-                subscriptionStatus: 'inactive'
+                subscriptionStatus: 'inactive',
+                role: 'user'
             },
         });
     } catch (e) {
@@ -597,7 +598,8 @@ app.post('/api/auth/login', async (req, res) => {
             credits: user.credits,
             referralCode: user.referral_code,
             subscriptionTier: user.subscription_tier || 'free',
-            subscriptionStatus: user.subscription_status || 'inactive'
+            subscriptionStatus: user.subscription_status || 'inactive',
+            role: user.role || 'user'
         } 
     });
 });
@@ -648,7 +650,8 @@ app.post('/api/auth/clerk', async (req, res) => {
                 credits: fullUser.credits,
                 referralCode: fullUser.referral_code,
                 subscriptionTier: fullUser.subscription_tier || 'free',
-                subscriptionStatus: fullUser.subscription_status || 'inactive'
+                subscriptionStatus: fullUser.subscription_status || 'inactive',
+                role: fullUser.role || 'user'
             },
         });
     } catch (err) {
@@ -670,7 +673,8 @@ app.get('/api/me', (req, res) => {
             referralCode: req.userFromCookie.referral_code,
             subscriptionTier: req.userFromCookie.subscription_tier || 'free',
             subscriptionStatus: req.userFromCookie.subscription_status || 'inactive',
-            subscriptionEnd: req.userFromCookie.subscription_end || null
+            subscriptionEnd: req.userFromCookie.subscription_end || null,
+            role: req.userFromCookie.role || 'user'
         },
     });
 });
@@ -762,6 +766,10 @@ app.post('/api/checkout/mock-success', async (req, res) => {
 });
 
 app.get('/api/admin/add-credits', async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u || u.role !== 'admin') {
+        return res.status(403).json({ error: 'FORBIDDEN' });
+    }
     const email = String(req.query.email || '').trim().toLowerCase();
     const amount = Number(req.query.amount || 2000);
 
@@ -772,7 +780,6 @@ app.get('/api/admin/add-credits', async (req, res) => {
     try {
         let user = await auth.userByEmail(email);
         if (!user) {
-            // Create user if they don't exist yet
             const dummyPassword = `admin_${Date.now()}`;
             user = await auth.createUser(email, dummyPassword);
         }
@@ -792,6 +799,62 @@ app.get('/api/admin/add-credits', async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'FAILED_TO_ADD_CREDITS', message: e.message });
+    }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u || u.role !== 'admin') {
+        return res.status(403).json({ error: 'FORBIDDEN' });
+    }
+    const { search = '' } = req.query;
+    try {
+        let rows;
+        if (search) {
+            const resUsers = await db.query(
+                `SELECT id, email, credits, subscription_tier, subscription_status, role, created_at 
+                 FROM users 
+                 WHERE lower(email) LIKE lower($1)
+                 ORDER BY id DESC`,
+                [`%${search}%`]
+            );
+            rows = resUsers.rows;
+        } else {
+            const resUsers = await db.query(
+                `SELECT id, email, credits, subscription_tier, subscription_status, role, created_at 
+                 FROM users 
+                 ORDER BY id DESC`
+            );
+            rows = resUsers.rows;
+        }
+        res.json({ success: true, users: rows });
+    } catch (e) {
+        res.status(500).json({ error: 'ADMIN_USERS_FETCH_FAILED', message: e.message });
+    }
+});
+
+app.post('/api/admin/update-user', async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u || u.role !== 'admin') {
+        return res.status(403).json({ error: 'FORBIDDEN' });
+    }
+    const { userId, credits, subscriptionTier, subscriptionStatus, role } = req.body;
+    if (!userId) {
+        return res.status(400).json({ error: 'USER_ID_REQUIRED' });
+    }
+    try {
+        await db.query(
+            `UPDATE users 
+             SET credits = COALESCE($1, credits),
+                 subscription_tier = COALESCE($2, subscription_tier),
+                 subscription_status = COALESCE($3, subscription_status),
+                 role = COALESCE($4, role)
+             WHERE id = $5`,
+            [credits, subscriptionTier, subscriptionStatus, role, userId]
+        );
+        res.json({ success: true, message: 'User updated successfully' });
+    } catch (e) {
+        res.status(500).json({ error: 'ADMIN_USER_UPDATE_FAILED', message: e.message });
     }
 });
 

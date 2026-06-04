@@ -39,7 +39,9 @@ export function useAchievements() {
   const save = (data) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {}
+    } catch {
+      // ignore quota exceeded or other storage errors
+    }
   };
 
   // Check daily return on mount
@@ -50,6 +52,7 @@ export function useAchievements() {
       localStorage.setItem('glamai_last_visit', today);
       if (lastVisit) {
         // They came back on a different day
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPendingToast(ACHIEVEMENT_DEFS.daily_return.message);
       }
     }

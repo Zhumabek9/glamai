@@ -23,7 +23,7 @@ import {
 const Playground = lazy(() => import('./Playground'));
 import { t } from '../utils/i18n';
 
-export default function Hero({ 
+function Hero({ 
   onStartClick, 
   onViewPricing, 
   user,
@@ -32,7 +32,9 @@ export default function Hero({
   onOpenAuth, 
   onAddHistory, 
   setActiveTab, 
-  playgroundRef 
+  playgroundRef,
+  styleContext,
+  setStyleContext
 }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const isDragging = useRef(false);
@@ -214,6 +216,8 @@ export default function Hero({
             onOpenAuth={onOpenAuth}
             onAddHistory={onAddHistory}
             setActiveTab={setActiveTab}
+            styleContext={styleContext}
+            setStyleContext={setStyleContext}
           />
         </Suspense>
       </div>
@@ -291,88 +295,6 @@ export default function Hero({
               <h3>{t('home.downloadShare')}</h3>
               <p>{t('home.downloadShareDesc')}</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3.5 TESTIMONIALS */}
-      <div className="landing-section testimonials-section">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-badge">💬 Real Stories</span>
-            <h2>Loved by over 52,000+ Users</h2>
-            <p>Read how GlamAI helped users discover their signature look and prevent costly salon disasters.</p>
-          </div>
-
-          <div className="testimonials-grid">
-            {[
-              {
-                name: 'Sophia M.',
-                meta: 'Used Bob Cut style',
-                avatar: '💁‍♀️',
-                bg: 'linear-gradient(135deg,#ff2e93,#a855f7)',
-                text: 'I was nervous about cutting my hair short. GlamAI let me preview a bob cut and I loved it — booked my appointment the next day!',
-                stars: 5
-              },
-              {
-                name: 'James R.',
-                meta: 'Tried Fade & Undercut',
-                avatar: '🧔',
-                bg: 'linear-gradient(135deg,#3b82f6,#06b6d4)',
-                text: 'Finally found the perfect fade style without spending $50 on a cut I might hate. The AI results looked super realistic.',
-                stars: 4
-              },
-              {
-                name: 'Aisha K.',
-                meta: 'Tested Braids & Locs',
-                avatar: '👩🏾',
-                bg: 'linear-gradient(135deg,#f59e0b,#ef4444)',
-                text: 'I tested 5 different braid styles in one session! The batch generation feature is a game changer. So worth it.',
-                stars: 5
-              },
-              {
-                name: 'Elena V.',
-                meta: 'Tried Wavy & Curly looks',
-                avatar: '🌸',
-                bg: 'linear-gradient(135deg,#ec4899,#f97316)',
-                text: 'The results are honestly better than I expected. The color matching is incredible — tried blonde highlights and it looked so natural.',
-                stars: 5
-              },
-              {
-                name: 'Marcus T.',
-                meta: 'Explored Long & Curly styles',
-                avatar: '🧑🏽',
-                bg: 'linear-gradient(135deg,#10b981,#3b82f6)',
-                text: 'Showed the results to my barber and he was impressed. Using GlamAI before every appointment now — saves so much time explaining.',
-                stars: 4
-              },
-              {
-                name: 'Lena P.',
-                meta: 'Tested Pixie & Shag cuts',
-                avatar: '✨',
-                bg: 'linear-gradient(135deg,#8b5cf6,#ec4899)',
-                text: 'Going from long to short is scary! GlamAI made it easy to commit. The pixie cut preview convinced me to take the leap.',
-                stars: 5
-              }
-            ].map((review, i) => (
-              <div key={i} className="testimonial-card glass-panel">
-                <div className="testimonial-stars">
-                  {[...Array(review.stars)].map((_, si) => (
-                    <Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />
-                  ))}
-                </div>
-                <p className="testimonial-text">{review.text}</p>
-                <div className="testimonial-author">
-                  <div className="testimonial-avatar" style={{ background: review.bg, color: '#fff' }}>
-                    {review.avatar}
-                  </div>
-                  <div className="testimonial-author-info">
-                    <span className="testimonial-name">{review.name}</span>
-                    <span className="testimonial-meta">{review.meta}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -520,3 +442,6 @@ export default function Hero({
     </section>
   );
 }
+
+
+export default React.memo(Hero);

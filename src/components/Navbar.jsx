@@ -1,9 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen, Paintbrush, Gem } from 'lucide-react';
 import { t } from '../utils/i18n';
 
 export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const drawerRef = useRef(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+        return;
+      }
+
+      if (e.key === 'Tab' && drawerRef.current) {
+        const focusableElements = drawerRef.current.querySelectorAll(
+          'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select'
+        );
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Save last active element to restore focus when drawer closes
+    const lastActive = document.activeElement;
+    
+    // Focus the first focusable element in the drawer
+    if (drawerRef.current) {
+      const focusable = drawerRef.current.querySelectorAll('a[href], button');
+      if (focusable.length > 0) {
+        focusable[0].focus();
+      }
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (lastActive && typeof lastActive.focus === 'function') {
+        lastActive.focus();
+      }
+    };
+  }, [mobileMenuOpen]);
 
   const navigate = (tab) => {
     setActiveTab(tab);
@@ -53,6 +107,15 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             </a>
 
             <a 
+              href="/scanner"
+              className={`nav-item ${activeTab === 'scanner' ? 'active' : ''}`}
+              onClick={(e) => { e.preventDefault(); navigate('scanner'); }}
+            >
+              <Smile size={14} />
+              <span>Scanner</span>
+            </a>
+
+            <a 
               href="/trending"
               className={`nav-item ${activeTab === 'trending' ? 'active' : ''}`}
               onClick={(e) => { e.preventDefault(); navigate('trending'); }}
@@ -97,9 +160,10 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                     <span>{user.tokens} credits</span>
                   </div>
                 )}
-                <div 
+                <button 
                   className="user-profile-badge"
                   onClick={() => navigate('settings')}
+                  aria-label="User settings"
                   style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -107,7 +171,10 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                       color: 'var(--text-primary)',
                       fontSize: '0.85rem',
                       fontWeight: 500,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0
                   }}
                 >
                   <div 
@@ -126,12 +193,21 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                   <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {user.email.split('@')[0]}
                   </span>
-                </div>
+                </button>
                 <button 
                   className="btn btn-secondary" 
                   onClick={onLogout}
-                  style={{ padding: '0.35rem 0.7rem', borderRadius: 'var(--radius-sm)' }}
+                  style={{ 
+                    padding: '0',
+                    width: '44px',
+                    height: '44px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'var(--radius-sm)'
+                  }}
                   title={t('nav.signOut')}
+                  aria-label={t('nav.signOut')}
                 >
                   <LogOut size={14} />
                 </button>
@@ -181,10 +257,17 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div className="mobile-drawer">
+          <div 
+            ref={drawerRef}
+            className="mobile-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation drawer"
+          >
             <a href="/" className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('playground'); }}>Hair Transformation</a>
             <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>AI Makeup Salon</a>
             <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>AI Nails Studio</a>
+            <a href="/scanner" className={`mobile-nav-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('scanner'); }}>AI Face Scanner</a>
             <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>Trending Feed</a>
             <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog & Trends</a>
             <a href="/pricing" className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('pricing'); }}>Pricing Plans</a>
@@ -229,6 +312,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                       className="btn btn-secondary" 
                       onClick={() => { onLogout(); setMobileMenuOpen(false); }}
                       style={{ padding: '0.4rem 0.8rem' }}
+                      aria-label={t('nav.signOut')}
                     >
                       <LogOut size={15} />
                       <span style={{ fontSize: '0.85rem' }}>{t('nav.signOut')}</span>
@@ -236,7 +320,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                   </div>
                 </div>
               ) : (
-                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { onOpenAuth(); setMobileMenuOpen(false); }}>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { onOpenAuth(); setMobileMenuOpen(false); }} aria-label={t('nav.signIn')}>
                   <LogIn size={16} />
                   <span>{t('nav.signIn')}</span>
                 </button>
@@ -251,6 +335,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'playground' ? 'active' : ''}`}
           onClick={() => navigate('playground')}
+          aria-label="Hair Transformation Tab"
         >
           <Scissors size={20} />
           <span>Hair</span>
@@ -258,6 +343,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'makeup' ? 'active' : ''}`}
           onClick={() => navigate('makeup')}
+          aria-label="Makeup try-on tab"
         >
           <Paintbrush size={20} />
           <span>Makeup</span>
@@ -265,6 +351,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'nails' ? 'active' : ''}`}
           onClick={() => navigate('nails')}
+          aria-label="Nails Try-On Tab"
         >
           <Gem size={20} />
           <span>Nails</span>
@@ -272,6 +359,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'trending' ? 'active' : ''}`}
           onClick={() => navigate('trending')}
+          aria-label="Trending Feed Tab"
         >
           <Compass size={20} />
           <span>Feed</span>
@@ -279,6 +367,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'dashboard' || activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => user ? navigate('dashboard') : onOpenAuth()}
+          aria-label={user ? "Dashboard Tab" : "Sign In Tab"}
         >
           {user ? <User size={20} /> : <LogIn size={20} />}
           <span>{user ? 'Profile' : 'Sign In'}</span>

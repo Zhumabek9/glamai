@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Compass, Sparkles, Flame, Eye, Share2, TrendingUp } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Sparkles, Flame, Eye, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 
 const TRENDING_POSTS = [
@@ -236,6 +236,18 @@ export default function TrendingFeed({ setActiveTab }) {
 function BeforeAfterSlider({ before, after, category }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const handleMove = (clientX) => {
     if (!containerRef.current) return;
@@ -257,7 +269,7 @@ function BeforeAfterSlider({ before, after, category }) {
       {category && <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(255,46,147,0.9)', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '6px' }}>{category}</div>}
 
       <div style={{ position: 'absolute', top: 0, left: 0, width: `${sliderPosition}%`, height: '100%', overflow: 'hidden', borderRight: '2px solid #fff' }}>
-        <img src={before} alt="Before" style={{ width: containerRef.current ? containerRef.current.getBoundingClientRect().width + 'px' : '300px', height: '300px', objectFit: 'cover', maxWidth: 'none', pointerEvents: 'none' }} />
+        <img src={before} alt="Before" style={{ width: containerWidth ? `${containerWidth}px` : '100%', height: '300px', objectFit: 'cover', maxWidth: 'none', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>BEFORE</div>
       </div>
 

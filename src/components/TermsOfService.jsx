@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { FileText, ArrowLeft } from 'lucide-react';
 
 export default function TermsOfService({ setActiveTab }) {

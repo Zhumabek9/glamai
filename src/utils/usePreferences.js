@@ -12,6 +12,7 @@ export function usePreferences(userId) {
     try {
       return JSON.parse(localStorage.getItem(storageKey) || '{}');
     } catch {
+      // ignore
       return {};
     }
   };
@@ -20,7 +21,9 @@ export function usePreferences(userId) {
 
   // Reload when userId changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefs(load());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const savePreference = useCallback((key, value) => {
@@ -29,7 +32,9 @@ export function usePreferences(userId) {
       const updated = { ...prev, [key]: value };
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated));
-      } catch {}
+      } catch {
+        // ignore
+      }
       return updated;
     });
   }, [storageKey]);
@@ -44,7 +49,7 @@ export function usePreferences(userId) {
       const existing = prev.lastStyles || [];
       const updated = [styleId, ...existing.filter(s => s !== styleId)].slice(0, 3);
       const newPrefs = { ...prev, lastStyles: updated };
-      try { localStorage.setItem(storageKey, JSON.stringify(newPrefs)); } catch {}
+      try { localStorage.setItem(storageKey, JSON.stringify(newPrefs)); } catch { /* ignore */ }
       return newPrefs;
     });
   }, [storageKey]);

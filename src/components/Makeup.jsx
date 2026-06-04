@@ -4,6 +4,8 @@ import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { useFavorites } from './Favorites';
 import ShareStoriesModal from './ShareStoriesModal';
+import SliderComparison from './SliderComparison';
+import confetti from 'canvas-confetti';
 
 const MAKEUP_PRESETS = [
   { id: 'bronze', name: 'Sunkissed Bronze', image: '/styles/makeup_bronze.png', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
@@ -69,14 +71,8 @@ const PROGRESS_STEPS = [
   '🌟 Refining makeup layers...'
 ];
 
-const SOCIAL_PROOF = [
-  { name: 'Min-ji K.', look: 'Korean Glow', emoji: '🌸', text: 'The glass skin effect is unbelievable – tried it for my wedding day look!' },
-  { name: 'Sarah L.', look: 'Soft Glam', emoji: '💄', text: 'Saved me from buying 5 wrong shades. This app paid for itself!' },
-  { name: 'Chloe M.', look: 'Siren Eyes', emoji: '✨', text: 'Festival makeup perfect! The winged liner preview is spot-on.' },
-  { name: 'Amara J.', look: 'Natural Glow', emoji: '👑', text: 'Finally found my perfect shade of nude before committing to a product.' },
-];
 
-export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
+function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext }) {
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -98,11 +94,44 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [showFixedCta, setShowFixedCta] = useState(true);
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const [currentResultId, setCurrentResultId] = useState(null);
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const previewPanelRef = useRef(null);
   const sliderRef = useRef(null);
+
+  useEffect(() => {
+    if (!sliderRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setSliderWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(sliderRef.current);
+    return () => observer.disconnect();
+  }, [resultImage]);
+
+  // Handle incoming style context from face scanner or blog
+  useEffect(() => {
+    if (styleContext && styleContext.taskType === 'makeup') {
+      const styleName = styleContext.style.toLowerCase();
+      const matched = MAKEUP_PRESETS.find(p => 
+        p.id.toLowerCase() === styleName ||
+        p.name.toLowerCase() === styleName ||
+        p.name.toLowerCase().includes(styleName) ||
+        styleName.includes(p.name.toLowerCase())
+      );
+      if (matched) {
+        setSelectedPreset(matched.id);
+        toast.success(`Makeup preset pre-selected: ${matched.name}`);
+      } else {
+        toast.info(`Makeup selected: ${styleContext.style}`);
+      }
+      setStyleContext(null);
+    }
+  }, [styleContext, setStyleContext, toast]);
 
   // Monitor scroll positioning to hide/show the mobile floating button appropriately
   useEffect(() => {
@@ -178,36 +207,45 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
   };
 
   const handleGenerate = async () => {
-    const isPremium = user && user.subscriptionTier === 'premium';
-    const tokenCost = isPremium ? 0 : 10;
     const isGuest = !user || user.isGuest;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
 
     setFeedback(null);
     setFeedbackSubmitted(false);
 
-    if (isGuest && availableTokens < 10) {
-      toast.error('Free generation used up! Sign up to get more tokens.');
+    // 1. Check user authentication before generation
+    const isSignedIn = !isGuest;
+    if (!isSignedIn) {
       onOpenAuth();
       return;
     }
-    if (!isGuest && !isPremium && availableTokens < 10) {
-      toast.error('You need at least 10 tokens!');
+
+    // 2. Check client-side credits (unless the account is unlimited)
+    const isUnlimited = user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'active';
+    if (!isUnlimited && availableTokens < 10) {
+      toast.error('You need at least 10 tokens to generate makeup!');
       setActiveTab('pricing');
       return;
     }
 
     setIsGenerating(true);
-    setProgress(0);
+    setProgress(10);
     setLoadingText('Uploading selfie to AI engine...');
     setEtaRemaining(30);
 
+    // Smooth scroll to preview on mobile screen widths
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.innerWidth < 1024 && previewPanelRef.current) {
+        previewPanelRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+
     const steps = [
-      { prg: 15, txt: PROGRESS_STEPS[1] },
-      { prg: 35, txt: PROGRESS_STEPS[2] },
-      { prg: 55, txt: PROGRESS_STEPS[3] },
-      { prg: 75, txt: PROGRESS_STEPS[4] },
-      { prg: 90, txt: PROGRESS_STEPS[5] }
+      { prg: 25, txt: PROGRESS_STEPS[1] },
+      { prg: 45, txt: PROGRESS_STEPS[2] },
+      { prg: 70, txt: PROGRESS_STEPS[3] },
+      { prg: 85, txt: PROGRESS_STEPS[4] },
+      { prg: 95, txt: PROGRESS_STEPS[5] }
     ];
 
     const etaInterval = setInterval(() => {
@@ -215,17 +253,19 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
     }, 1000);
 
     let currentStep = 0;
+    
+    // Progress steps animation timer
     const interval = setInterval(() => {
       setProgress(prev => {
-        const nextVal = prev + 1;
+        const nextVal = prev + 10;
         if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
           setLoadingText(steps[currentStep].txt);
           currentStep++;
         }
-        if (nextVal >= 95) return 95;
+        if (nextVal >= 90) return 90;
         return nextVal;
       });
-    }, 100);
+    }, 400);
 
     try {
       const presetObj = MAKEUP_PRESETS.find(p => p.id === selectedPreset);
@@ -246,39 +286,66 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
       formData.append('makeup', makeupDesc);
       formData.append('gender', 'female');
 
+      // 3. Post request to backend prediction API
       const res = await authFetch('/api/generate', { method: 'POST', body: formData });
 
       clearInterval(interval);
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        if (errData.code === 'LOGIN_REQUIRED') {
-          toast.error('Free generation used up! Sign up to continue.');
-          onOpenAuth();
-          setIsGenerating(false);
-          clearInterval(etaInterval);
-          return;
-        }
         throw new Error(errData.error || 'Failed to render makeup');
       }
 
       const data = await res.json();
-      setResultImage(data.imageUrl);
-      setProgress(100);
-      setSliderPosition(50);
-      toast.success('AI Makeup rendered successfully!');
-      onDeductToken(tokenCost);
+      
+      if (data.success) {
+        const newId = 'makeup-' + Date.now();
+        setCurrentResultId(newId);
+        setResultImage(data.imageUrl);
+        setProgress(100);
+        setSliderPosition(50);
+        toast.success('AI Makeup rendered successfully!');
+        
+        // Deduct credits locally (skip for unlimited subscription plans)
+        if (!isUnlimited) {
+          onDeductToken(10);
+        }
 
-      onAddHistory({
-        id: `history-makeup-${Date.now()}`,
-        original: image,
-        result: data.imageUrl,
-        style: presetObj ? presetObj.name : 'Makeup',
-        color: lipstickObj ? lipstickObj.name : 'Lipstick',
-        date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-      });
+        onAddHistory({
+          id: `history-makeup-${Date.now()}`,
+          original: image,
+          result: data.imageUrl,
+          style: presetObj ? presetObj.name : 'Makeup',
+          color: lipstickObj ? lipstickObj.name : 'Lipstick',
+          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+        });
 
-      // Scroll to result on mobile
+        // 4. Save new match to local storage history list
+        const newMatch = {
+          id: `match_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+          timestamp: Date.now(),
+          date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
+          code: selectedPreset,
+          name: presetObj ? presetObj.name : 'Custom Makeup',
+          matchRate: `${Math.floor(88 + Math.random() * 11)}%`,
+          img: data.imageUrl
+        };
+        const storageKey = user ? `levante_matches_${user.id}` : "levante_matches";
+        const existingMatches = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        const filteredMatches = existingMatches.filter(m => m.code !== newMatch.code);
+        localStorage.setItem(storageKey, JSON.stringify([newMatch, ...filteredMatches].slice(0, 10)));
+
+        // Success confetti animation
+        confetti({
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ["#6D28D9", "#EC4899", "#ffffff"]
+        });
+      } else {
+        throw new Error(data.error || 'Failed to render makeup');
+      }
+
       scrollToPreview();
 
     } catch (err) {
@@ -304,6 +371,7 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
     setResultImage(null);
     setFeedback(null);
     setFeedbackSubmitted(false);
+    setCurrentResultId(null);
   };
 
   return (
@@ -325,8 +393,13 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
         </div>
       </div>
 
+      {/* Try free notification banner */}
+      <div className="try-free-banner">
+        <span>Try free — no sign-up needed · 1 free trial instantly</span>
+      </div>
+
       <div className="playground-grid">
-        {/* Left: Controls */}
+        {/* Right Side: Customizer Controls */}
         <div className="control-panel glass-panel">
           <div className="desktop-playground-header">
             <h2 className="section-title">
@@ -379,7 +452,7 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
           {/* Preset Cards */}
           <div className="selector-group">
             <span className="selector-title">SELECT MAKEUP LOOK</span>
-            <div className="style-cards-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="style-cards-grid">
               {MAKEUP_PRESETS.map(p => {
                 const isSelected = selectedPreset === p.id;
                 return (
@@ -389,12 +462,12 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
                     className={`style-card ${isSelected ? 'selected' : ''}`}
                     aria-pressed={isSelected}
                     aria-label={`Select: ${p.name}`}
-                    onClick={() => { setSelectedPreset(p.id); setActiveQuickPreset(null); scrollToPreview(); }}
-                    style={{ border: 'none', background: 'transparent', padding: '0.5rem', cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                    onClick={() => { setSelectedPreset(p.id); setActiveQuickPreset(null); }}
+                    style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
                   >
                     {isSelected && <div className="selected-badge"><Check size={12} /></div>}
                     <div className="style-card-image-wrapper">
-                      <img src={p.image} alt={p.name} className="style-card-img" />
+                      <img src={p.image} alt={p.name} className="style-card-img" loading="lazy" decoding="async" />
                       <div className="style-card-overlay"></div>
                     </div>
                     <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{p.name}</div>
@@ -439,7 +512,7 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
 
           {/* Blush */}
           <div className="selector-group">
-            <span className="selector-title">BLUSH & HIGHLIGHTER</span>
+            <span className="selector-title">BLUSH & SKIN GLOW</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {BLUSHES.map(b => (
                 <button key={b.id} className={`btn ${selectedBlush === b.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedBlush(b.id)}>{b.name}</button>
@@ -447,21 +520,25 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', padding: '0.9rem', fontSize: '1rem' }}
-              disabled={!image || isGenerating}
-              onClick={handleGenerate}
-            >
-              <Sparkles size={18} />
-              <span>{isGenerating ? `Generating... ${etaRemaining}s` : 'Apply AI Makeup'}</span>
-            </button>
+          {/* Token usage info */}
+          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
+                This render: 10 Tokens
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right: Preview Panel */}
+        {/* Left Side: Upload and Result Viewer */}
         <div className="preview-panel glass-panel" ref={previewPanelRef}>
+          <div className="preview-header">
+            <span className="preview-title-uppercase">YOUR NEW AI GENERATED MAKEUP</span>
+          </div>
+
           {isGenerating && (
             <div className="loading-overlay">
               <div className="spinner-outer">
@@ -475,123 +552,153 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
             </div>
           )}
 
+          {/* Comparison / Main Viewer Block */}
+          <div className="preview-viewer-area">
+            {!image ? (
+              /* Demo State: comparison slider using public makeup images */
+              <div className="demo-comparison-wrapper">
+                <SliderComparison
+                  beforeSrc="/trending_makeup_before.png"
+                  afterSrc="/trending_makeup.png"
+                  title="Demo Makeup"
+                  hideActions={true}
+                />
+              </div>
+            ) : resultImage ? (
+              <div style={{ width: '100%' }}>
+                <SliderComparison
+                  beforeSrc={image}
+                  afterSrc={resultImage}
+                  title={selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup'}
+                  onShare={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name || 'Makeup Look' : 'Makeup Look' })}
+                  onDownload={() => {}}
+                  hideActions={false}
+                />
+
+                {/* Feedback */}
+                {!feedbackSubmitted && (
+                  <div className="feedback-panel">
+                    <span className="feedback-title">Did you like the result?</span>
+                    <div className="feedback-buttons">
+                      <button onClick={() => handleFeedback('like')} className="feedback-btn positive">👍 Yes</button>
+                      <button onClick={() => handleFeedback('dislike')} className="feedback-btn negative">👎 No</button>
+                    </div>
+                  </div>
+                )}
+                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">Thank you for your feedback! ✨</span></div>}
+
+                {/* Additional Actions */}
+                <div className="preview-controls-row">
+                  <button
+                    className="btn btn-secondary"
+                    style={{ color: (currentResultId && isFavorite(currentResultId)) ? '#ff2e93' : undefined }}
+                    onClick={() => {
+                      if (!currentResultId) return;
+                      if (isFavorite(currentResultId)) { 
+                        removeFavorite(currentResultId); 
+                        toast.success('Removed from favourites'); 
+                      } else { 
+                        addFavorite({ 
+                          id: currentResultId, 
+                          result: resultImage, 
+                          style: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup', 
+                          category: '💄 Makeup', 
+                          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
+                        }); 
+                        toast.success('Saved to favourites ❤️'); 
+                      }
+                    }}
+                  >
+                    <Heart size={15} /><span>Save Favourite</span>
+                  </button>
+                  <button className="btn btn-secondary" onClick={handleReset}>
+                    <RefreshCw size={15} /><span>Try Another Style</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <div className="preview-container" style={{ maxWidth: '450px', width: '100%', margin: '0 auto' }}>
+                  <img src={image} alt="Makeup Preview" style={{ width: '100%', display: 'block', borderRadius: '12px' }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upload dropzone (rendered below comparison image) */}
           {!image ? (
-            <div className="dropzone" onClick={triggerUpload} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerUpload(); } }} aria-label="Upload photo" style={{ cursor: 'pointer' }}>
-              <div className="dropzone-icon"><Upload size={24} /></div>
+            <div 
+              className="dropzone-modern"
+              onClick={triggerUpload}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="dropzone-icon">
+                <Upload size={28} />
+              </div>
               <h3>Upload Your Selfie</h3>
-              <p>Upload a clear, front-facing portrait to apply beauty makeup filters.</p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                <button className="btn btn-primary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); triggerUpload(); }}>
-                  <Upload size={15} /> <span>Upload Photo</span>
-                </button>
-                <button className="btn btn-secondary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); triggerCamera(); }}>
-                  <Camera size={15} /> <span>Take Photo</span>
-                </button>
-              </div>
-              {/* Privacy Badge */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '1rem', fontSize: '0.78rem', color: 'var(--text-muted)', justifyContent: 'center' }}>
-                <Lock size={12} />
-                <span>Your photo is fully secure. Auto-deleted within 1 hour.</span>
-              </div>
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} />
+              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
+              <p className="dropzone-hint">Drag & drop or click to upload</p>
+              
+              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
           ) : (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-              {resultImage ? (
-                <>
-                  {/* Before/After Slider */}
-                  <div
-                    ref={sliderRef}
-                    onMouseMove={(e) => { if (e.buttons === 1) handleSliderMove(e.clientX); }}
-                    onTouchMove={(e) => { e.preventDefault(); if (e.touches.length > 0) handleSliderMove(e.touches[0].clientX); }}
-                    style={{ position: 'relative', width: '100%', maxWidth: '460px', height: '360px', borderRadius: '16px', overflow: 'hidden', cursor: 'ew-resize', userSelect: 'none', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
-                  >
-                    <img src={resultImage} alt="After Makeup" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                    <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(255,46,147,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>AFTER</div>
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: `${sliderPosition}%`, height: '100%', overflow: 'hidden', borderRight: '2px solid #fff' }}>
-                      <img src={image} alt="Before Makeup" style={{ width: sliderRef.current ? sliderRef.current.getBoundingClientRect().width + 'px' : '460px', height: '360px', objectFit: 'cover', maxWidth: 'none', pointerEvents: 'none' }} />
-                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>BEFORE</div>
-                    </div>
-                    <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${sliderPosition}%`, width: '2px', background: '#fff', transform: 'translateX(-50%)', pointerEvents: 'none' }}>
-                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '32px', height: '32px', background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', color: 'var(--color-pink-primary)', fontWeight: 'bold' }}>⇔</div>
-                    </div>
-                  </div>
+            !isGenerating && (
+              <div className="upload-actions-bar">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
+                  <Camera size={14} />
+                  <span>Take Photo</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
+                  <Upload size={14} />
+                  <span>Upload File</span>
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
+                  <span>Delete Photo</span>
+                </button>
+                
+                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
+              </div>
+            )
+          )}
 
-                  {/* Feedback */}
-                  {!feedbackSubmitted && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                      <span>Love the result?</span>
-                      <button onClick={() => handleFeedback('like')} style={{ fontSize: '1.2rem', background: 'none', border: 'none', cursor: 'pointer' }}>👍</button>
-                      <button onClick={() => handleFeedback('dislike')} style={{ fontSize: '1.2rem', background: 'none', border: 'none', cursor: 'pointer' }}>👎</button>
-                    </div>
-                  )}
-                  {feedbackSubmitted && <div style={{ fontSize: '0.85rem', color: 'var(--color-pink-primary)' }}>Thank you for your feedback! ✨</div>}
-
-                  {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <a href={resultImage} download="glamai_makeup.png" className="btn btn-primary" style={{ flex: 1, minWidth: '120px', maxWidth: '160px' }}>
-                      <Download size={15} /><span>Download</span>
-                    </a>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ flex: 1, minWidth: '100px', maxWidth: '130px', color: isFavorite('makeup-result') ? '#ff2e93' : undefined }}
-                      onClick={() => {
-                        const id = 'makeup-' + Date.now();
-                        if (isFavorite(id)) { removeFavorite(id); toast.success('Removed from favourites'); }
-                        else { addFavorite({ id, result: resultImage, style: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup', category: '💄 Makeup', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) }); toast.success('Saved to favourites ❤️'); }
-                      }}
-                    >
-                      <Heart size={15} /><span>Save</span>
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name || 'Makeup Look' : 'Makeup Look' })} style={{ flex: 1, minWidth: '100px', maxWidth: '130px' }}>
-                      <Share2 size={15} /><span>Stories</span>
-                    </button>
-                    <button className="btn btn-secondary" onClick={handleReset} style={{ flex: 1, minWidth: '80px', maxWidth: '110px' }}>
-                      <RefreshCw size={15} /><span>Reset</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="preview-container" style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#000', maxWidth: '450px', width: '100%', margin: '0 auto' }}>
-                    <img src={image} alt="Makeup Preview" style={{ maxWidth: '100%', height: 'auto', display: 'block', maxHeight: '460px', objectFit: 'contain' }} />
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <button className="btn btn-secondary" onClick={triggerUpload} style={{ fontSize: '0.8rem' }}>
-                      <Upload size={14} /><span>Change Photo</span>
-                    </button>
-                    <button className="btn btn-secondary" onClick={triggerCamera} style={{ fontSize: '0.8rem' }}>
-                      <Camera size={14} /><span>Take Photo</span>
-                    </button>
-                    <button className="btn btn-secondary" onClick={handleReset} style={{ fontSize: '0.8rem' }}>
-                      <RefreshCw size={14} /><span>Reset</span>
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    <Lock size={12} /><span>Your photo is fully secure. Auto-deleted within 1 hour.</span>
-                  </div>
-                </>
-              )}
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} />
+          {/* Generate Button (positioned under upload dropzone) */}
+          {!resultImage && (
+            <div className="generate-action-box">
+              <button 
+                className="btn btn-primary generate-btn-large" 
+                disabled={!image || isGenerating}
+                onClick={() => { handleGenerate(); }}
+              >
+                <Sparkles size={18} />
+                <span>Apply AI Makeup</span>
+                <span className="generate-btn-cost">
+                  (-10 Tokens)
+                </span>
+              </button>
+              
+              <div className="generate-helper-links">
+                {isGuest ? (
+                  <>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <span className="helper-separator">·</span>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  </>
+                ) : (
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                )}
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Social Proof Scroll */}
-      <div style={{ margin: '2rem 0', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', minWidth: 'max-content' }}>
-          {SOCIAL_PROOF.map((s, i) => (
-            <div key={i} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', padding: '1rem', minWidth: '220px', maxWidth: '250px' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{s.emoji}</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', lineHeight: '1.5' }}>"{s.text}"</div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-pink-primary)' }}>{s.name} · {s.look}</div>
-            </div>
-          ))}
+          {/* Privacy Trust Badge */}
+          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
+            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+          </div>
         </div>
-      </div>
+
+              </div>
 
       {/* Real Transformations */}
       <div className="landing-section transformations-section">
@@ -620,33 +727,7 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
         </div>
       </div>
 
-      {/* Testimonials */}
-      <div className="landing-section testimonials-section">
-        <div className="section-header">
-          <span className="section-badge">💬 Real Stories</span>
-          <h2>Loved by Makeup Lovers</h2>
-          <p>Read why users choose GlamAI to test cosmetic aesthetics risk-free.</p>
-        </div>
-        <div className="testimonials-grid">
-          {[
-            { name: 'Min-ji K.', meta: 'Korean Makeup Preset', avatar: '🌸', text: 'The Korean gradient lip tint is spot on! Saved it to show my stylist.' },
-            { name: 'Sarah L.', meta: 'Bridal Makeup Preset', avatar: '👰‍♀️', text: 'I designed my entire wedding look here. The Champagne Bridal preview made the decision so easy.' },
-            { name: 'Chloe M.', meta: 'Euphoria Preset', avatar: '✨', text: 'The graphic eyeliner looks so real! Perfect for festival prep.' }
-          ].map((review, i) => (
-            <div key={i} className="testimonial-card glass-panel">
-              <div className="testimonial-stars">{[...Array(5)].map((_, si) => (<Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />))}</div>
-              <p className="testimonial-text">{review.text}</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar" style={{ background: 'var(--gradient-pink-purple)', color: '#fff' }}>{review.avatar}</div>
-                <div className="testimonial-author-info">
-                  <span className="testimonial-name">{review.name}</span>
-                  <span className="testimonial-meta">{review.meta}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* FAQ */}
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
@@ -726,3 +807,6 @@ export default function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, o
     </section>
   );
 }
+
+
+export default React.memo(Makeup);

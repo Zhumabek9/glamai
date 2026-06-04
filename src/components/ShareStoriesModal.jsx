@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { X, Download, Share2, Copy } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { X, Download, Copy } from 'lucide-react';
 import { useToast } from './Toast';
 
 /**

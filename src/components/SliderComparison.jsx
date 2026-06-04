@@ -1,14 +1,26 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Download, Share2 } from 'lucide-react';
 
 /**
  * SliderComparison — Interactive drag before/after comparison slider
  * Touch + mouse compatible
  */
-export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, onDownload, colorFilter }) {
+export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, onDownload, colorFilter, hideActions }) {
   const [position, setPosition] = useState(50); // percentage 0–100
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
@@ -64,23 +76,25 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
         className="slider-comparison-container"
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       >
-        {/* Before image (full width, clipped on right) */}
+        {/* After image (background, full width — right side) */}
         <img
-          src={beforeSrc}
-          alt="Before"
+          src={afterSrc}
+          alt="After"
           className="slider-img slider-img-before"
           draggable={false}
+          style={colorFilter}
         />
 
-        {/* After image (clipped to left portion) */}
+        {/* Before image (clipped to left portion — original photo) */}
         <div
           className="slider-after-clip"
           style={{ width: `${position}%` }}
         >
           <img
-            src={afterSrc}
-            alt="After"
+            src={beforeSrc}
+            alt="Before"
             className="slider-img slider-img-after"
+            style={{ width: containerWidth ? `${containerWidth}px` : '100%', maxWidth: 'none' }}
             draggable={false}
           />
         </div>
@@ -100,27 +114,29 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
           </div>
         </div>
 
-        {/* Labels */}
+        {/* Labels: Before on left side of divider, After on right side */}
         <span className="slider-label-before">Before</span>
-        <span className="slider-label-after">After</span>
+        <span className="slider-label-after" style={{ left: `calc(${position}% + 0.75rem)` }}>After</span>
       </div>
 
       {/* Action buttons */}
-      <div className="slider-actions">
-        <a
-          href={afterSrc}
-          download={`glamai_${title || 'hairstyle'}.png`}
-          className="btn btn-primary"
-          onClick={onDownload}
-        >
-          <Download size={16} />
-          <span>Download HD</span>
-        </a>
-        <button className="btn btn-secondary" onClick={onShare}>
-          <Share2 size={16} />
-          <span>Share</span>
-        </button>
-      </div>
+      {!hideActions && (
+        <div className="slider-actions">
+          <a
+            href={afterSrc}
+            download={`glamai_${title || 'hairstyle'}.png`}
+            className="btn btn-primary"
+            onClick={onDownload}
+          >
+            <Download size={16} />
+            <span>Download HD</span>
+          </a>
+          <button className="btn btn-secondary" onClick={onShare}>
+            <Share2 size={16} />
+            <span>Share</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

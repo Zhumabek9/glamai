@@ -20,7 +20,7 @@ function verifyPassword(password, hash) {
 
 async function userByEmail(email) {
     const res = await db.query(
-        'SELECT id, email, password_hash AS "passwordHash", credits, subscription_tier, subscription_status, subscription_end, referral_code FROM users WHERE lower(email)=lower($1)',
+        'SELECT id, email, password_hash AS "passwordHash", credits, subscription_tier, subscription_status, subscription_end, referral_code, role FROM users WHERE lower(email)=lower($1)',
         [email]
     );
     return res.rows[0] || null;
@@ -28,7 +28,7 @@ async function userByEmail(email) {
 
 async function userById(id) {
     const res = await db.query(
-        'SELECT id, email, credits, subscription_tier, subscription_status, subscription_end, referral_code FROM users WHERE id=$1',
+        'SELECT id, email, credits, subscription_tier, subscription_status, subscription_end, referral_code, role FROM users WHERE id=$1',
         [id]
     );
     return res.rows[0] || null;
@@ -61,7 +61,7 @@ async function createUser(email, password, referredByCode = null) {
         await addCredits(newUserId, 50);
     }
     
-    return { id: newUserId, email, credits: referredByUserId ? credits + 50 : credits, referralCode };
+    return { id: newUserId, email, credits: referredByUserId ? credits + 50 : credits, referralCode, role: 'user' };
 }
 
 async function addCredits(userId, amount) {

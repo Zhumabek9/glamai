@@ -492,39 +492,6 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
         </div>
       </div>
 
-      {/* --- Real Stories --- */}
-      <div className="landing-section testimonials-section">
-        <div className="section-header">
-          <span className="section-badge">💬 Real Stories</span>
-          <h2>Loved by Professionals</h2>
-          <p>Read why users use GlamAI for clean profile photos and passport shots.</p>
-        </div>
-        <div className="testimonials-grid">
-          {[
-            { name: 'Emma G.', meta: 'Skin Smooth & Acne Clear', avatar: '👩', text: 'Unlike standard filters that make your skin look like a flat blur, GlamAI preserves actual pore detail while clearing stubborn acne spots. Incredible.' },
-            { name: 'Chris D.', meta: 'Smile Whitener', avatar: '👨', text: 'The teeth whitening is beautiful. It is not glowing neon white, it looks like real healthy dental enamel under natural sunlight.' },
-            { name: 'Rita W.', meta: 'Face Symmetry', avatar: '✨', text: 'My passport photo was slightly asymmetrical due to bad lighting. Adjusting the symmetry slider balanced it out perfectly.' }
-          ].map((review, i) => (
-            <div key={i} className="testimonial-card glass-panel">
-              <div className="testimonial-stars">
-                {[...Array(5)].map((_, si) => (
-                  <Star key={si} size={14} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />
-                ))}
-              </div>
-              <p className="testimonial-text">{review.text}</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar" style={{ background: 'var(--gradient-pink-purple)', color: '#fff' }}>
-                  {review.avatar}
-                </div>
-                <div className="testimonial-author-info">
-                  <span className="testimonial-name">{review.name}</span>
-                  <span className="testimonial-meta">{review.meta}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* --- Why Choose Us --- */}
       <div className="landing-section why-choose-section">

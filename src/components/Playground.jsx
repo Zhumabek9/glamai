@@ -991,7 +991,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           )}
 
           {!image ? (
-            <div style={{ width: '100%' }}>
+            <div className="empty-state-wrapper">
               {/* Empty State: File Upload */}
               <div 
                 className="dropzone"
@@ -1030,39 +1030,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   capture="user"
                   onChange={handleCameraCapture}
                 />
-              </div>
-
-              {/* Horizontal Social Proof Cases */}
-              <div className="social-proof-scroll">
-                <div className="social-proof-card">
-                  <span className="social-proof-stars">★★★★★</span>
-                  <span className="social-proof-name">Julia K.</span>
-                  <span className="social-proof-style">Bob / Caramel</span>
-                  <p className="social-proof-text">"Matches my face shape perfectly! Saved me from a bad salon decision."</p>
-                </div>
-                <div className="social-proof-card">
-                  <span className="social-proof-stars">★★★★★</span>
-                  <span className="social-proof-name">Alex M.</span>
-                  <span className="social-proof-style">French Crop / Blonde</span>
-                  <p className="social-proof-text">"Fast, high quality, and looks very natural. Recommending to my friends!"</p>
-                </div>
-                <div className="social-proof-card">
-                  <span className="social-proof-stars">★★★★★</span>
-                  <span className="social-proof-name">Sarah L.</span>
-                  <span className="social-proof-style">Wavy / Ash Blonde</span>
-                  <p className="social-proof-text">"Love the interactive comparison slider. Excellent accuracy."</p>
-                </div>
-                <div className="social-proof-card">
-                  <span className="social-proof-stars">★★★★★</span>
-                  <span className="social-proof-name">Daniel T.</span>
-                  <span className="social-proof-style">Buzz Cut / Titanium</span>
-                  <p className="social-proof-text">"Insanely realistic render. Worth every token!"</p>
-                </div>
-              </div>
-
-              {/* Privacy Trust Badge */}
-              <div className="privacy-trust-badge" style={{ justifyContent: 'center' }}>
-                <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
               </div>
             </div>
           ) : (
@@ -1368,6 +1335,39 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
             )
           )}
+
+          {/* Horizontal Social Proof Cases */}
+          <div className="social-proof-scroll" style={{ marginTop: '2rem' }}>
+            <div className="social-proof-card">
+              <span className="social-proof-stars">★★★★★</span>
+              <span className="social-proof-name">Julia K.</span>
+              <span className="social-proof-style">Bob / Caramel</span>
+              <p className="social-proof-text">"Matches my face shape perfectly! Saved me from a bad salon decision."</p>
+            </div>
+            <div className="social-proof-card">
+              <span className="social-proof-stars">★★★★★</span>
+              <span className="social-proof-name">Alex M.</span>
+              <span className="social-proof-style">French Crop / Blonde</span>
+              <p className="social-proof-text">"Fast, high quality, and looks very natural. Recommending to my friends!"</p>
+            </div>
+            <div className="social-proof-card">
+              <span className="social-proof-stars">★★★★★</span>
+              <span className="social-proof-name">Sarah L.</span>
+              <span className="social-proof-style">Wavy / Ash Blonde</span>
+              <p className="social-proof-text">"Love the interactive comparison slider. Excellent accuracy."</p>
+            </div>
+            <div className="social-proof-card">
+              <span className="social-proof-stars">★★★★★</span>
+              <span className="social-proof-name">Daniel T.</span>
+              <span className="social-proof-style">Buzz Cut / Titanium</span>
+              <p className="social-proof-text">"Insanely realistic render. Worth every token!"</p>
+            </div>
+          </div>
+
+          {/* Privacy Trust Badge */}
+          <div className="privacy-trust-badge" style={{ justifyContent: 'center' }}>
+            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+          </div>
         </div>
       </div>
       {lightboxImage && (

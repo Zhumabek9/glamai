@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useAuth, useUser, useClerk } from '@clerk/react';
 import { authFetch } from './apiClient';
 import Navbar from './components/Navbar';
@@ -22,6 +22,7 @@ const Blog = lazy(() => import('./components/Blog'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./components/TermsOfService'));
 const Favorites = lazy(() => import('./components/Favorites'));
+const FaceAnalysis = lazy(() => import('./components/FaceAnalysis'));
 
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
@@ -33,7 +34,7 @@ export default function App() {
     const cleanPath = path.replace(/^\//, '');
     if (!cleanPath) return 'playground';
     const validTabs = [
-      'playground', 'makeup', 'nails',
+      'playground', 'makeup', 'nails', 'scanner',
       'trending', 'dashboard', 'settings', 
       'pricing', 'blog', 'privacy', 'terms', 'history', 'favorites'
     ];
@@ -41,6 +42,7 @@ export default function App() {
   };
 
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(window.location.pathname));
+  const [styleContext, setStyleContext] = useState(null);
   const [user, setUser] = useState(null);
   const [guestTokens, setGuestTokens] = useState(10);
   const [history, setHistory] = useState([]);
@@ -48,7 +50,7 @@ export default function App() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [stripeEnabled, setStripeEnabled] = useState(false);
 
-  const handleOpenAuth = () => {
+  const handleOpenAuth = useCallback(() => {
     if (openSignIn) {
       openSignIn({
         appearance: {
@@ -60,9 +62,9 @@ export default function App() {
     } else {
       setIsAuthOpen(true);
     }
-  };
+  }, [openSignIn]);
 
-  const navigateToTab = (tab) => {
+  const navigateToTab = useCallback((tab) => {
     setActiveTab(tab);
     const path = tab === 'playground' ? '/' : `/${tab}`;
     window.history.pushState(null, '', path);
@@ -78,10 +80,11 @@ export default function App() {
       settings: 'GlamAI — Settings',
       privacy: 'GlamAI — Privacy Policy',
       terms: 'GlamAI — Terms of Service',
-      history: 'GlamAI — My Style History'
+      history: 'GlamAI — My Style History',
+      scanner: 'GlamAI — AI Face Scanner & Beauty Analysis'
     };
     document.title = titles[tab] || 'GlamAI — AI Hairstyle Changer';
-  };
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -149,7 +152,8 @@ export default function App() {
             tokens: data.user.credits,
             referralCode: data.user.referralCode,
             subscriptionTier: data.user.subscriptionTier || 'free',
-            subscriptionStatus: data.user.subscriptionStatus || 'inactive'
+            subscriptionStatus: data.user.subscriptionStatus || 'inactive',
+            role: data.user.role || 'user'
           };
           setUser(activeUser);
           loadHistory(activeUser.email);
@@ -166,7 +170,7 @@ export default function App() {
   }, [isLoaded, userId, clerkUser]);
 
   // 2. Load History for specific user
-  const loadHistory = (email) => {
+  const loadHistory = useCallback((email) => {
     const key = `glamai_history_${email.toLowerCase()}`;
     try {
       const raw = localStorage.getItem(key);
@@ -182,24 +186,25 @@ export default function App() {
     } catch (_) {
       setHistory([]);
     }
-  };
+  }, []);
 
   // 3. User Authentication
-  const handleAuthSuccess = (backendUser) => {
+  const handleAuthSuccess = useCallback((backendUser) => {
     const activeUser = {
       id: backendUser.id,
       email: backendUser.email,
       tokens: backendUser.credits,
       referralCode: backendUser.referralCode,
       subscriptionTier: backendUser.subscriptionTier || 'free',
-      subscriptionStatus: backendUser.subscriptionStatus || 'inactive'
+      subscriptionStatus: backendUser.subscriptionStatus || 'inactive',
+      role: backendUser.role || 'user'
     };
     setUser(activeUser);
     setGuestTokens(10); // reset guest tokens on login
     loadHistory(activeUser.email);
-  };
+  }, [loadHistory]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await signOut();
       await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -209,18 +214,18 @@ export default function App() {
     setUser(null);
     setHistory([]);
     setActiveTab('playground');
-  };
+  }, [signOut]);
 
   // 4. Token deduction (syncs state; actual deduction happens during /api/generate)
-  const handleDeductToken = (count = 1) => {
+  const handleDeductToken = useCallback((count = 1) => {
     if (!user) return;
     setUser(prev => prev ? { ...prev, tokens: Math.max(0, prev.tokens - count) } : null);
-  };
+  }, [user]);
 
   // 4b. Guest token deduction
-  const handleGuestDeductToken = (count = 10) => {
+  const handleGuestDeductToken = useCallback((count = 10) => {
     setGuestTokens(prev => Math.max(0, prev - count));
-  };
+  }, []);
 
   // Effective user object passed to components (real user or guest with tokens)
   const effectiveUser = useMemo(() => user || { 
@@ -232,10 +237,10 @@ export default function App() {
   }, [user, guestTokens]);
 
   // 5. Payment completed (syncs state; actual increment happens via Stripe webhook/backend)
-  const handlePaymentSuccess = (newTokens) => {
+  const handlePaymentSuccess = useCallback((newTokens) => {
     if (!user) return;
     setUser(prev => prev ? { ...prev, tokens: newTokens } : null);
-  };
+  }, [user]);
 
   const handleSelectPlan = (plan) => {
     if (stripeEnabled) {
@@ -267,45 +272,50 @@ export default function App() {
   };
 
   // 6. Adding & Deleting History
-  const handleAddHistory = (newItem) => {
+  const handleAddHistory = useCallback((newItem) => {
     if (!user) return;
-    // Strip base64 original image — only keep result URL to avoid quota overflow
-    const safeItem = { ...newItem, original: null };
-    // Keep max 15 entries
-    const updatedHistory = [safeItem, ...history].slice(0, 15);
-    setHistory(updatedHistory);
-    try {
-      localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(updatedHistory));
-    } catch (e) {
-      // Quota exceeded — trim to 5 oldest entries and retry
-      console.warn('localStorage quota exceeded, trimming history...');
-      const trimmed = updatedHistory.slice(0, 5);
-      setHistory(trimmed);
+    setHistory(prev => {
+      // Strip base64 original image — only keep result URL to avoid quota overflow
+      const safeItem = { ...newItem, original: null };
+      // Keep max 15 entries
+      const updatedHistory = [safeItem, ...prev].slice(0, 15);
+      
       try {
-        localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(trimmed));
-      } catch (_) {
-        // If still fails, clear history entirely
-        localStorage.removeItem(`glamai_history_${user.email.toLowerCase()}`);
-        setHistory([]);
+        localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(updatedHistory));
+      } catch (e) {
+        // Quota exceeded — trim to 5 oldest entries and retry
+        console.warn('localStorage quota exceeded, trimming history...');
+        const trimmed = updatedHistory.slice(0, 5);
+        try {
+          localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(trimmed));
+          return trimmed;
+        } catch (_) {
+          // If still fails, clear history entirely
+          localStorage.removeItem(`glamai_history_${user.email.toLowerCase()}`);
+          return [];
+        }
       }
-    }
-  };
+      return updatedHistory;
+    });
+  }, [user]);
 
-  const handleClearHistoryItem = (itemId) => {
+  const handleClearHistoryItem = useCallback((itemId) => {
     if (!user) return;
-    const updatedHistory = history.filter(item => item.id !== itemId);
-    setHistory(updatedHistory);
-    try {
-      localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(updatedHistory));
-    } catch (_) {}
-  };
+    setHistory(prev => {
+      const updatedHistory = prev.filter(item => item.id !== itemId);
+      try {
+        localStorage.setItem(`glamai_history_${user.email.toLowerCase()}`, JSON.stringify(updatedHistory));
+      } catch (_) {}
+      return updatedHistory;
+    });
+  }, [user]);
 
-  const scrollToPlayground = () => {
+  const scrollToPlayground = useCallback(() => {
     navigateToTab('playground');
     setTimeout(() => {
       playgroundRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
-  };
+  }, [navigateToTab]);
 
   return (
     <ToastProvider>
@@ -336,6 +346,8 @@ export default function App() {
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
                 playgroundRef={playgroundRef}
+                styleContext={styleContext}
+                setStyleContext={setStyleContext}
               />
             )}
 
@@ -347,6 +359,17 @@ export default function App() {
                 onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
+                styleContext={styleContext}
+                setStyleContext={setStyleContext}
+              />
+            )}
+
+            {activeTab === 'scanner' && (
+              <FaceAnalysis
+                user={effectiveUser}
+                onOpenAuth={handleOpenAuth}
+                setActiveTab={navigateToTab}
+                setStyleContext={setStyleContext}
               />
             )}
 
