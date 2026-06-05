@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useEffect, useState, useRef } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2, Award, Briefcase, Heart, Flame, Leaf } from 'lucide-react';
 import { useToast } from './Toast';
@@ -8,6 +9,8 @@ import { usePreferences } from '../utils/usePreferences';
 import { useAchievements } from '../utils/useAchievements';
 import { useFavorites } from './Favorites';
 import ShareStoriesModal from './ShareStoriesModal';
+import confetti from 'canvas-confetti';
+
 
 const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
 
@@ -352,9 +355,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         return [...filtered, styleId];
       }
     });
-
-    // Auto scroll up to generation preview on mobile when "applying" (selecting) a style
-    scrollToPreview();
   };
 
   const handleApplyPreset = (preset) => {
@@ -366,17 +366,12 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       
       // Select preset feedback
       toast.success(`Preset "${preset.name}" applied!`);
-
-      // Auto scroll up to generation preview on mobile when applying a preset
-      scrollToPreview();
     }
   };
 
   const handleQuickStartSelect = (styleId) => {
     setSelectedStyles([styleId]);
     setShowQuickStart(false);
-    // Trigger generation instantly
-    handleGenerate([styleId]);
   };
 
   const handleFeedback = (type) => {
@@ -524,6 +519,8 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       openPricingWithRecommendation();
       return;
     }
+
+    scrollToPreview();
 
     setIsGenerating(true);
     setProgress(0);
@@ -682,6 +679,15 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setProgress(100);
       setLoadingText('Generation complete!');
       toast.success("AI Hairstyle rendering finished!");
+
+      // Success confetti animation
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ["#6D28D9", "#EC4899", "#ffffff"]
+      });
+
       if (isGuest || (!isGuest && (availableTokens - calculatedCost) <= 20)) {
         setShowUpsellBox(true);
       }
@@ -734,7 +740,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       <div className="mobile-playground-header">
         <h2 className="section-title">
           <Scissors size={20} color="var(--color-pink-primary)" />
-          <span>AI Hairstyle Customizer</span>
+          <span>{t('audit.playground.aiHairstyleCustomizer')}</span>
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
           Select your desired hair template and color. Every generation uses 10 tokens.
@@ -747,7 +753,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           <div className="desktop-playground-header">
             <h2 className="section-title">
               <Scissors size={20} color="var(--color-pink-primary)" />
-              <span>AI Hairstyle Customizer</span>
+              <span>{t('audit.playground.aiHairstyleCustomizer')}</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Select your desired hair template and color. Every generation uses 10 tokens.
@@ -758,7 +764,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* COLLECTION selection */}
           <div className="selector-group">
-            <span className="selector-title">COLLECTION</span>
+            <span className="selector-title">{t('audit.playground.collection')}</span>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {GENDERS.map(g => (
                 <button
@@ -781,10 +787,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           {/* SMART PRESETS */}
           <div className="selector-group">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span className="selector-title" style={{ marginBottom: 0 }}>⚡ QUICK PRESETS</span>
+              <span className="selector-title" style={{ marginBottom: 0 }}>{t('audit.makeup.quickPresets')}</span>
               <button
                 type="button"
-                title="Random hairstyle"
+                title={t('audit.playground.randomHairstyle')}
                 onClick={() => {
                   const eligible = HAIRSTYLES.filter(h => h.gender === selectedGender && h.id !== 'no_change');
                   if (eligible.length === 0) return;
@@ -822,7 +828,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* CATEGORY filter */}
           <div className="selector-group">
-            <span className="selector-title">HAIRSTYLE CATEGORY</span>
+            <span className="selector-title">{t('audit.playground.hairstyleCategory')}</span>
             <div className="category-chips">
               {activeCategories.map(cat => (
                 <button
@@ -845,7 +851,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             {image && selectedStyles.every(s => s === 'no_change') && (
               <div className="onboarding-hint">
                 <TrendingUp size={15} />
-                <span>👆 Select a style template below to begin customizer render!</span>
+                <span>{t('audit.playground.selectAStyleTemplateBelowToBeg')}</span>
               </div>
             )}
             <div className="style-cards-grid">
@@ -867,7 +873,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                       </div>
                     )}
                     {!h.isSpecial && POPULAR_STYLE_IDS.includes(h.id) && !isSelected && (
-                      <div className="style-card-popular-badge">Popular</div>
+                      <div className="style-card-popular-badge">{t('audit.playground.popular')}</div>
                     )}
                     <div className="style-card-image-wrapper">
                       {h.isSpecial ? (
@@ -897,7 +903,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Color Shade selection */}
           <div className="selector-group">
-            <span className="selector-title">COLOR SHADE SELECTION</span>
+            <span className="selector-title">{t('audit.playground.colorShadeSelection')}</span>
             <div className="color-grid-4col">
               {COLORS.map(c => (
                 <button
@@ -909,7 +915,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   aria-label={`Select color shade: ${c.name}`}
                   onClick={() => setSelectedColor(c.id)}
                 >
-                  {c.hot && <span className="color-grid-hot">HOT</span>}
+                  {c.hot && <span className="color-grid-hot">{t('audit.hero.hot')}</span>}
                   <span
                     className="color-grid-dot"
                     style={{ background: c.hex }}
@@ -977,20 +983,21 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           )}
 
           <div className="preview-header">
-            <span className="preview-title-uppercase">YOUR NEW AI GENERATED HAIR</span>
+            <span className="preview-title-uppercase">{t('audit.playground.yourNewAiGeneratedHair')}</span>
           </div>
 
           <div className="preview-viewer-area">
             {!image ? (
               <div className="demo-comparison-wrapper">
                 <SliderComparison
-                  beforeSrc="/hero-before.jpg"
-                  afterSrc="/hero-after.jpg"
-                  title="Demo Hairstyle"
+                  beforeSrc="/trending_hair_before.png"
+                  afterSrc="/trending_hair.png"
+                  title={t('audit.playground.demoHairstyle')}
                   hideActions={true}
                 />
               </div>
             ) : (
+
 
             /* Active State: Preview & Result */
             resultImages.length > 1 ? (
@@ -1039,7 +1046,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                           {isItemGenerating && (
                             <div className="generation-card-overlay">
                               <div className="generation-card-spinner"></div>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-pink-primary)' }}>Rendering...</span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-pink-primary)' }}>{t('audit.playground.rendering')}</span>
                               <div className="progress-track" style={{ height: '4px', width: '80%', marginTop: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
                                 <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: 'var(--color-pink-primary)' }}></div>
                               </div>
@@ -1050,13 +1057,13 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                           {isItemPending && (
                             <div className="generation-card-overlay" style={{ background: 'rgba(0,0,0,0.6)' }}>
                               <RefreshCw size={24} className="animate-spin-slow" style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Waiting...</span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{t('audit.playground.waiting')}</span>
                             </div>
                           )}
 
                           {isItemError && (
                             <div className="generation-card-overlay" style={{ background: 'rgba(30,10,10,0.8)' }}>
-                              <span style={{ color: '#ff4d4d', fontSize: '0.75rem', fontWeight: 600 }}>Failed</span>
+                              <span style={{ color: '#ff4d4d', fontSize: '0.75rem', fontWeight: 600 }}>{t('audit.playground.failed')}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '0.6rem', marginTop: '4px', maxWidth: '90%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {res.error || 'AI Server Error'}
                               </span>
@@ -1076,7 +1083,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                                 href={res.result}
                                 download={`glamai_${res.styleName}_${res.colorName}.png`}
                                 className="generation-card-btn"
-                                title="Download HD Render"
+                                title={t('audit.playground.downloadHdRender')}
                               >
                                 <Download size={14} />
                               </a>
@@ -1098,7 +1105,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                               </button>
                               <button
                                 className="generation-card-btn"
-                                title="Share to Stories"
+                                title={t('audit.playground.shareToStories')}
                                 onClick={() => setShowStoriesModal({ url: res.result, styleName: res.styleName })}
                               >
                                 <Share2 size={14} />
@@ -1119,13 +1126,13 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                       style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
                       <Download size={16} />
-                      <span>Download All</span>
+                      <span>{t('audit.playground.downloadAll')}</span>
                     </button>
                   )}
                   {!isGenerating && (
                     <button className="btn btn-secondary" onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <RefreshCw size={16} />
-                      <span>Try Another Batch</span>
+                      <span>{t('audit.playground.tryAnotherBatch')}</span>
                     </button>
                   )}
                 </div>
@@ -1151,7 +1158,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     {/* 👍/👎 Feedback Panel */}
                     {!feedbackSubmitted ? (
                       <div className="feedback-panel">
-                        <span className="feedback-title">Did you like the result?</span>
+                        <span className="feedback-title">{t('audit.makeup.didYouLikeTheResult')}</span>
                         <div className="feedback-buttons">
                           <button
                             type="button"
@@ -1189,7 +1196,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                       </div>
                     ) : (
                       <div className="feedback-panel">
-                        <span className="feedback-thanks">Thank you for your feedback! ❤️</span>
+                        <span className="feedback-thanks">{t('audit.playground.thankYouForYourFeedback')}</span>
                       </div>
                     )}
                   </div>
@@ -1240,7 +1247,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   {resultImage && (
                     <button type="button" className="btn btn-secondary" onClick={handleReset} style={{ margin: '0 auto' }}>
                       <RefreshCw size={16} />
-                      <span>Try another style</span>
+                      <span>{t('audit.playground.tryAnotherStyle')}</span>
                     </button>
                   )}
                 </div>
@@ -1265,34 +1272,57 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           {!image ? (
             <div 
               className="dropzone-modern"
-              onClick={triggerUpload}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'default' }}
             >
-              <div className="dropzone-icon">
-                <Upload size={28} />
+              <div onClick={triggerUpload} style={{ cursor: 'pointer', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="dropzone-icon">
+                  <Upload size={28} />
+                </div>
+                <h3>{t('audit.makeup.uploadYourSelfie')}</h3>
+                <p className="dropzone-subtext">{t('audit.makeup.jpegPngOrWebpMax10mb')}</p>
+                <p className="dropzone-hint">{t('audit.makeup.dragDropOrClickToUpload')}</p>
               </div>
-              <h3>Upload Your Selfie</h3>
-              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
-              <p className="dropzone-hint">Drag & drop or click to upload</p>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={triggerCamera}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Camera size={16} />
+                  <span>{t('audit.makeup.takePhoto')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={triggerUpload}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Upload size={16} />
+                  <span>{t('audit.makeup.uploadFile')}</span>
+                </button>
+              </div>
               
               <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
               <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
             </div>
           ) : (
+
             !isGenerating && (
               <div className="upload-actions-bar">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
                   <Camera size={14} />
-                  <span>Take Photo</span>
+                  <span>{t('audit.makeup.takePhoto')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
                   <Upload size={14} />
-                  <span>Upload File</span>
+                  <span>{t('audit.makeup.uploadFile')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
-                  <span>Delete Photo</span>
+                  <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
                 
                 <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
@@ -1310,7 +1340,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
-                <span>Render AI Hairstyle</span>
+                <span>{t('audit.playground.renderAiHairstyle')}</span>
                 <span className="generate-btn-cost">
                   (-{selectedStyles.length * 10} Token{selectedStyles.length * 10 > 1 ? 's' : ''})
                 </span>
@@ -1319,12 +1349,12 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               <div className="generate-helper-links">
                 {isGuest ? (
                   <>
-                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>{t('audit.makeup.signIn')}</button>
                     <span className="helper-separator">·</span>
-                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                   </>
                 ) : (
-                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                 )}
               </div>
             </div>
@@ -1332,7 +1362,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Privacy Trust Badge */}
           <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+            <span>{t('audit.makeup.yourPhotoIsFullySecureAutodele')}</span>
           </div>
         </div>
       </div>
@@ -1389,7 +1419,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             >
               <div>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>{lightboxTitle}</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Generated by GlamAI</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('audit.playground.generatedByGlamai')}</p>
               </div>
               <a 
                 href={lightboxImage} 
@@ -1398,7 +1428,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
               >
                 <Download size={14} />
-                <span>Download</span>
+                <span>{t('audit.favorites.download')}</span>
               </a>
             </div>
             <button 
@@ -1431,7 +1461,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       {showQuickStart && (
         <div className="modal-backdrop" onClick={() => setShowQuickStart(false)}>
           <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
-            <button type="button" className="modal-close-btn" onClick={() => setShowQuickStart(false)} aria-label="Close">
+            <button type="button" className="modal-close-btn" onClick={() => setShowQuickStart(false)} aria-label={t('audit.playground.close')}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -1483,7 +1513,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             onClick={() => { handleGenerate(); scrollToPreview(); }}
           >
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
-            <span>Render AI Hairstyle</span>
+            <span>{t('audit.playground.renderAiHairstyle')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
               (-{selectedStyles.length * 10} Tokens)
             </span>
