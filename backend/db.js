@@ -44,7 +44,7 @@ async function initDb() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
+        password_hash TEXT,
         credits INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
@@ -91,6 +91,19 @@ async function initDb() {
       ON analytics_events (event, created_at DESC);
     `);
 
+    // Drop NOT NULL from password_hash for existing tables
+    await pool.query(`
+      ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+    `).catch(() => {});
+
+    // Create indexes on generations table for performance and rate limiting
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_generations_created_at ON generations (created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_generations_ip_user_id ON generations (ip, user_id);
+    `).catch(err => {
+      console.error('Migration error adding indexes to generations:', err.message);
+    });
+
     // Migrate users table
     await ensureColumn('users', 'subscription_tier', "TEXT DEFAULT 'free'");
     await ensureColumn('users', 'subscription_status', "TEXT DEFAULT 'inactive'");
@@ -99,11 +112,17 @@ async function initDb() {
     await ensureColumn('users', 'referral_code', "TEXT");
     await ensureColumn('users', 'referred_by', "INTEGER");
     await ensureColumn('users', 'role', "TEXT DEFAULT 'user'");
-    await pool.query(`
-      UPDATE users 
-      SET role = 'admin' 
-      WHERE lower(email) IN ('sigmastudiokg@gmail.com', 'juma99kg@gmail.com')
-    `);
+
+    const adminEmails = (process.env.ADMIN_EMAILS || 'sigmastudiokg@gmail.com,juma99kg@gmail.com')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (adminEmails.length > 0) {
+      await pool.query(
+        `UPDATE users SET role = 'admin' WHERE lower(email) = ANY($1)`,
+        [adminEmails]
+      );
+    }
 
     // Migrate generations table
     await ensureColumn('generations', 'task_type', "TEXT DEFAULT 'hairstyle'");

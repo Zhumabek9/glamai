@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Smile, Flame, Heart, Wind } from 'lucide-react';
 import { useToast } from './Toast';
@@ -8,20 +9,20 @@ import SliderComparison from './SliderComparison';
 import confetti from 'canvas-confetti';
 
 const MAKEUP_PRESETS = [
-  { id: 'bronze', name: 'Sunkissed Bronze', image: '/styles/makeup_bronze.png', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
-  { id: 'clean-girl', name: 'Clean Girl', image: '/styles/makeup_clean_girl.png', desc: 'Minimalist editorial look, fresh hyper-hydrated skin, and natural definition.' },
-  { id: 'y2k', name: 'Y2K Shimmer', image: '/styles/makeup_y2k.png', desc: 'Frosty pastel eyeshadows, high-shine wet lip gloss, and a classic late-90s vibe.' },
-  { id: 'beige', name: 'Nude Beige', image: '/styles/makeup_beige.png', desc: 'Neutral beige eyeshadow, soft contours, and natural nude lip.' },
-  { id: 'soft-glam', name: 'Soft Glam', image: '/styles/makeup_soft_glam.png', desc: 'Warm brown smoky eyes, neutral lips, and radiant finish.' },
-  { id: 'doll-like', name: 'Doll Porcelain', image: '/styles/makeup_doll_like.png', desc: 'Pink flushed cheeks, defined long lashes, and glossy pink lips.' },
-  { id: 'elegant', name: 'Timeless Elegance', image: '/styles/makeup_elegant.png', desc: 'Sophisticated look, classic thin eyeliner, and soft rose lips.' },
-  { id: 'girlish', name: 'Petal Pink', image: '/styles/makeup_girlish.png', desc: 'Cute baby pink blush and glossy pink gradient lips.' },
-  { id: 'grunge-rock', name: 'Edgy Grunge', image: '/styles/makeup_grunge_rock.png', desc: 'Dark smoky eyeshadow, bold brown/nude matte lip.' },
-  { id: 'matte', name: 'Velvet Matte', image: '/styles/makeup_matte.png', desc: 'Flawless velvet skin, nude matte lip, structured contours.' },
-  { id: 'seductive', name: 'Cat Eye', image: '/styles/makeup_seductive.png', desc: 'Dramatic winged cat eyeliner, sharp contour, and dark bold lips.' },
-  { id: 'glossy-lips', name: 'Glass Lips', image: '/styles/makeup_glossy_lips.png', desc: 'Simple glass skin paired with high-shine wet lip gloss.' },
-  { id: 'siren-eyes', name: 'Siren Eyes', image: '/styles/makeup_siren_eyes.png', desc: 'Elongated winged liner, smoked out edges, and dramatic lifted eyes.' },
-  { id: 'latte-makeup', name: 'Latte Contour', image: '/styles/makeup_latte_makeup.png', desc: 'Warm caramel tones, soft brown smoky eyes, and nude glossy lips.' }
+  { id: 'bronze', name: 'Sunkissed Bronze', image: '/styles/makeup_bronze.webp', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
+  { id: 'clean-girl', name: 'Clean Girl', image: '/styles/makeup_clean_girl.webp', desc: 'Minimalist editorial look, fresh hyper-hydrated skin, and natural definition.' },
+  { id: 'y2k', name: 'Y2K Shimmer', image: '/styles/makeup_y2k.webp', desc: 'Frosty pastel eyeshadows, high-shine wet lip gloss, and a classic late-90s vibe.' },
+  { id: 'beige', name: 'Nude Beige', image: '/styles/makeup_beige.webp', desc: 'Neutral beige eyeshadow, soft contours, and natural nude lip.' },
+  { id: 'soft-glam', name: 'Soft Glam', image: '/styles/makeup_soft_glam.webp', desc: 'Warm brown smoky eyes, neutral lips, and radiant finish.' },
+  { id: 'doll-like', name: 'Doll Porcelain', image: '/styles/makeup_doll_like.webp', desc: 'Pink flushed cheeks, defined long lashes, and glossy pink lips.' },
+  { id: 'elegant', name: 'Timeless Elegance', image: '/styles/makeup_elegant.webp', desc: 'Sophisticated look, classic thin eyeliner, and soft rose lips.' },
+  { id: 'girlish', name: 'Petal Pink', image: '/styles/makeup_girlish.webp', desc: 'Cute baby pink blush and glossy pink gradient lips.' },
+  { id: 'grunge-rock', name: 'Edgy Grunge', image: '/styles/makeup_grunge_rock.webp', desc: 'Dark smoky eyeshadow, bold brown/nude matte lip.' },
+  { id: 'matte', name: 'Velvet Matte', image: '/styles/makeup_matte.webp', desc: 'Flawless velvet skin, nude matte lip, structured contours.' },
+  { id: 'seductive', name: 'Cat Eye', image: '/styles/makeup_seductive.webp', desc: 'Dramatic winged cat eyeliner, sharp contour, and dark bold lips.' },
+  { id: 'glossy-lips', name: 'Glass Lips', image: '/styles/makeup_glossy_lips.webp', desc: 'Simple glass skin paired with high-shine wet lip gloss.' },
+  { id: 'siren-eyes', name: 'Siren Eyes', image: '/styles/makeup_siren_eyes.webp', desc: 'Elongated winged liner, smoked out edges, and dramatic lifted eyes.' },
+  { id: 'latte-makeup', name: 'Latte Contour', image: '/styles/makeup_latte_makeup.webp', desc: 'Warm caramel tones, soft brown smoky eyes, and nude glossy lips.' }
 ];
 
 const QUICK_PRESETS = [
@@ -215,16 +216,16 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
     setFeedback(null);
     setFeedbackSubmitted(false);
 
-    // 1. Check user authentication before generation
-    const isSignedIn = !isGuest;
-    if (!isSignedIn) {
+    // Guest with no tokens left — ask to sign up
+    if (isGuest && availableTokens < 10) {
+      toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
-    // 2. Check client-side credits (unless the account is unlimited)
+    // Logged-in user with no tokens — redirect to pricing (unless account is unlimited)
     const isUnlimited = user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'active';
-    if (!isUnlimited && availableTokens < 10) {
+    if (!isGuest && !isUnlimited && availableTokens < 10) {
       toast.error('You need at least 10 tokens to generate makeup!');
       setActiveTab('pricing');
       return;
@@ -383,22 +384,24 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         <div className="glowing-orb pink-orb"></div>
         <div className="glowing-orb purple-orb"></div>
         <h1 className="landing-title">
-          <span className="gradient-text">AI Makeup Studio</span>
+          <span className="gradient-text">{t('audit.makeup.aiMakeupStudio')}</span>
         </h1>
         <p className="landing-subtitle">
           Try luxury lipsticks, eyeliners, and makeup presets tailored to your unique skin tone — no smudge, no commitment.
         </p>
         <div className="landing-stats">
-          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /><span>Biometric Tone Matching</span></div>
-          <div className="stat-badge"><span>💄 14 Makeup Presets</span></div>
-          <div className="stat-badge"><Lock size={14} color="var(--color-pink-primary)" /><span>Privacy Protected</span></div>
+          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /><span>{t('audit.makeup.biometricToneMatching')}</span></div>
+          <div className="stat-badge"><span>{t('audit.makeup.14MakeupPresets')}</span></div>
+          <div className="stat-badge"><Lock size={14} color="var(--color-pink-primary)" /><span>{t('audit.makeup.privacyProtected')}</span></div>
         </div>
       </div>
 
       {/* Try free notification banner */}
-      <div className="try-free-banner">
-        <span>Try free — no sign-up needed · 1 free trial instantly</span>
-      </div>
+      {isGuest && (
+        <div className="try-free-banner">
+          <span>{t('audit.makeup.tryFreeNoSignupNeeded1FreeTria')}</span>
+        </div>
+      )}
 
       <div className="playground-grid">
         {/* Right Side: Customizer Controls */}
@@ -406,7 +409,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           <div className="desktop-playground-header">
             <h2 className="section-title">
               <Sparkles size={20} color="var(--color-pink-primary)" />
-              <span>AI Makeup Workspace</span>
+              <span>{t('audit.makeup.aiMakeupWorkspace')}</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Choose a quick preset or customize every detail.
@@ -418,10 +421,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           {/* QUICK PRESETS */}
           <div className="selector-group">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span className="selector-title" style={{ marginBottom: 0 }}>⚡ QUICK PRESETS</span>
+              <span className="selector-title" style={{ marginBottom: 0 }}>{t('audit.makeup.quickPresets')}</span>
               <button
                 type="button"
-                title="Random preset"
+                title={t('audit.makeup.randomPreset')}
                 onClick={() => {
                   const random = MAKEUP_PRESETS[Math.floor(Math.random() * MAKEUP_PRESETS.length)];
                   setSelectedPreset(random.id);
@@ -453,7 +456,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Preset Cards */}
           <div className="selector-group">
-            <span className="selector-title">SELECT MAKEUP LOOK</span>
+            <span className="selector-title">{t('audit.makeup.selectMakeupLook')}</span>
             <div className="style-cards-grid">
               {MAKEUP_PRESETS.map(p => {
                 const isSelected = selectedPreset === p.id;
@@ -481,7 +484,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Lipstick */}
           <div className="selector-group">
-            <span className="selector-title">LIPSTICK SHADE</span>
+            <span className="selector-title">{t('audit.makeup.lipstickShade')}</span>
             <div className="pill-grid">
               {LIPSTICKS.map(l => (
                 <button type="button" key={l.id} className={`pill-option ${selectedLipstick === l.id ? 'selected' : ''}`} onClick={() => setSelectedLipstick(l.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: 'none', font: 'inherit', cursor: 'pointer' }}>
@@ -494,7 +497,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Eyeliner */}
           <div className="selector-group">
-            <span className="selector-title">EYELINER STYLE</span>
+            <span className="selector-title">{t('audit.makeup.eyelinerStyle')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {EYELINERS.map(e => (
                 <button key={e.id} className={`btn ${selectedEyeliner === e.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedEyeliner(e.id)}>{e.name}</button>
@@ -504,7 +507,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Eyeshadow */}
           <div className="selector-group">
-            <span className="selector-title">EYESHADOW PALETTE</span>
+            <span className="selector-title">{t('audit.makeup.eyeshadowPalette')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {EYESHADOWS.map(es => (
                 <button key={es.id} className={`btn ${selectedEyeshadow === es.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedEyeshadow(es.id)}>{es.name}</button>
@@ -514,7 +517,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Blush */}
           <div className="selector-group">
-            <span className="selector-title">BLUSH & SKIN GLOW</span>
+            <span className="selector-title">{t('audit.makeup.blushSkinGlow')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {BLUSHES.map(b => (
                 <button key={b.id} className={`btn ${selectedBlush === b.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedBlush(b.id)}>{b.name}</button>
@@ -538,7 +541,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         {/* Left Side: Upload and Result Viewer */}
         <div className="preview-panel glass-panel" ref={previewPanelRef}>
           <div className="preview-header">
-            <span className="preview-title-uppercase">YOUR NEW AI GENERATED MAKEUP</span>
+            <span className="preview-title-uppercase">{t('audit.makeup.yourNewAiGeneratedMakeup')}</span>
           </div>
 
           {isGenerating && (
@@ -562,7 +565,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <SliderComparison
                   beforeSrc="/trending_makeup_before.png"
                   afterSrc="/trending_makeup.png"
-                  title="Demo Makeup"
+                  title={t('audit.makeup.demoMakeup')}
                   hideActions={true}
                 />
               </div>
@@ -580,14 +583,14 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 {/* Feedback */}
                 {!feedbackSubmitted && (
                   <div className="feedback-panel">
-                    <span className="feedback-title">Did you like the result?</span>
+                    <span className="feedback-title">{t('audit.makeup.didYouLikeTheResult')}</span>
                     <div className="feedback-buttons">
-                      <button onClick={() => handleFeedback('like')} className="feedback-btn positive">👍 Yes</button>
-                      <button onClick={() => handleFeedback('dislike')} className="feedback-btn negative">👎 No</button>
+                      <button onClick={() => handleFeedback('like')} className="feedback-btn positive">{t('audit.makeup.yes')}</button>
+                      <button onClick={() => handleFeedback('dislike')} className="feedback-btn negative">{t('audit.makeup.no')}</button>
                     </div>
                   </div>
                 )}
-                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">Thank you for your feedback! ✨</span></div>}
+                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">{t('audit.makeup.thankYouForYourFeedback')}</span></div>}
 
                 {/* Additional Actions */}
                 <div className="preview-controls-row">
@@ -611,10 +614,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                       }
                     }}
                   >
-                    <Heart size={15} /><span>Save Favourite</span>
+                    <Heart size={15} /><span>{t('audit.makeup.saveFavourite')}</span>
                   </button>
                   <button className="btn btn-secondary" onClick={handleReset}>
-                    <RefreshCw size={15} /><span>Try Another Style</span>
+                    <RefreshCw size={15} /><span>{t('audit.makeup.tryAnotherStyle')}</span>
                   </button>
                 </div>
               </div>
@@ -631,32 +634,61 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           {!image ? (
             <div 
               className="dropzone-modern"
-              onClick={triggerUpload}
-              style={{ cursor: 'pointer' }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) loadImage(file);
+              }}
+              style={{ cursor: 'default' }}
             >
-              <div className="dropzone-icon">
-                <Upload size={28} />
+              <div onClick={triggerUpload} style={{ cursor: 'pointer', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="dropzone-icon">
+                  <Upload size={28} />
+                </div>
+                <h3>{t('audit.makeup.uploadYourSelfie')}</h3>
+                <p className="dropzone-subtext">{t('audit.makeup.jpegPngOrWebpMax10mb')}</p>
+                <p className="dropzone-hint">{t('audit.makeup.dragDropOrClickToUpload')}</p>
               </div>
-              <h3>Upload Your Selfie</h3>
-              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
-              <p className="dropzone-hint">Drag & drop or click to upload</p>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={triggerCamera}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Camera size={16} />
+                  <span>{t('audit.makeup.takePhoto')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={triggerUpload}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Upload size={16} />
+                  <span>{t('audit.makeup.uploadFile')}</span>
+                </button>
+              </div>
               
               <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
               <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
           ) : (
+
             !isGenerating && (
               <div className="upload-actions-bar">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
                   <Camera size={14} />
-                  <span>Take Photo</span>
+                  <span>{t('audit.makeup.takePhoto')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
                   <Upload size={14} />
-                  <span>Upload File</span>
+                  <span>{t('audit.makeup.uploadFile')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
-                  <span>Delete Photo</span>
+                  <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
                 
                 <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
@@ -666,15 +698,15 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           )}
 
           {/* Generate Button (positioned under upload dropzone) */}
-          {!resultImage && (
+          {image && (
             <div className="generate-action-box">
               <button 
                 className="btn btn-primary generate-btn-large" 
-                disabled={!image || isGenerating}
+                disabled={isGenerating}
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
-                <span>Apply AI Makeup</span>
+                <span>{t('audit.makeup.applyAiMakeup')}</span>
                 <span className="generate-btn-cost">
                   (-10 Tokens)
                 </span>
@@ -683,12 +715,12 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
               <div className="generate-helper-links">
                 {isGuest ? (
                   <>
-                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>{t('audit.makeup.signIn')}</button>
                     <span className="helper-separator">·</span>
-                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                   </>
                 ) : (
-                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                 )}
               </div>
             </div>
@@ -696,7 +728,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           {/* Privacy Trust Badge */}
           <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+            <span>{t('audit.makeup.yourPhotoIsFullySecureAutodele')}</span>
           </div>
         </div>
       </div>
@@ -704,9 +736,9 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       {/* Real Transformations */}
       <div className="landing-section transformations-section">
         <div className="section-header">
-          <span className="section-badge">✨ Showcase</span>
-          <h2>See the Magic in Action</h2>
-          <p>Real AI makeup transformations in high definition.</p>
+          <span className="section-badge">{t('audit.faceanalysis.showcase')}</span>
+          <h2>{t('audit.makeup.seeTheMagicInAction')}</h2>
+          <p>{t('audit.makeup.realAiMakeupTransformationsInH')}</p>
         </div>
         <div className="transformations-grid">
           {[
@@ -718,7 +750,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             <div key={tData.id} className="transformation-card-outer">
               <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
                 <div className="transformation-image-wrapper" style={{ height: '220px', borderRadius: '12px', overflow: 'hidden' }}>
-                  {tData.hot && <span className="transformation-hot-badge">TRENDING</span>}
+                  {tData.hot && <span className="transformation-hot-badge">{t('audit.makeup.trending')}</span>}
                   <img src={tData.path} alt={tData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
@@ -734,8 +766,8 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="section-header">
-            <span className="section-badge">❓ Got Questions?</span>
-            <h2>Common Makeup Inquiries</h2>
+            <span className="section-badge">{t('audit.faceanalysis.gotQuestions')}</span>
+            <h2>{t('audit.makeup.commonMakeupInquiries')}</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
             {[
@@ -775,7 +807,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             Instantly preview your flawless makeover. No physical testing, no expensive buyer's remorse.
           </p>
           <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
-            <span>Create Your Look Now</span>
+            <span>{t('audit.makeup.createYourLookNow')}</span>
             <ArrowRight size={18} />
           </button>
         </div>
@@ -790,7 +822,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             onClick={() => { handleGenerate(); scrollToPreview(); }}
           >
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
-            <span>Apply AI Makeup</span>
+            <span>{t('audit.makeup.applyAiMakeup')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
               (-10 Tokens)
             </span>

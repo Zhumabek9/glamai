@@ -3811,6 +3811,17 @@
   }
 }
 
+.dashboard-page-container {
+  background: var(--bg-primary);
+  padding: 4rem 0 6rem;
+}
+@media (max-width: 768px) {
+  .dashboard-page-container {
+    padding: 2rem 0 4rem;
+  }
+}
+
+
 /* --- Layout Redesign Styles (image_1 reference) --- */
 .try-free-banner {
   display: inline-flex;
@@ -4921,4 +4932,82 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
+/* --- Language Switcher Dropdown --- */
+.lang-switcher-container {
+  position: relative;
+  display: inline-block;
+}
+
+.lang-switcher-btn {
+  background: rgba(255, 46, 147, 0.05);
+  border: 1px solid rgba(255, 46, 147, 0.15);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.lang-switcher-btn:hover {
+  background: rgba(255, 46, 147, 0.1);
+  border-color: var(--color-pink-primary);
+  color: var(--color-pink-primary);
+  box-shadow: 0 0 10px rgba(255, 46, 147, 0.15);
+}
+
+.lang-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(253, 250, 253, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 46, 147, 0.15);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 0 12px rgba(255, 46, 147, 0.05);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  z-index: 1000;
+  min-width: 130px;
+  animation: langDropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes langDropdownFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lang-dropdown-menu button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.lang-dropdown-menu button:hover {
+  background: rgba(255, 46, 147, 0.06);
+  color: var(--color-pink-primary);
+}
+
+.lang-dropdown-menu button.active {
+  background: rgba(255, 46, 147, 0.12);
+  color: var(--color-pink-primary);
+  font-weight: 700;
+}
+
 

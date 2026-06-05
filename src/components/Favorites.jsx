@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Download, Sparkles, Image } from 'lucide-react';
 
@@ -42,17 +43,17 @@ export default function Favorites({ setActiveTab }) {
           <Heart size={36} color="var(--color-pink-primary)" />
         </div>
         <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>No Favourites Yet</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>{t('audit.favorites.noFavouritesYet')}</h2>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '320px' }}>
             Tap the ❤️ button on any AI result to save it here for later.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button className="btn btn-primary" onClick={() => setActiveTab('playground')} style={{ padding: '0.75rem 1.5rem' }}>
-            <Sparkles size={16} /> <span>Try Hair Styles</span>
+            <Sparkles size={16} /> <span>{t('audit.favorites.tryHairStyles')}</span>
           </button>
           <button className="btn btn-secondary" onClick={() => setActiveTab('makeup')} style={{ padding: '0.75rem 1.5rem' }}>
-            <span>💄 Try Makeup</span>
+            <span>{t('audit.favorites.tryMakeup')}</span>
           </button>
         </div>
       </div>
@@ -68,7 +69,7 @@ export default function Favorites({ setActiveTab }) {
           <div className="glowing-orb pink-orb" />
           <div className="glowing-orb purple-orb" />
           <h1 className="landing-title">
-            <span className="gradient-text">My Favourites</span>
+            <span className="gradient-text">{t('audit.favorites.myFavourites')}</span>
           </h1>
           <p className="landing-subtitle">
             All your saved AI results in one place. {favorites.length} look{favorites.length !== 1 ? 's' : ''} saved.
@@ -120,14 +121,14 @@ export default function Favorites({ setActiveTab }) {
                     download={`glamai_fav_${item.id}.png`}
                     className="btn btn-primary"
                     style={{ flex: 2, padding: '0.55rem 0', fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                    title="Download"
+                    title={t('audit.favorites.download')}
                   >
-                    <Download size={13} /> <span>Download</span>
+                    <Download size={13} /> <span>{t('audit.favorites.download')}</span>
                   </a>
                   <button
                     className="btn btn-secondary"
                     style={{ flex: 1, padding: '0.55rem 0', fontSize: '0.78rem' }}
-                    title="Remove from favourites"
+                    title={t('audit.favorites.removeFromFavourites')}
                     onClick={() => removeFavorite(item.id)}
                   >
                     <Trash2 size={13} />

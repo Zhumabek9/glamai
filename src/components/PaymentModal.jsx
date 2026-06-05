@@ -1,8 +1,9 @@
+import t from '../utils/i18n';
 import React, { useState } from 'react';
 import { X, CreditCard, ShieldCheck, CheckCircle } from 'lucide-react';
 import { authFetch } from '../apiClient';
 
-export default function PaymentModal({ plan, onClose, onPaymentSuccess }) {
+export default function PaymentModal({ plan, allowMockPayment = true, onClose, onPaymentSuccess }) {
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -131,143 +132,156 @@ export default function PaymentModal({ plan, onClose, onPaymentSuccess }) {
         {!isSuccess ? (
           <>
             <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Secure Checkout</h2>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{t('audit.paymentmodal.secureCheckout')}</h2>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 You are purchasing the <strong>{plan.name}</strong> ({plan.tokens} Tokens) for <strong>{getDisplayPrice()}</strong>{plan.billingPeriod === 'yearly' ? ' (billed annually)' : ''}.
               </p>
             </div>
 
-            {error && (
-              <div 
-                style={{ 
-                  background: 'rgba(255, 59, 48, 0.1)', 
-                  border: '1px solid rgba(255, 59, 48, 0.2)', 
-                  color: '#ff453a', 
-                  padding: '0.75rem', 
-                  borderRadius: 'var(--radius-sm)', 
-                  marginBottom: '1.5rem',
-                  fontSize: '0.85rem'
-                }}
-              >
-                {error}
+            {!allowMockPayment ? (
+              <div style={{ padding: '2rem 1.5rem', textAlign: 'center', background: 'rgba(255, 59, 48, 0.05)', border: '1px solid rgba(255, 59, 48, 0.15)', borderRadius: '16px', marginBottom: '1rem' }}>
+                <p style={{ color: '#ff453a', fontWeight: 700, margin: '0 0 0.5rem', fontSize: '1rem' }}>
+                  Stripe Checkout Unavailable
+                </p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                  Live payments are currently disabled because Stripe is not configured. Please contact the administrator to set the Stripe credentials in the environment setup.
+                </p>
               </div>
-            )}
-
-            {/* Virtual Card Graphic Preview */}
-            <div className="checkout-card-preview">
-              <div className="card-logo">
-                <CreditCard size={28} style={{ opacity: 0.8 }} />
-                <span style={{ fontSize: '0.9rem', letterSpacing: '0.1em' }}>{getCardBrand()}</span>
-              </div>
-              <div className="card-chip"></div>
-              <div className="card-number-display">
-                {cardNumber || '•••• •••• •••• ••••'}
-              </div>
-              <div className="card-details-row">
-                <div>
-                  <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>Cardholder</div>
-                  <div className="card-holder-name">{cardHolder || 'Your Name'}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>Expires</div>
-                  <div className="card-expiry-display">{expiry || 'MM/YY'}</div>
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={handlePaymentSubmit}>
-              <div className="form-group">
-                <label className="form-label">Cardholder Name</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="JOHN DOE"
-                  value={cardHolder}
-                  onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                  disabled={isProcessing}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Card Number</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="4000 1234 5678 9010"
-                  value={cardNumber}
-                  onChange={handleCardNumberChange}
-                  disabled={isProcessing}
-                  required
-                />
-              </div>
-
-              <div className="payment-form-row">
-                <div className="form-group">
-                  <label className="form-label">Expiration Date</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="MM/YY"
-                    value={expiry}
-                    onChange={handleExpiryChange}
-                    disabled={isProcessing}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">CVC / CVV</label>
-                  <input 
-                    type="password" 
-                    className="form-input" 
-                    placeholder="•••"
-                    value={cvc}
-                    onChange={handleCvcChange}
-                    disabled={isProcessing}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  fontSize: '0.75rem', 
-                  color: 'var(--text-muted)',
-                  margin: '1rem 0 1.5rem' 
-                }}
-              >
-                <ShieldCheck size={16} style={{ color: '#2eff93' }} />
-                <span>SSL Encrypted 256-bit secure gateway check. Accept Visa, MC, Amex.</span>
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                style={{ width: '100%', padding: '0.9rem' }}
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <div 
-                      style={{ 
-                        width: '18px', 
-                        height: '18px', 
-                        border: '2px solid rgba(255, 255, 255, 0.3)', 
-                        borderTopColor: '#fff', 
-                        borderRadius: '50%', 
-                        animation: 'spin 0.6s linear infinite' 
-                      }} 
-                    />
-                    <span>Processing Payment...</span>
-                  </>
-                ) : (
-                  <span>Pay {getDisplayPrice()}</span>
+            ) : (
+              <>
+                {error && (
+                  <div 
+                    style={{ 
+                      background: 'rgba(255, 59, 48, 0.1)', 
+                      border: '1px solid rgba(255, 59, 48, 0.2)', 
+                      color: '#ff453a', 
+                      padding: '0.75rem', 
+                      borderRadius: 'var(--radius-sm)', 
+                      marginBottom: '1.5rem',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    {error}
+                  </div>
                 )}
-              </button>
-            </form>
+
+                {/* Virtual Card Graphic Preview */}
+                <div className="checkout-card-preview">
+                  <div className="card-logo">
+                    <CreditCard size={28} style={{ opacity: 0.8 }} />
+                    <span style={{ fontSize: '0.9rem', letterSpacing: '0.1em' }}>{getCardBrand()}</span>
+                  </div>
+                  <div className="card-chip"></div>
+                  <div className="card-number-display">
+                    {cardNumber || '•••• •••• •••• ••••'}
+                  </div>
+                  <div className="card-details-row">
+                    <div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('audit.paymentmodal.cardholder')}</div>
+                      <div className="card-holder-name">{cardHolder || 'Your Name'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('audit.paymentmodal.expires')}</div>
+                      <div className="card-expiry-display">{expiry || 'MM/YY'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handlePaymentSubmit}>
+                  <div className="form-group">
+                    <label className="form-label">{t('audit.paymentmodal.cardholderName')}</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder={t('audit.paymentmodal.johnDoe')}
+                      value={cardHolder}
+                      onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                      disabled={isProcessing}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">{t('audit.paymentmodal.cardNumber')}</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="4000 1234 5678 9010"
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      disabled={isProcessing}
+                      required
+                    />
+                  </div>
+
+                  <div className="payment-form-row">
+                    <div className="form-group">
+                      <label className="form-label">{t('audit.paymentmodal.expirationDate')}</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder={t('audit.paymentmodal.mmyy')}
+                        value={expiry}
+                        onChange={handleExpiryChange}
+                        disabled={isProcessing}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">{t('audit.paymentmodal.cvcCvv')}</label>
+                      <input 
+                        type="password" 
+                        className="form-input" 
+                        placeholder="•••"
+                        value={cvc}
+                        onChange={handleCvcChange}
+                        disabled={isProcessing}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem', 
+                      fontSize: '0.75rem', 
+                      color: 'var(--text-muted)',
+                      margin: '1rem 0 1.5rem' 
+                    }}
+                  >
+                    <ShieldCheck size={16} style={{ color: '#2eff93' }} />
+                    <span>{t('audit.paymentmodal.sslEncrypted256bitSecureGatewa')}</span>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', padding: '0.9rem' }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div 
+                          style={{ 
+                            width: '18px', 
+                            height: '18px', 
+                            border: '2px solid rgba(255, 255, 255, 0.3)', 
+                            borderTopColor: '#fff', 
+                            borderRadius: '50%', 
+                            animation: 'spin 0.6s linear infinite' 
+                          }} 
+                        />
+                        <span>{t('audit.paymentmodal.processingPayment')}</span>
+                      </>
+                    ) : (
+                      <span>Pay {getDisplayPrice()}</span>
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
           </>
         ) : (
           /* Payment success screen */
@@ -275,7 +289,7 @@ export default function PaymentModal({ plan, onClose, onPaymentSuccess }) {
             <div className="success-icon-wrapper">
               <CheckCircle size={36} />
             </div>
-            <h2>Payment Successful!</h2>
+            <h2>{t('audit.paymentmodal.paymentSuccessful')}</h2>
             <p>
               Your payment has been approved. <br />
               <strong>+{plan.tokens} Tokens</strong> have been credited to your GlamAI account.

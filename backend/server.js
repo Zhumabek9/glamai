@@ -2,6 +2,11 @@
 
 require('dotenv').config();
 
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'change-this-in-production-secret')) {
+    console.error('CRITICAL ERROR: process.env.JWT_SECRET is missing or insecure in production!');
+    process.exit(1);
+}
+
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -20,56 +25,74 @@ const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${proc
 const GUEST_TRIALS_ALLOWED = Number(process.env.GUEST_FREE_TRIALS ?? '1');
 
 const PACKS = {
-    'weekly-vip': {
-        credits: 500,
-        priceId: process.env.STRIPE_PRICE_WEEKLY || '',
-        label: 'Weekly VIP',
-    },
-    'monthly-vip': {
-        credits: 3000,
-        priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
-        label: 'Monthly VIP',
-    },
-    'yearly-vip': {
-        credits: 40000,
-        priceId: process.env.STRIPE_PRICE_PRO_YEARLY || '',
-        label: 'Yearly VIP',
-    },
-    'lite-monthly': {
-        credits: 200,
-        priceId: process.env.STRIPE_PRICE_LITE_MONTHLY || '',
-        label: 'Lite Monthly',
-    },
-    'pro-monthly': {
-        credits: 3000,
-        priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
-        label: 'Pro Monthly',
-    },
-    'lite-yearly': {
-        credits: 200,
-        priceId: process.env.STRIPE_PRICE_LITE_YEARLY || '',
-        label: 'Lite Yearly',
-    },
-    'pro-yearly': {
-        credits: 3000,
-        priceId: process.env.STRIPE_PRICE_PRO_YEARLY || '',
-        label: 'Pro Yearly',
-    },
-    'lite-onetime': {
-        credits: 200,
-        priceId: process.env.STRIPE_PRICE_LITE_ONETIME || '',
-        label: 'Lite One-Time',
-    },
-    'pro-onetime': {
-        credits: 3000,
-        priceId: process.env.STRIPE_PRICE_PRO_ONETIME || '',
-        label: 'Pro One-Time',
-    },
-    'ultra-onetime': {
-        credits: 6000,
-        priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '',
-        label: 'Ultra One-Time',
-    },
+  // VIP Subscriptions
+  'weekly-vip': {
+    credits: 500,
+    priceId: process.env.STRIPE_PRICE_WEEKLY || '',
+    label: 'Weekly VIP',
+  },
+  'monthly-vip': {
+    credits: 2000,
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
+    label: 'Monthly VIP',
+  },
+  'yearly-vip': {
+    credits: 24000,
+    priceId: process.env.STRIPE_PRICE_PRO_YEARLY || '',
+    label: 'Yearly VIP',
+  },
+  // New Credit Packs
+  'mini-pack': {
+    credits: 100,
+    priceId: process.env.STRIPE_PRICE_LITE_ONETIME || '',
+    label: 'Mini Pack',
+  },
+  'standart-pack': {
+    credits: 300,
+    priceId: process.env.STRIPE_PRICE_PRO_ONETIME || '',
+    label: 'Standart Pack',
+  },
+  'max-pack': {
+    credits: 1000,
+    priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '',
+    label: 'Max Pack',
+  },
+  // Legacy / fallback mappings (mapping same prices to updated credits)
+  'lite-monthly': {
+    credits: 200,
+    priceId: process.env.STRIPE_PRICE_LITE_MONTHLY || '',
+    label: 'Lite Monthly',
+  },
+  'pro-monthly': {
+    credits: 2000,
+    priceId: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
+    label: 'Pro Monthly',
+  },
+  'lite-yearly': {
+    credits: 2000,
+    priceId: process.env.STRIPE_PRICE_LITE_YEARLY || '',
+    label: 'Lite Yearly',
+  },
+  'pro-yearly': {
+    credits: 24000,
+    priceId: process.env.STRIPE_PRICE_PRO_YEARLY || '',
+    label: 'Pro Yearly',
+  },
+  'lite-onetime': {
+    credits: 100,
+    priceId: process.env.STRIPE_PRICE_LITE_ONETIME || '',
+    label: 'Lite One-Time',
+  },
+  'pro-onetime': {
+    credits: 300,
+    priceId: process.env.STRIPE_PRICE_PRO_ONETIME || '',
+    label: 'Pro One-Time',
+  },
+  'ultra-onetime': {
+    credits: 1000,
+    priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '',
+    label: 'Ultra One-Time',
+  },
 };
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
@@ -77,6 +100,14 @@ const ANALYTICS_MAX_EVENTS = 5000;
 const analyticsEvents = [];
 
 const app = express();
+
+// Set security headers middleware
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
 
 // Ensure all API calls have /api prefix (Vercel strips it in experimentalServices)
 app.use((req, res, next) => {
@@ -208,7 +239,7 @@ app.use(async (req, res, next) => {
 
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-app.post('/api/analytics', async (req, res) => {
+app.post(['/api/analytics', '/analytics'], async (req, res) => {
     const event = String(req.body?.event || '').trim();
     if (!event) {
         return res.status(400).json({ error: 'EVENT_REQUIRED' });
@@ -521,6 +552,7 @@ const sendPublicConfig = async (req, res) => {
         'unknown';
     const used = await auth.guestTrialState(ip);
     const guestTokensRemaining = Math.max(0, GUEST_TRIALS_ALLOWED - used) * 10;
+    const country = req.headers['x-vercel-ip-country'] || req.headers['x-vercel-country'] || null;
 
     res.json({
         supabaseUrl: process.env.SUPABASE_URL || null,
@@ -536,7 +568,9 @@ const sendPublicConfig = async (req, res) => {
             priceConfigured: Boolean(v.priceId),
         })),
         stripeEnabled: Boolean(stripe && process.env.STRIPE_WEBHOOK_SECRET),
+        allowMockPayment: process.env.NODE_ENV !== 'production' || process.env.ALLOW_MOCK_PAYMENT === '1',
         authBackend: true,
+        country,
     });
 };
 
@@ -893,6 +927,27 @@ app.post('/api/user/profile', async (req, res) => {
     }
 });
 
+app.delete(['/api/user/profile', '/user/profile'], async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+
+    try {
+        // Delete user's generations
+        await db.query('DELETE FROM generations WHERE user_id = $1', [u.id]);
+        // Delete user's analytics events
+        await db.query('DELETE FROM analytics_events WHERE user_id = $1', [u.id]);
+        // Delete user profile
+        await db.query('DELETE FROM users WHERE id = $1', [u.id]);
+        
+        // Clear auth cookie
+        auth.clearAuthCookie(res);
+        res.json({ success: true, message: 'Account deleted successfully' });
+    } catch (e) {
+        console.error("Failed to delete user profile:", e);
+        res.status(500).json({ error: 'PROFILE_DELETION_FAILED' });
+    }
+});
+
 app.get('/api/user/history', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
@@ -1011,6 +1066,27 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
             //
         }
     };
+
+    // DB Rate Limiting: max 5 generations per minute per IP or User
+    try {
+        const rateCheck = await db.query(
+            `SELECT COUNT(*)::int AS count 
+             FROM generations 
+             WHERE (ip = $1 OR (user_id = $2 AND user_id IS NOT NULL)) 
+               AND created_at >= NOW() - INTERVAL '1 minute'`,
+            [ip, userRow?.id || null]
+        );
+        if (rateCheck.rows[0].count >= 5) {
+            unlinkSafe();
+            return res.status(429).json({
+                success: false,
+                code: 'RATE_LIMIT_EXCEEDED',
+                error: 'Too many requests. Please wait a minute.'
+            });
+        }
+    } catch (err) {
+        console.warn('Rate limiter database query failed:', err.message);
+    }
 
     if (!file) {
         unlinkSafe();

@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Heart } from 'lucide-react';
 import { useToast } from './Toast';
@@ -165,16 +166,16 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
     setFeedback(null);
     setFeedbackSubmitted(false);
 
-    // 1. Check user authentication before generation
-    const isSignedIn = !isGuest;
-    if (!isSignedIn) {
+    // Guest with no tokens left — ask to sign up
+    if (isGuest && availableTokens < 10) {
+      toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
-    // 2. Check client-side credits (unless the account is unlimited)
+    // Logged-in user with no tokens — redirect to pricing (unless account is unlimited)
     const isUnlimited = user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'active';
-    if (!isUnlimited && availableTokens < 10) {
+    if (!isGuest && !isUnlimited && availableTokens < 10) {
       toast.error('You need at least 10 tokens to generate nails!');
       setActiveTab('pricing');
       return;
@@ -320,22 +321,24 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
         <div className="glowing-orb pink-orb"></div>
         <div className="glowing-orb purple-orb"></div>
         <h1 className="landing-title">
-          <span className="gradient-text">AI Nail Studio</span>
+          <span className="gradient-text">{t('audit.nails.aiNailStudio')}</span>
         </h1>
         <p className="landing-subtitle">
           Try liquid chrome, french tips, marble acrylics, or bespoke nail art in real time — zero dry time, zero salon commitment.
         </p>
         <div className="landing-stats">
-          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /><span>9 Premium Designs</span></div>
-          <div className="stat-badge"><span>💅 5 Nail Shapes</span></div>
-          <div className="stat-badge"><Lock size={14} color="var(--color-pink-primary)" /><span>Privacy Protected</span></div>
+          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /><span>{t('audit.nails.9PremiumDesigns')}</span></div>
+          <div className="stat-badge"><span>{t('audit.nails.5NailShapes')}</span></div>
+          <div className="stat-badge"><Lock size={14} color="var(--color-pink-primary)" /><span>{t('audit.makeup.privacyProtected')}</span></div>
         </div>
       </div>
 
       {/* Try free notification banner */}
-      <div className="try-free-banner">
-        <span>Try free — no sign-up needed · 1 free trial instantly</span>
-      </div>
+      {isGuest && (
+        <div className="try-free-banner">
+          <span>{t('audit.makeup.tryFreeNoSignupNeeded1FreeTria')}</span>
+        </div>
+      )}
 
       <div className="playground-grid">
         {/* Left Side: Customizer Controls */}
@@ -343,7 +346,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           <div className="desktop-playground-header">
             <h2 className="section-title">
               <Sparkles size={20} color="var(--color-pink-primary)" />
-              <span>AI Nails Workspace</span>
+              <span>{t('audit.nails.aiNailsWorkspace')}</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Pick a quick preset or customize your nail look.
@@ -355,10 +358,10 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           {/* QUICK PRESETS */}
           <div className="selector-group">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span className="selector-title" style={{ marginBottom: 0 }}>⚡ QUICK PRESETS</span>
+              <span className="selector-title" style={{ marginBottom: 0 }}>{t('audit.makeup.quickPresets')}</span>
               <button
                 type="button"
-                title="Random nail design"
+                title={t('audit.nails.randomNailDesign')}
                 onClick={() => {
                   const random = NAIL_PRESETS[Math.floor(Math.random() * NAIL_PRESETS.length)];
                   setSelectedPreset(random.id);
@@ -390,7 +393,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
           {/* Preset Cards */}
           <div className="selector-group">
-            <span className="selector-title">SELECT NAIL DESIGN</span>
+            <span className="selector-title">{t('audit.nails.selectNailDesign')}</span>
             <div className="style-cards-grid">
               {NAIL_PRESETS.map(p => {
                 const isSelected = selectedPreset === p.id;
@@ -418,7 +421,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
           {/* Nail Shape */}
           <div className="selector-group">
-            <span className="selector-title">NAIL SHAPE</span>
+            <span className="selector-title">{t('audit.nails.nailShape')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {NAIL_SHAPES.map(s => (
                 <button key={s.id} className={`btn ${selectedShape === s.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedShape(s.id)}>
@@ -430,7 +433,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
           {/* Nail Texture */}
           <div className="selector-group">
-            <span className="selector-title">NAIL TEXTURE</span>
+            <span className="selector-title">{t('audit.nails.nailTexture')}</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
               {NAIL_TEXTURES.map(tObj => (
                 <button key={tObj.id} className={`btn ${selectedTexture === tObj.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedTexture(tObj.id)}>
@@ -456,7 +459,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
         {/* Right Side: Upload and Result Viewer */}
         <div className="preview-panel glass-panel" ref={previewPanelRef}>
           <div className="preview-header">
-            <span className="preview-title-uppercase">YOUR NEW AI GENERATED NAILS</span>
+            <span className="preview-title-uppercase">{t('audit.nails.yourNewAiGeneratedNails')}</span>
           </div>
 
           {isGenerating && (
@@ -479,7 +482,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                 <SliderComparison
                   beforeSrc="/trending_nails_before.png"
                   afterSrc="/trending_nails.png"
-                  title="Demo Nails"
+                  title={t('audit.nails.demoNails')}
                   hideActions={true}
                 />
               </div>
@@ -496,14 +499,14 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
                 {!feedbackSubmitted && (
                   <div className="feedback-panel">
-                    <span className="feedback-title">Did you like the result?</span>
+                    <span className="feedback-title">{t('audit.makeup.didYouLikeTheResult')}</span>
                     <div className="feedback-buttons">
-                      <button onClick={() => { setFeedback('like'); setFeedbackSubmitted(true); toast.success('Thank you! 💅'); }} className="feedback-btn positive">👍 Yes</button>
-                      <button onClick={() => { setFeedback('dislike'); setFeedbackSubmitted(true); toast.success('Thanks for helping us improve!'); }} className="feedback-btn negative">👎 No</button>
+                      <button onClick={() => { setFeedback('like'); setFeedbackSubmitted(true); toast.success('Thank you! 💅'); }} className="feedback-btn positive">{t('audit.makeup.yes')}</button>
+                      <button onClick={() => { setFeedback('dislike'); setFeedbackSubmitted(true); toast.success('Thanks for helping us improve!'); }} className="feedback-btn negative">{t('audit.makeup.no')}</button>
                     </div>
                   </div>
                 )}
-                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">Thank you for your feedback! ✨</span></div>}
+                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">{t('audit.makeup.thankYouForYourFeedback')}</span></div>}
 
                 <div className="preview-controls-row">
                   <button
@@ -526,10 +529,10 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                       }
                     }}
                   >
-                    <Heart size={15} /><span>Save Favourite</span>
+                    <Heart size={15} /><span>{t('audit.makeup.saveFavourite')}</span>
                   </button>
                   <button className="btn btn-secondary" onClick={handleReset}>
-                    <RefreshCw size={15} /><span>Try Another Style</span>
+                    <RefreshCw size={15} /><span>{t('audit.makeup.tryAnotherStyle')}</span>
                   </button>
                 </div>
               </div>
@@ -546,32 +549,61 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           {!image ? (
             <div 
               className="dropzone-modern"
-              onClick={triggerUpload}
-              style={{ cursor: 'pointer' }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) loadImage(file);
+              }}
+              style={{ cursor: 'default' }}
             >
-              <div className="dropzone-icon">
-                <Upload size={28} />
+              <div onClick={triggerUpload} style={{ cursor: 'pointer', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div className="dropzone-icon">
+                  <Upload size={28} />
+                </div>
+                <h3>{t('audit.nails.uploadAPhotoOfYourHand')}</h3>
+                <p className="dropzone-subtext">{t('audit.makeup.jpegPngOrWebpMax10mb')}</p>
+                <p className="dropzone-hint">{t('audit.makeup.dragDropOrClickToUpload')}</p>
               </div>
-              <h3>Upload a Photo of Your Hand</h3>
-              <p className="dropzone-subtext">JPEG, PNG, or WebP - Max 10MB</p>
-              <p className="dropzone-hint">Drag & drop or click to upload</p>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={triggerCamera}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Camera size={16} />
+                  <span>{t('audit.makeup.takePhoto')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={triggerUpload}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  <Upload size={16} />
+                  <span>{t('audit.makeup.uploadFile')}</span>
+                </button>
+              </div>
               
               <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
               <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
           ) : (
+
             !isGenerating && (
               <div className="upload-actions-bar">
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerCamera}>
                   <Camera size={14} />
-                  <span>Take Photo</span>
+                  <span>{t('audit.makeup.takePhoto')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm" onClick={triggerUpload}>
                   <Upload size={14} />
-                  <span>Upload File</span>
+                  <span>{t('audit.makeup.uploadFile')}</span>
                 </button>
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
-                  <span>Delete Photo</span>
+                  <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
                 
                 <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
@@ -581,15 +613,15 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           )}
 
           {/* Generate Button */}
-          {!resultImage && (
+          {image && (
             <div className="generate-action-box">
               <button 
                 className="btn btn-primary generate-btn-large" 
-                disabled={!image || isGenerating}
+                disabled={isGenerating}
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
-                <span>Apply AI Nails</span>
+                <span>{t('audit.nails.applyAiNails')}</span>
                 <span className="generate-btn-cost">
                   (-10 Tokens)
                 </span>
@@ -598,12 +630,12 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
               <div className="generate-helper-links">
                 {isGuest ? (
                   <>
-                    <button type="button" className="helper-link" onClick={onOpenAuth}>Sign In</button>
+                    <button type="button" className="helper-link" onClick={onOpenAuth}>{t('audit.makeup.signIn')}</button>
                     <span className="helper-separator">·</span>
-                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                    <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                   </>
                 ) : (
-                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>Purchase credits to continue</button>
+                  <button type="button" className="helper-link" onClick={() => setActiveTab('pricing')}>{t('audit.makeup.purchaseCreditsToContinue')}</button>
                 )}
               </div>
             </div>
@@ -611,7 +643,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
           {/* Privacy Trust Badge */}
           <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>🔒 Your photo is fully secure. Auto-deleted within 1 hour.</span>
+            <span>{t('audit.makeup.yourPhotoIsFullySecureAutodele')}</span>
           </div>
         </div>
       </div>
@@ -619,9 +651,9 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       {/* See the Magic in Action */}
       <div className="landing-section transformations-section">
         <div className="section-header">
-          <span className="section-badge">✨ Showcase</span>
-          <h2>See the Magic in Action</h2>
-          <p>Inspect the realistic glossy overlays and perfect alignments of our AI nail styling.</p>
+          <span className="section-badge">{t('audit.faceanalysis.showcase')}</span>
+          <h2>{t('audit.makeup.seeTheMagicInAction')}</h2>
+          <p>{t('audit.nails.inspectTheRealisticGlossyOverl')}</p>
         </div>
         <div className="transformations-grid">
           {[
@@ -633,7 +665,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <div key={tData.id} className="transformation-card-outer">
               <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
                 <div className="transformation-image-wrapper" style={{ height: '220px', borderRadius: '12px', overflow: 'hidden' }}>
-                  {tData.hot && <span className="transformation-hot-badge">POPULAR</span>}
+                  {tData.hot && <span className="transformation-hot-badge">{t('audit.faceanalysis.popular')}</span>}
                   <img src={tData.path} alt={tData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
@@ -649,8 +681,8 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="section-header">
-            <span className="section-badge">❓ Got Questions?</span>
-            <h2>Common Nail Inquiries</h2>
+            <span className="section-badge">{t('audit.faceanalysis.gotQuestions')}</span>
+            <h2>{t('audit.nails.commonNailInquiries')}</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
             {[
@@ -690,7 +722,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             Preview your next manicure design and find the perfect color balance for your hands.
           </p>
           <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
-            <span>Create Your Look Now</span>
+            <span>{t('audit.makeup.createYourLookNow')}</span>
             <ArrowRight size={18} />
           </button>
         </div>
@@ -705,7 +737,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             onClick={() => { handleGenerate(); scrollToPreview(); }}
           >
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
-            <span>Apply AI Nails</span>
+            <span>{t('audit.nails.applyAiNails')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
               (-10 Tokens)
             </span>

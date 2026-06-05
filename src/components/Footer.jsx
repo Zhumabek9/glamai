@@ -5,23 +5,30 @@ import { t } from '../utils/i18n';
 export default function Footer({ setActiveTab }) {
   const year = new Date().getFullYear();
 
-  const footerLinks = {
-    Product: [
-      { label: t('nav.tryItFree'), tab: 'playground' },
-      { label: t('footer.pricing'), tab: 'pricing' },
-      { label: t('footer.blog'), tab: 'blog' },
-      { label: t('footer.history'), tab: 'history' },
-    ],
-    Legal: [
-      { label: t('footer.privacy'), tab: 'privacy' },
-      { label: t('footer.terms'), tab: 'terms' },
-    ],
-  };
+  const footerLinks = [
+    {
+      title: t('footer.headingProduct', 'Product'),
+      links: [
+        { label: t('nav.tryItFree'), tab: 'playground' },
+        { label: t('footer.pricing'), tab: 'pricing' },
+        { label: t('footer.blog'), tab: 'blog' },
+        { label: t('footer.history'), tab: 'history' },
+      ]
+    },
+    {
+      title: t('footer.headingLegal', 'Legal'),
+      links: [
+        { label: t('footer.privacy'), tab: 'privacy' },
+        { label: t('footer.terms'), tab: 'terms' },
+      ]
+    }
+  ];
 
   const socialLinks = [
     {
       label: 'Instagram',
-      href: '#',
+      href: 'https://instagram.com/glamai_app',
+      aria: 'Instagram Profile',
       svg: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
           <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -32,7 +39,8 @@ export default function Footer({ setActiveTab }) {
     },
     {
       label: 'X / Twitter',
-      href: '#',
+      href: 'https://x.com/glamai_app',
+      aria: 'X Profile',
       svg: (
         <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -41,7 +49,8 @@ export default function Footer({ setActiveTab }) {
     },
     {
       label: 'YouTube',
-      href: '#',
+      href: 'https://youtube.com/@glamai_app',
+      aria: 'YouTube Channel',
       svg: (
         <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
           <path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/>
@@ -95,7 +104,7 @@ export default function Footer({ setActiveTab }) {
               maxWidth: '280px',
               margin: '0 0 1.5rem',
             }}>
-              Try 100+ hairstyles, makeup looks, and nail art styles on your own photo with AI. Photorealistic results in seconds — free to start.
+              {t('footer.brandDesc', 'Try 100+ hairstyles, makeup looks, and nail art styles on your own photo with AI. Photorealistic results in seconds — free to start.')}
             </p>
             {/* Social icons */}
             <div style={{ display: 'flex', gap: '0.6rem' }}>
@@ -104,6 +113,9 @@ export default function Footer({ setActiveTab }) {
                   key={s.label}
                   href={s.href}
                   title={s.label}
+                  aria-label={s.aria}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     width: '36px',
                     height: '36px',
@@ -137,8 +149,8 @@ export default function Footer({ setActiveTab }) {
           </div>
 
           {/* Link columns */}
-          {Object.entries(footerLinks).map(([heading, links]) => (
-            <div key={heading}>
+          {footerLinks.map(col => (
+            <div key={col.title}>
               <h4 style={{
                 fontFamily: 'var(--font-heading)',
                 fontSize: '0.85rem',
@@ -148,10 +160,10 @@ export default function Footer({ setActiveTab }) {
                 letterSpacing: '0.06em',
                 marginBottom: '1.25rem',
               }}>
-                {heading}
+                {col.title}
               </h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                {links.map(link => (
+                {col.links.map(link => (
                   <li key={link.label}>
                     <button
                       onClick={() => setActiveTab(link.tab)}
@@ -192,7 +204,7 @@ export default function Footer({ setActiveTab }) {
         >
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
             {t('footer.copyright').replace('{year}', year)}
-            {' '}Made with <Heart size={12} color="var(--color-pink-primary)" fill="var(--color-pink-primary)" style={{ display: 'inline', verticalAlign: 'middle' }} /> for your style journey.
+            {' '}{t('footer.madeWithPart1', 'Made with')}{' '}<Heart size={12} color="var(--color-pink-primary)" fill="var(--color-pink-primary)" style={{ display: 'inline', verticalAlign: 'middle' }} />{' '}{t('footer.madeWithPart2', 'for your style journey.')}
           </p>
           <div style={{ display: 'flex', gap: '1.25rem' }}>
             <button

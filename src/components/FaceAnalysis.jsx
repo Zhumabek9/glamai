@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useRef } from 'react';
 import { Upload, Sparkles, User, Check, RefreshCw, Scissors, Smile, Eye, Award, ArrowRight, Star, ChevronDown, ChevronUp, Users, Lock, Palette, HelpCircle, Coins } from 'lucide-react';
 import { useToast } from './Toast';
@@ -82,15 +83,15 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
         <div className="glowing-orb pink-orb"></div>
         <div className="glowing-orb purple-orb"></div>
         <h1 className="landing-title">
-          <span className="gradient-text">AI Face Scanner</span> & Analysis
+          <span className="gradient-text">{t('audit.faceanalysis.aiFaceScanner')}</span> {t('audit.faceanalysis.andAnalysis', '& Analysis')}
         </h1>
         <p className="landing-subtitle">
-          Unlock personalized style insights. Upload your selfie to scan facial symmetry, shape structures, and skin tones, instantly mapping the perfect haircuts and beauty presets for your profile.
+          {t('audit.faceanalysis.heroSubtitle', 'Unlock personalized style insights. Upload your selfie to scan facial symmetry, shape structures, and skin tones, instantly mapping the perfect haircuts and beauty presets for your profile.')}
         </p>
         <div className="landing-stats">
-          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>Biometric Landmark Mapping</span></div>
-          <div className="stat-badge"><Coins size={14} color="var(--color-pink-primary)" /> <span>Free Analysis scan</span></div>
-          <div className="stat-badge"><span>⚡ Powered by Face Mesh AI</span></div>
+          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>{t('audit.faceanalysis.biometricLandmarkMapping')}</span></div>
+          <div className="stat-badge"><Coins size={14} color="var(--color-pink-primary)" /> <span>{t('audit.faceanalysis.freeAnalysisScan')}</span></div>
+          <div className="stat-badge"><span>{t('audit.faceanalysis.poweredByFaceMeshAi')}</span></div>
         </div>
       </div>
 
@@ -107,10 +108,10 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
               <div className="dropzone-icon">
                 <Upload size={24} />
               </div>
-              <h3>Take or Upload a Selfie</h3>
-              <p>For best results, look straight ahead with a neutral face and clear lighting.</p>
+              <h3>{t('audit.faceanalysis.takeOrUploadASelfie')}</h3>
+              <p>{t('audit.faceanalysis.forBestResultsLookStraightAhea')}</p>
               <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}>
-                Browse Files
+                {t('audit.faceanalysis.browseFiles', 'Browse Files')}
               </button>
               <input 
                 ref={fileInputRef}
@@ -158,7 +159,7 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
           {image && !isScanning && !analysisResult && (
             <button className="btn btn-primary" style={{ marginTop: '1.5rem', width: '100%' }} onClick={handleScan}>
               <Sparkles size={16} />
-              <span>Start AI Scanning</span>
+              <span>{t('audit.faceanalysis.startAiScanning')}</span>
             </button>
           )}
 
@@ -166,9 +167,9 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
             <div style={{ marginTop: '1.5rem', textAlign: 'center', width: '100%' }}>
               <div className="spinner-inner" style={{ margin: '0 auto 0.5rem' }}></div>
               <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-pink-primary)', margin: 0 }}>
-                {scanStep === 1 && "Detecting facial coordinates..."}
-                {scanStep === 2 && "Analyzing skin undertones..."}
-                {scanStep === 3 && "Synthesizing recommendations..."}
+                {scanStep === 1 && t('audit.faceanalysis.detectingFacialCoordinates', 'Detecting facial coordinates...')}
+                {scanStep === 2 && t('audit.faceanalysis.analyzingSkinUndertones', 'Analyzing skin undertones...')}
+                {scanStep === 3 && t('audit.faceanalysis.synthesizingRecommendations', 'Synthesizing recommendations...')}
               </p>
             </div>
           )}
@@ -180,15 +181,15 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
             {!analysisResult ? (
               <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                 <User size={40} style={{ opacity: 0.5, marginBottom: '1rem', display: 'block', margin: '0 auto 1rem' }} />
-                <h3>Ready to Analyze</h3>
-                <p style={{ fontSize: '0.85rem' }}>Click the scan button to start the facial landmark scanner.</p>
+                <h3>{t('audit.faceanalysis.readyToAnalyze')}</h3>
+                <p style={{ fontSize: '0.85rem' }}>{t('audit.faceanalysis.clickTheScanButtonToStartTheFa')}</p>
               </div>
             ) : (
               <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255, 46, 147, 0.06)', padding: '1rem', borderRadius: '16px' }}>
                   <Award size={24} color="var(--color-pink-primary)" />
                   <div>
-                    <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>HAIR COMPATIBILITY SCORE</h4>
+                    <h4 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: 0 }}>{t('audit.faceanalysis.hairCompatibilityScore')}</h4>
                     <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>{analysisResult.hairCompatibility}%</span>
                   </div>
                 </div>
@@ -196,24 +197,24 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
                 {/* Characteristics */}
                 <div className="analysis-characteristics-grid">
                   <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)', padding: '1rem', borderRadius: '16px' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>Face Shape</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>{t('audit.faceanalysis.faceShape')}</span>
                     <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{analysisResult.faceShape}</span>
                   </div>
                   
                   <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-border)', padding: '1rem', borderRadius: '16px' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>Skin undertone</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, display: 'block', textTransform: 'uppercase' }}>{t('audit.faceanalysis.skinUndertone')}</span>
                     <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'capitalize' }}>{analysisResult.skinTone.replace('-', ' ')}</span>
                   </div>
                 </div>
 
                 {/* Recommendations */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, borderBottom: '1px solid rgba(255, 46, 147, 0.1)', paddingBottom: '0.5rem' }}>Recommended Presets</h3>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, borderBottom: '1px solid rgba(255, 46, 147, 0.1)', paddingBottom: '0.5rem' }}>{t('audit.faceanalysis.recommendedPresets')}</h3>
                   
                   {/* Hairstyles */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
                     <Scissors size={16} color="var(--color-pink-primary)" />
-                    <span style={{ fontWeight: 700, minWidth: '80px' }}>Haircut:</span>
+                    <span style={{ fontWeight: 700, minWidth: '80px' }}>{t('audit.faceanalysis.haircut')}</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.hairstyles.map(h => (
                         <button key={h} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
@@ -229,7 +230,7 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
                   {/* Makeup */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
                     <Sparkles size={16} color="var(--color-pink-primary)" />
-                    <span style={{ fontWeight: 700, minWidth: '80px' }}>Makeup:</span>
+                    <span style={{ fontWeight: 700, minWidth: '80px' }}>{t('audit.faceanalysis.makeup')}</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.makeup.map(m => (
                         <button key={m} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
@@ -245,7 +246,7 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
                   {/* Beards */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.85rem' }}>
                     <Smile size={16} color="var(--color-pink-primary)" />
-                    <span style={{ fontWeight: 700, minWidth: '80px' }}>Beard:</span>
+                    <span style={{ fontWeight: 700, minWidth: '80px' }}>{t('audit.faceanalysis.beard')}</span>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                       {analysisResult.recommendations.beards.map(b => (
                         <button key={b} className="category-chip active" style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem' }} onClick={() => {
@@ -277,21 +278,21 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
       {/* --- Real Transformations --- */}
       <div className="landing-section transformations-section" style={{ marginTop: '3rem' }}>
         <div className="section-header">
-          <span className="section-badge">✨ Showcase</span>
-          <h2>Real Transformations</h2>
-          <p>Discover how exact landmark scanning unlocks custom-tailored beauty styles.</p>
+          <span className="section-badge">{t('audit.faceanalysis.showcase')}</span>
+          <h2>{t('audit.faceanalysis.realTransformations')}</h2>
+          <p>{t('audit.faceanalysis.discoverHowExactLandmarkScanni')}</p>
         </div>
         <div className="transformations-grid">
           {[
-            { id: 1, title: 'Heart Shape Mapping', path: '/styles/female_bob.webp', hot: true },
-            { id: 2, title: 'Oval Symmetry Balancing', path: '/styles/female_straight.webp' },
-            { id: 3, title: 'Cool Undertone Palettes', path: '/styles/makeup_natural.png' },
-            { id: 4, title: 'Square Contour Softening', path: '/styles/female_soft-waves.webp' },
+            { id: 1, title: t('audit.faceanalysis.showcaseTitle1', 'Heart Shape Mapping'), path: '/styles/female_bob.webp', hot: true },
+            { id: 2, title: t('audit.faceanalysis.showcaseTitle2', 'Oval Symmetry Balancing'), path: '/styles/female_straight.webp' },
+            { id: 3, title: t('audit.faceanalysis.showcaseTitle3', 'Cool Undertone Palettes'), path: '/styles/makeup_natural.png' },
+            { id: 4, title: t('audit.faceanalysis.showcaseTitle4', 'Square Contour Softening'), path: '/styles/female_soft-waves.webp' },
           ].map(tData => (
             <div key={tData.id} className="transformation-card-outer">
               <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
                 <div className="transformation-image-wrapper" style={{ height: '220px', borderRadius: '12px', overflow: 'hidden' }}>
-                  {tData.hot && <span className="transformation-hot-badge">POPULAR</span>}
+                  {tData.hot && <span className="transformation-hot-badge">{t('audit.faceanalysis.popular')}</span>}
                   <img src={tData.path} alt={tData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
@@ -306,16 +307,16 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
       {/* --- Simple Process --- */}
       <div className="landing-section process-section">
         <div className="section-header">
-          <span className="section-badge">⚡ Simple Process</span>
-          <h2>4 Steps to Your Beauty Profile</h2>
-          <p>Scan and analyze your features to eliminate style guesswork forever.</p>
+          <span className="section-badge">{t('audit.faceanalysis.simpleProcess')}</span>
+          <h2>{t('audit.faceanalysis.4StepsToYourBeautyProfile')}</h2>
+          <p>{t('audit.faceanalysis.scanAndAnalyzeYourFeaturesToEl')}</p>
         </div>
         <div className="process-timeline">
           {[
-            { num: '01', title: 'Upload Selfie', desc: 'Provide a front-facing photo under clean, even lighting.', icon: <Upload size={24} /> },
-            { num: '02', title: 'Biometric Scan', desc: 'Our landmark grid analyzes your facial dimensions.', icon: <Sparkles size={24} /> },
-            { num: '03', title: 'Tone Analysis', desc: 'AI evaluates skin RGB spectrums for warm/cool undertones.', icon: <Palette size={24} /> },
-            { num: '04', title: 'Get Match Report', desc: 'Instantly view compatible haircuts, beard lengths, and makeup.', icon: <Award size={24} /> },
+            { num: '01', title: t('audit.faceanalysis.stepTitle1', 'Upload Selfie'), desc: t('audit.faceanalysis.stepDesc1', 'Provide a front-facing photo under clean, even lighting.'), icon: <Upload size={24} /> },
+            { num: '02', title: t('audit.faceanalysis.stepTitle2', 'Biometric Scan'), desc: t('audit.faceanalysis.stepDesc2', 'Our landmark grid analyzes your facial dimensions.'), icon: <Sparkles size={24} /> },
+            { num: '03', title: t('audit.faceanalysis.stepTitle3', 'Tone Analysis'), desc: t('audit.faceanalysis.stepDesc3', 'AI evaluates skin RGB spectrums for warm/cool undertones.'), icon: <Palette size={24} /> },
+            { num: '04', title: t('audit.faceanalysis.stepTitle4', 'Get Match Report'), desc: t('audit.faceanalysis.stepDesc4', 'Instantly view compatible haircuts, beard lengths, and makeup.'), icon: <Award size={24} /> },
           ].map((step, idx) => (
             <div key={idx} className="process-card glass-panel">
               <div className="process-step-num">{step.num}</div>
@@ -331,16 +332,16 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
       {/* --- Why Choose Us --- */}
       <div className="landing-section why-choose-section">
         <div className="section-header">
-          <span className="section-badge">🏆 Why Choose Us</span>
-          <h2>Biometric Precision Alignment</h2>
-          <p>Our detector maps key features to compute structural ratios accurately.</p>
+          <span className="section-badge">{t('audit.faceanalysis.whyChooseUs')}</span>
+          <h2>{t('audit.faceanalysis.biometricPrecisionAlignment')}</h2>
+          <p>{t('audit.faceanalysis.ourDetectorMapsKeyFeaturesToCo')}</p>
         </div>
         <div className="benefits-grid">
           {[
-            { title: 'Landmark Grid Mapping', desc: 'Aligns 68 biometric landmark points over eyes, brows, nose, and lips.', icon: <Sparkles size={24} /> },
-            { title: 'Undertone Validator', desc: 'Analyzes skin color charts to identify precise cosmetic warm/cool matching ranges.', icon: <Palette size={24} /> },
-            { title: 'Cross-Salon Sync', desc: 'Syncs recommendation tags directly to Hair, Makeup, and Beard workspaces.', icon: <Scissors size={24} /> },
-            { title: 'Local Encryption', desc: 'All scanned portrait coordinates are processed locally. Biometric data is safe.', icon: <Lock size={24} /> },
+            { title: t('audit.faceanalysis.benefitTitle1', 'Landmark Grid Mapping'), desc: t('audit.faceanalysis.benefitDesc1', 'Aligns 68 biometric landmark points over eyes, brows, nose, and lips.'), icon: <Sparkles size={24} /> },
+            { title: t('audit.faceanalysis.benefitTitle2', 'Undertone Validator'), desc: t('audit.faceanalysis.benefitDesc2', 'Analyzes skin color charts to identify precise cosmetic warm/cool matching ranges.'), icon: <Palette size={24} /> },
+            { title: t('audit.faceanalysis.benefitTitle3', 'Cross-Salon Sync'), desc: t('audit.faceanalysis.benefitDesc3', 'Syncs recommendation tags directly to Hair, Makeup, and Beard workspaces.'), icon: <Scissors size={24} /> },
+            { title: t('audit.faceanalysis.benefitTitle4', 'Local Encryption'), desc: t('audit.faceanalysis.benefitDesc4', 'All scanned portrait coordinates are processed locally. Biometric data is safe.'), icon: <Lock size={24} /> },
           ].map((b, idx) => (
             <div key={idx} className="benefit-card glass-panel">
               <div className="benefit-icon-wrapper">{b.icon}</div>
@@ -355,15 +356,15 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="section-header">
-            <span className="section-badge">❓ Got Questions?</span>
-            <h2>Common Scanner Inquiries</h2>
-            <p>Everything you need to know about our face shape scanner.</p>
+            <span className="section-badge">{t('audit.faceanalysis.gotQuestions')}</span>
+            <h2>{t('audit.faceanalysis.commonScannerInquiries')}</h2>
+            <p>{t('audit.faceanalysis.everythingYouNeedToKnowAboutOu')}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
             {[
-              { q: 'Is my scanned portrait private?', a: 'Yes. We process scans on-the-fly and do not store photos or biometric vectors on our databases. Your scanning session is completely private.' },
-              { q: 'Can lighting affect face shape detection?', a: 'Yes. For high accuracy, keep your face facing straight under uniform light with neutral expressions (no smiling during landmarks scan).' },
-              { q: 'How does it identify undertone palettes?', a: 'Our AI reads high-density color averages of cheek and forehead skin, comparing values to warmth index matrices.' }
+              { q: t('audit.faceanalysis.faqQ1', 'Is my scanned portrait private?'), a: t('audit.faceanalysis.faqA1', 'Yes. We process scans on-the-fly and do not store photos or biometric vectors on our databases. Your scanning session is completely private.') },
+              { q: t('audit.faceanalysis.faqQ2', 'Can lighting affect face shape detection?'), a: t('audit.faceanalysis.faqA2', 'Yes. For high accuracy, keep your face facing straight under uniform light with neutral expressions (no smiling during landmarks scan).') },
+              { q: t('audit.faceanalysis.faqQ3', 'How does it identify undertone palettes?'), a: t('audit.faceanalysis.faqA3', 'Our AI reads high-density color averages of cheek and forehead skin, comparing values to warmth index matrices.') }
             ].map((item, idx) => {
               const isOpened = openFaq === idx;
               return (
@@ -414,13 +415,13 @@ export default function FaceAnalysis({ user, onOpenAuth, setActiveTab, setStyleC
       <div className="landing-section bottom-cta-section" style={{ background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '680px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '2.5rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem' }}>
-            Ready to Find Your Perfect style?
+            {t('audit.faceanalysis.ctaTitle', 'Ready to Find Your Perfect Style?')}
           </h2>
           <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: '1.6' }}>
-            Discover your symmetry ratio, face shapes, and unlock custom-tailored recommendations now.
+            {t('audit.faceanalysis.ctaDesc', 'Discover your symmetry ratio, face shapes, and unlock custom-tailored recommendations now.')}
           </p>
           <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 380, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1.05rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
-            <span>Start Scanning Now</span>
+            <span>{t('audit.faceanalysis.startScanningNow')}</span>
             <ArrowRight size={18} />
           </button>
         </div>

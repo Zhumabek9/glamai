@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useRef } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff, ArrowRight, Star, ChevronDown, ChevronUp, Users, Lock, Palette } from 'lucide-react';
 import { useToast } from './Toast';
@@ -150,15 +151,15 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
         <div className="glowing-orb pink-orb"></div>
         <div className="glowing-orb purple-orb"></div>
         <h1 className="landing-title">
-          <span className="gradient-text">Flawless Portraiture, Real Textures</span>. Try Premium AI Retouching
+          <span className="gradient-text">{t('audit.retouch.flawlessPortraitureRealTexture')}</span>. Try Premium AI Retouching
         </h1>
         <p className="landing-subtitle">
           Experience editorial-grade skin and facial enhancements that preserve your authentic character. Smooth pigmentation, illuminate smiles, and define eyes without the synthetic plastic look. Powered by texture retention algorithms.
         </p>
         <div className="landing-stats">
-          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>Texture-Preserving Smoothing</span></div>
-          <div className="stat-badge"><Coins size={14} color="var(--color-pink-primary)" /> <span>Subcellular Blemish Smart Erase</span></div>
-          <div className="stat-badge"><span>⚡ Professional Detail Retention</span></div>
+          <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>{t('audit.retouch.texturepreservingSmoothing')}</span></div>
+          <div className="stat-badge"><Coins size={14} color="var(--color-pink-primary)" /> <span>{t('audit.retouch.subcellularBlemishSmartErase')}</span></div>
+          <div className="stat-badge"><span>{t('audit.retouch.professionalDetailRetention')}</span></div>
         </div>
       </div>
 
@@ -168,7 +169,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
           <div className="desktop-playground-header">
             <h2 className="section-title">
               <Sparkles size={20} color="var(--color-pink-primary)" />
-              <span>Retouch Workspace</span>
+              <span>{t('audit.retouch.retouchWorkspace')}</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Adjust sliders below to customize the beauty filter intensity.
@@ -182,7 +183,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Smooth Skin */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>SMOOTH SKIN</span>
+                <span>{t('audit.retouch.smoothSkin')}</span>
                 <span>{smoothSkin}%</span>
               </div>
               <input 
@@ -192,7 +193,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={smoothSkin} 
                 onChange={(e) => setSmoothSkin(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Smooth skin intensity percentage"
+                aria-label={t('audit.retouch.smoothSkinIntensityPercentage')}
                 aria-valuenow={smoothSkin}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -202,7 +203,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Teeth Whitening */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>TEETH WHITENING</span>
+                <span>{t('audit.retouch.teethWhitening')}</span>
                 <span>{teethWhitening}%</span>
               </div>
               <input 
@@ -212,7 +213,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={teethWhitening} 
                 onChange={(e) => setTeethWhitening(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Teeth whitening percentage"
+                aria-label={t('audit.retouch.teethWhiteningPercentage')}
                 aria-valuenow={teethWhitening}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -222,7 +223,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Eye Enhancement */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>EYE ENHANCEMENT</span>
+                <span>{t('audit.retouch.eyeEnhancement')}</span>
                 <span>{eyeEnhancement}%</span>
               </div>
               <input 
@@ -232,7 +233,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={eyeEnhancement} 
                 onChange={(e) => setEyeEnhancement(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Eye enhancement percentage"
+                aria-label={t('audit.retouch.eyeEnhancementPercentage')}
                 aria-valuenow={eyeEnhancement}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -242,7 +243,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Face Symmetry */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>FACE SYMMETRY ENHANCEMENT</span>
+                <span>{t('audit.retouch.faceSymmetryEnhancement')}</span>
                 <span>{faceSymmetry}%</span>
               </div>
               <input 
@@ -252,7 +253,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={faceSymmetry} 
                 onChange={(e) => setFaceSymmetry(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Face symmetry enhancement percentage"
+                aria-label={t('audit.retouch.faceSymmetryEnhancementPercent')}
                 aria-valuenow={faceSymmetry}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -262,7 +263,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Skin Glow */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>DEWY SKIN GLOW</span>
+                <span>{t('audit.retouch.dewySkinGlow')}</span>
                 <span>{skinGlow}%</span>
               </div>
               <input 
@@ -272,7 +273,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={skinGlow} 
                 onChange={(e) => setSkinGlow(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Dewy skin glow percentage"
+                aria-label={t('audit.retouch.dewySkinGlowPercentage')}
                 aria-valuenow={skinGlow}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -282,7 +283,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             {/* Skin Texture Preservation */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                <span>SKIN TEXTURE PRESERVATION</span>
+                <span>{t('audit.retouch.skinTexturePreservation')}</span>
                 <span>{skinTexturePreservation}%</span>
               </div>
               <input 
@@ -292,7 +293,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                 value={skinTexturePreservation} 
                 onChange={(e) => setSkinTexturePreservation(Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--color-pink-primary)' }}
-                aria-label="Skin texture preservation percentage"
+                aria-label={t('audit.retouch.skinTexturePreservationPercent')}
                 aria-valuenow={skinTexturePreservation}
                 aria-valuemin="0"
                 aria-valuemax="100"
@@ -311,7 +312,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid var(--color-pink-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: poreRefiner ? 'var(--color-pink-primary)' : 'transparent', transition: 'all 0.15s ease' }}>
                 {poreRefiner && <Check size={12} color="#fff" />}
               </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>PORE REFINER (SMART PRESERVE)</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('audit.retouch.poreRefinerSmartPreserve')}</span>
             </div>
 
             {/* Acne Removal Checkbox */}
@@ -326,7 +327,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: '2px solid var(--color-pink-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: acneRemoval ? 'var(--color-pink-primary)' : 'transparent', transition: 'all 0.15s ease' }}>
                 {acneRemoval && <Check size={12} color="#fff" />}
               </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>ACNE & BLEMISH REMOVAL</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('audit.retouch.acneBlemishRemoval')}</span>
             </div>
           </div>
 
@@ -338,7 +339,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               onClick={handleGenerate}
             >
               <Sparkles size={18} />
-              <span>Apply AI Retouch</span>
+              <span>{t('audit.retouch.applyAiRetouch')}</span>
             </button>
           </div>
         </div>
@@ -365,13 +366,13 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current.click(); } }}
-              aria-label="Upload photo: drag and drop a face photo here or press Enter to browse files"
+              aria-label={t('audit.retouch.uploadPhotoDragAndDropAFacePho')}
             >
               <div className="dropzone-icon">
                 <Upload size={24} />
               </div>
-              <h3>Upload a Portrait Photo</h3>
-              <p>Upload a selfie or headshot to retouch and polish.</p>
+              <h3>{t('audit.retouch.uploadAPortraitPhoto')}</h3>
+              <p>{t('audit.retouch.uploadASelfieOrHeadshotToRetou')}</p>
               <button className="btn btn-secondary" tabIndex={-1} onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}>
                 Browse Files
               </button>
@@ -388,16 +389,16 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
               {resultImage ? (
                 <div className="before-after-grid">
                   <div className="before-after-col">
-                    <span className="before-after-label before">Before</span>
+                    <span className="before-after-label before">{t('audit.retouch.before')}</span>
                     <div className="preview-container">
                       <img src={image} alt="Before Retouch" />
                     </div>
                   </div>
                   <div className="before-after-col">
-                    <span className="before-after-label after">After</span>
+                    <span className="before-after-label after">{t('audit.retouch.after')}</span>
                     <div className="preview-container">
                       <img src={resultImage} alt="After Retouch" />
-                      <div className="slider-label after" style={{ top: '1rem', right: '1rem', bottom: 'auto' }}>AI RETOUCHED</div>
+                      <div className="slider-label after" style={{ top: '1rem', right: '1rem', bottom: 'auto' }}>{t('audit.retouch.aiRetouched')}</div>
                     </div>
                   </div>
                 </div>
@@ -421,11 +422,11 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                       style={{ flex: 1, maxWidth: '200px' }}
                     >
                       <Download size={16} />
-                      <span>Download</span>
+                      <span>{t('audit.favorites.download')}</span>
                     </a>
                     <button className="btn btn-secondary" onClick={handleReset} style={{ flex: 1, maxWidth: '200px' }}>
                       <RefreshCw size={16} />
-                      <span>Reset</span>
+                      <span>{t('audit.retouch.reset')}</span>
                     </button>
                   </>
                 ) : (
@@ -442,9 +443,9 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
       {/* --- Real Transformations --- */}
       <div className="landing-section transformations-section">
         <div className="section-header">
-          <span className="section-badge">✨ Showcase</span>
-          <h2>Real Transformations</h2>
-          <p>See how our AI smart brushes clear blemishes while preserving skin porosity.</p>
+          <span className="section-badge">{t('audit.faceanalysis.showcase')}</span>
+          <h2>{t('audit.faceanalysis.realTransformations')}</h2>
+          <p>{t('audit.retouch.seeHowOurAiSmartBrushesClearBl')}</p>
         </div>
         <div className="transformations-grid">
           {[
@@ -456,7 +457,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             <div key={tData.id} className="transformation-card-outer">
               <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
                 <div className="transformation-image-wrapper" style={{ height: '220px', borderRadius: '12px', overflow: 'hidden' }}>
-                  {tData.hot && <span className="transformation-hot-badge">POPULAR</span>}
+                  {tData.hot && <span className="transformation-hot-badge">{t('audit.faceanalysis.popular')}</span>}
                   <img src={tData.path} alt={tData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
@@ -471,9 +472,9 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
       {/* --- Simple Process --- */}
       <div className="landing-section process-section">
         <div className="section-header">
-          <span className="section-badge">⚡ Simple Process</span>
-          <h2>4 Steps to Flawless Skin</h2>
-          <p>Easily edit and polish headshots with intuitive slider controls.</p>
+          <span className="section-badge">{t('audit.faceanalysis.simpleProcess')}</span>
+          <h2>{t('audit.retouch.4StepsToFlawlessSkin')}</h2>
+          <p>{t('audit.retouch.easilyEditAndPolishHeadshotsWi')}</p>
         </div>
         <div className="process-timeline">
           {[
@@ -496,9 +497,9 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
       {/* --- Why Choose Us --- */}
       <div className="landing-section why-choose-section">
         <div className="section-header">
-          <span className="section-badge">🏆 Why Choose Us</span>
-          <h2>Pore-Safe Retouching Algorithms</h2>
-          <p>Our engine targets only blemishes, retaining genuine skin textures.</p>
+          <span className="section-badge">{t('audit.faceanalysis.whyChooseUs')}</span>
+          <h2>{t('audit.retouch.poresafeRetouchingAlgorithms')}</h2>
+          <p>{t('audit.retouch.ourEngineTargetsOnlyBlemishesR')}</p>
         </div>
         <div className="benefits-grid">
           {[
@@ -520,9 +521,9 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="section-header">
-            <span className="section-badge">❓ Got Questions?</span>
-            <h2>Common Retouch Inquiries</h2>
-            <p>Common questions about our beauty retouch filter.</p>
+            <span className="section-badge">{t('audit.faceanalysis.gotQuestions')}</span>
+            <h2>{t('audit.retouch.commonRetouchInquiries')}</h2>
+            <p>{t('audit.retouch.commonQuestionsAboutOurBeautyR')}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
             {[
@@ -585,7 +586,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
             Unlock your best look. Smooth skin textures, whiten teeth, and create stunning headshots online.
           </p>
           <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 380, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1.05rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
-            <span>Retouch Your Photo Now</span>
+            <span>{t('audit.retouch.retouchYourPhotoNow')}</span>
             <ArrowRight size={18} />
           </button>
         </div>

@@ -131,7 +131,7 @@ function Hero({
               <div style={{ display: 'flex' }}>
                 {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />)}
               </div>
-              <span>4.9/5 rating</span>
+              <span>{t('audit.hero.495Rating')}</span>
             </div>
             <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
             <div className="trust-strip-item">
@@ -141,7 +141,7 @@ function Hero({
             <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
             <div className="trust-strip-item">
               <Lock size={18} />
-              <span>Privacy guaranteed</span>
+              <span>{t('audit.hero.privacyGuaranteed')}</span>
             </div>
           </div>
 
@@ -181,7 +181,7 @@ function Hero({
                 aria-valuenow={Math.round(sliderPosition)}
                 aria-valuemin="0"
                 aria-valuemax="100"
-                aria-label="Before and after comparison slider"
+                aria-label={t('audit.hero.beforeAndAfterComparisonSlider')}
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowLeft') {
@@ -237,7 +237,7 @@ function Hero({
               <div key={tData.id} className="transformation-card-outer">
                 <div className="transformation-card glass-panel">
                   <div className="transformation-image-wrapper">
-                    {tData.hot && <span className="transformation-hot-badge">HOT</span>}
+                    {tData.hot && <span className="transformation-hot-badge">{t('audit.hero.hot')}</span>}
                     <img src={tData.path} alt={tData.title} className="transformation-gif" loading="lazy" decoding="async" />
                   </div>
                 </div>
@@ -256,7 +256,7 @@ function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.simpleProcess')}</span>
             <h2>{t('howItWorks.title')}</h2>
-            <p>Zero salon regrets, zero waste. Preview your perfect hair, makeup, and nail styles instantly.</p>
+            <p>{t('audit.hero.zeroSalonRegretsZeroWastePrevi')}</p>
           </div>
 
           <div className="process-timeline">
@@ -305,7 +305,7 @@ function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.whyChooseUs')}</span>
             <h2>{t('trust.title')}</h2>
-            <p>Advanced generative AI beauty studio delivering 100% realistic hair, cosmetics, and grooming previews.</p>
+            <p>{t('audit.hero.advancedGenerativeAiBeautyStud')}</p>
           </div>
 
           <div className="benefits-grid">
@@ -366,7 +366,7 @@ function Hero({
           <div className="section-header">
             <span className="section-badge">{t('home.gotQuestions')}</span>
             <h2>{t('faq.title')}</h2>
-            <p>Answers to common questions about our AI virtual styling studio & beauty features.</p>
+            <p>{t('audit.hero.answersToCommonQuestionsAboutO')}</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>

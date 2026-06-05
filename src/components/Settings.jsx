@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Coins, Copy, Check, Lock, Sparkles, RefreshCw } from 'lucide-react';
 import { authFetch } from '../apiClient';
@@ -70,15 +71,24 @@ export default function Settings({ user, onLogout, setActiveTab }) {
     if (!confirmDelete) return;
 
     try {
-      await authFetch('/api/user/profile', {
-        method: 'DELETE'
-      }).catch((e) => console.warn("Backend profile delete failed", e));
-      
-      const emailKey = `glamai_history_${user.email.toLowerCase()}`;
-      localStorage.removeItem(emailKey);
-
+      // 1. Delete Clerk account first (primary identity provider)
       if (clerkUser) {
         await clerkUser.delete();
+      }
+
+      // 2. Delete database entry and sessions on backend
+      const res = await authFetch('/api/user/profile', {
+        method: 'DELETE'
+      });
+      
+      if (!res.ok) {
+        throw new Error("Server failed to remove profile records.");
+      }
+      
+      // 3. Remove localized storage items
+      if (user?.email) {
+        const emailKey = `glamai_history_${user.email.toLowerCase()}`;
+        localStorage.removeItem(emailKey);
       }
 
       toast.success("Your account and history have been successfully deleted.");
@@ -86,11 +96,7 @@ export default function Settings({ user, onLogout, setActiveTab }) {
       setActiveTab('playground');
     } catch (err) {
       console.error("Deletion error:", err);
-      const emailKey = `glamai_history_${user.email.toLowerCase()}`;
-      localStorage.removeItem(emailKey);
-      toast.success("Client data wiped. Account deletion complete.");
-      onLogout();
-      setActiveTab('playground');
+      toast.error(err.message || "Failed to fully delete your account. Please try again or contact support.");
     }
   };
 
@@ -110,12 +116,12 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
               <Shield size={18} color="var(--color-pink-primary)" />
-              <span>Subscription & Billing</span>
+              <span>{t('audit.settings.subscriptionBilling')}</span>
             </h3>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '12px' }}>
               <div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>CURRENT PLAN</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('audit.settings.currentPlan')}</p>
                 <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
                   {isPremium ? 'VIP Premium' : 'Free Tier'}
                 </span>
@@ -125,7 +131,7 @@ export default function Settings({ user, onLogout, setActiveTab }) {
                   Upgrade to VIP
                 </button>
               ) : (
-                <span className="vip-badge-mini" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>ACTIVE</span>
+                <span className="vip-badge-mini" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>{t('audit.settings.active')}</span>
               )}
             </div>
           </div>
@@ -134,7 +140,7 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <Sparkles size={18} color="var(--color-pink-primary)" />
-              <span>Referral program</span>
+              <span>{t('audit.settings.referralProgram')}</span>
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
               Share GlamAI with friends and earn 50 free credits for every friend who signs up!
@@ -155,11 +161,11 @@ export default function Settings({ user, onLogout, setActiveTab }) {
 
             <div style={{ display: 'flex', gap: '2rem', borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '1.5rem' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>TOTAL REFERRALS</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>{t('audit.settings.totalReferrals')}</span>
                 <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>{referralData.referralsCount}</span>
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>CREDITS EARNED</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>{t('audit.settings.creditsEarned')}</span>
                 <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-pink-primary)' }}>{referralData.referralsCount * 50}</span>
               </div>
             </div>
@@ -169,37 +175,37 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
               <Lock size={18} color="var(--color-pink-primary)" />
-              <span>Security Settings</span>
+              <span>{t('audit.settings.securitySettings')}</span>
             </h3>
 
             <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="form-group">
-                <label className="form-label">New Password</label>
+                <label className="form-label">{t('audit.settings.newPassword')}</label>
                 <input 
                   type="password" 
                   className="form-input" 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Min 8 characters"
+                  placeholder={t('audit.settings.min8Characters')}
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Confirm New Password</label>
+                <label className="form-label">{t('audit.settings.confirmNewPassword')}</label>
                 <input 
                   type="password" 
                   className="form-input" 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm password"
+                  placeholder={t('audit.settings.confirmPassword')}
                   required
                 />
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem' }} disabled={updating}>
                 {updating ? <RefreshCw className="animate-spin" size={16} /> : <Shield size={16} />}
-                <span>Update Password</span>
+                <span>{t('audit.settings.updatePassword')}</span>
               </button>
             </form>
           </div>
@@ -208,7 +214,7 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '2rem', border: '1px solid rgba(255, 77, 77, 0.2)' }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#ff4d4d' }}>
               <Shield size={18} color="#ff4d4d" />
-              <span>GDPR & CCPA Data Privacy</span>
+              <span>{t('audit.settings.gdprCcpaDataPrivacy')}</span>
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
               Under GDPR (Europe) and CCPA (USA), you have the right to request deletion of your account and personal data. Clicking the button below will immediately erase your style gallery, remove your credentials, and delete your profile.

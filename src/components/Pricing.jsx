@@ -6,15 +6,14 @@ import { trackEvent } from '../utils/analytics';
 const PLANS = {
   subscription: [
     {
-      id: "lite-monthly",
-      name: "Lite",
-      badge: "Good Start",
-      price: "$9.90",
-      billingPeriod: "monthly",
-      tokens: 200,
-      generations: "20 generations/month",
+      id: "weekly-vip",
+      name: "Weekly",
+      badge: "Flexible",
+      price: "$7.99",
+      billingPeriod: "week",
+      tokens: 500,
+      generations: "50 generations/week",
       features: [
-        "pricing.feat.liteGensOT",
         "pricing.hdExport",
         "pricing.fastSpeed",
         "pricing.allStyles",
@@ -23,15 +22,14 @@ const PLANS = {
       highlighted: false
     },
     {
-      id: "pro-monthly",
-      name: "Pro",
-      badge: "Best Value",
-      price: "$19.60",
-      billingPeriod: "monthly",
-      tokens: 3000,
-      generations: "300 generations/month",
+      id: "monthly-vip",
+      name: "Monthly",
+      badge: "Most Popular",
+      price: "$19.99",
+      billingPeriod: "month",
+      tokens: 2000,
+      generations: "200 generations/month",
       features: [
-        "pricing.feat.proGensOT",
         "pricing.hdExport",
         "pricing.fastSpeed",
         "pricing.allStyles",
@@ -41,15 +39,14 @@ const PLANS = {
       highlighted: true
     },
     {
-      id: "unlimited-monthly",
-      name: "Unlimited",
-      badge: "Power User",
-      price: "$29.90",
-      billingPeriod: "monthly",
-      tokens: "Unlimited*",
-      generations: "Unlimited generations",
+      id: "yearly-vip",
+      name: "Yearly",
+      badge: "Best Value (Save ~40%)",
+      price: "$149.99",
+      billingPeriod: "year",
+      tokens: 24000,
+      generations: "24,000 credits/year (2000 monthly)",
       features: [
-        "pricing.unlimitedGens",
         "pricing.hdExport",
         "pricing.fastSpeed",
         "pricing.allStyles",
@@ -61,15 +58,14 @@ const PLANS = {
   ],
   "one-time": [
     {
-      id: "starter-onetime",
-      name: "Starter Pack",
+      id: "mini-pack",
+      name: "Mini Pack",
       badge: null,
-      price: "$4.90",
-      tokens: 50,
-      generations: 5,
+      price: "$4.99",
+      tokens: 100,
+      generations: "10 generations",
       billingPeriod: "one-time",
       features: [
-        "5 generations",
         "pricing.feat.styles100",
         "pricing.feat.highQuality",
         "pricing.feat.instantDownload",
@@ -78,16 +74,14 @@ const PLANS = {
       highlighted: false
     },
     {
-      id: "lite-onetime",
-      name: "Lite Pack",
-      badge: "Most Popular",
-      price: "$9.90",
-      tokens: 200,
-      generations: 20,
+      id: "standart-pack",
+      name: "Standart Pack",
+      badge: "Popular",
+      price: "$9.99",
+      tokens: 300,
+      generations: "30 generations",
       billingPeriod: "one-time",
       features: [
-        "pricing.feat.liteGensOT",
-        "pricing.feat.liteCreditsOT",
         "pricing.feat.styles100",
         "pricing.feat.highQuality",
         "pricing.feat.instantDownload",
@@ -96,16 +90,14 @@ const PLANS = {
       highlighted: true
     },
     {
-      id: "pro-onetime",
-      name: "Pro Pack",
+      id: "max-pack",
+      name: "Max Pack",
       badge: "Best Deal",
-      price: "$19.60",
-      tokens: 3000,
-      generations: 300,
+      price: "$19.99",
+      tokens: 1000,
+      generations: "100 generations",
       billingPeriod: "one-time",
       features: [
-        "pricing.feat.proGensOT",
-        "pricing.feat.proCreditsOT",
         "pricing.feat.styles100",
         "pricing.feat.prioritySpeed",
         "pricing.feat.advancedTexture",
@@ -117,11 +109,14 @@ const PLANS = {
   ]
 };
 
+
+
 export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const [billingPeriod, setBillingPeriod] = useState('subscription');
   const [openFaq, setOpenFaq] = useState(null);
-  const monthlyPlan = PLANS.subscription.find((p) => p.id === 'pro-monthly');
+  const monthlyPlan = PLANS.subscription.find((p) => p.id === 'monthly-vip');
   const [recommendedPlanId, setRecommendedPlanId] = useState(null);
+
 
   const handleBuyClick = (plan) => {
     trackEvent('upgrade_start', {
@@ -145,12 +140,12 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const parsePrice = (price) => Number(String(price).replace(/[^0-9.]/g, '')) || 0;
   const getEquivalentMonthly = (plan) => {
     const price = parsePrice(plan.price);
-    if (plan.billingPeriod === 'yearly') return (price / 12).toFixed(2);
-    if (plan.billingPeriod === 'weekly') return (price * 4).toFixed(2);
+    if (plan.billingPeriod === 'year') return (price / 12).toFixed(2);
+    if (plan.billingPeriod === 'week') return (price * 4).toFixed(2);
     return price.toFixed(2);
   };
   const getSavingsVsMonthly = (plan) => {
-    if (plan.billingPeriod !== 'yearly' || !monthlyPlan) return null;
+    if (plan.billingPeriod !== 'year' || !monthlyPlan) return null;
     const yearlyPrice = parsePrice(plan.price);
     const monthlyYearCost = parsePrice(monthlyPlan.price) * 12;
     const saved = Math.max(0, monthlyYearCost - yearlyPrice);
@@ -173,17 +168,17 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
       return;
     }
     const credits = user?.tokens ?? 0;
-    if (credits <= 30) setRecommendedPlanId('lite-onetime');
-    else if (credits <= 200) setRecommendedPlanId('pro-monthly');
-    else setRecommendedPlanId('unlimited-monthly');
+    if (credits <= 30) setRecommendedPlanId('standart-pack');
+    else setRecommendedPlanId('monthly-vip');
   }, [user]);
+
 
   return (
     <div style={{ background: 'var(--bg-primary)', padding: '5rem 0 6rem' }}>
       <section className="pricing-section container animate-fade-in" style={{ padding: '0', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', padding: '0.4rem 1rem', borderRadius: 'var(--radius-full)', background: 'rgba(255, 46, 147, 0.08)', border: '1px solid rgba(255, 46, 147, 0.15)', color: 'var(--color-pink-primary)', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '1.25rem' }}>
           <Star size={12} style={{ marginRight: '0.4rem', fill: 'currentColor' }} />
-          <span>Premium Beauty Club</span>
+          <span>{t('audit.pricing.premiumBeautyClub')}</span>
         </div>
         
         <h1 className="pricing-title" style={{ fontSize: isMobile ? '2.25rem' : '3.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
@@ -193,9 +188,9 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
           {t('pricing.subtitle')}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-          <span style={{ background: 'rgba(255,46,147,0.08)', border: '1px solid rgba(255,46,147,0.15)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-pink-primary)' }}>Cancel anytime</span>
-          <span style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#059669' }}>No hidden fees</span>
-          <span style={{ background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>Instant access after payment</span>
+          <span style={{ background: 'rgba(255,46,147,0.08)', border: '1px solid rgba(255,46,147,0.15)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-pink-primary)' }}>{t('audit.pricing.cancelAnytime')}</span>
+          <span style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#059669' }}>{t('audit.pricing.noHiddenFees')}</span>
+          <span style={{ background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem', fontWeight: 700, color: '#2563eb' }}>{t('audit.pricing.instantAccessAfterPayment')}</span>
         </div>
 
         {/* Tab Switcher */}
@@ -215,7 +210,8 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 border: 'none'
               }}
             >
-              VIP Unlimited
+              VIP Subscriptions
+
             </button>
             <button 
               onClick={() => setBillingPeriod('one-time')}
@@ -310,10 +306,14 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
               </div>
               {plan.billingPeriod !== 'one-time' && (
                 <p style={{ margin: '-0.75rem 0 1.2rem', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  Equals ~${getEquivalentMonthly(plan)}/month
-                  {getSavingsVsMonthly(plan) ? ` • Save about $${getSavingsVsMonthly(plan)}/year` : ''}
+                  {plan.id === 'weekly-vip' ? 'Equals ~$7.99/weekly' : 
+                   plan.id === 'monthly-vip' ? 'Equals ~$19.99/monthly' : 
+                   plan.id === 'yearly-vip' ? 'Equals ~$149.99/yearly' : 
+                   `Equals ~${plan.price}/${plan.billingPeriod}`}
+                  {plan.id === 'yearly-vip' && ' (approx. ~$12.50/month)'}
                 </p>
               )}
+
 
               {/* Credits Callout Box */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: plan.highlighted ? 'rgba(255, 46, 147, 0.06)' : 'rgba(0,0,0,0.02)', padding: '0.85rem 1.25rem', borderRadius: '16px', width: '100%', marginBottom: '2.25rem' }}>
@@ -370,48 +370,49 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid rgba(255, 46, 147, 0.15)' }}>
-                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Feature</th>
-                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-muted)' }}>Free Plan</th>
-                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--color-pink-primary)' }}>VIP Pro</th>
+                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{t('audit.pricing.feature')}</th>
+                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--text-muted)' }}>{t('audit.pricing.freePlan')}</th>
+                  <th style={{ padding: '1rem', fontWeight: 800, color: 'var(--color-pink-primary)' }}>{t('audit.pricing.vipPremium')}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>Hairstyle Generations</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Limited (10 credits/gen)</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>Unlimited*</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.hairstyleGenerations')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.limited10Creditsgen')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.upTo2000Creditsmo')}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>Makeup, Beard, Nails, Retouch</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Locked (Requires VIP)</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>Fully Unlocked</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.makeupNailsStudio')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.lockedRequiresVip')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.fullyUnlocked')}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>Image Quality</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Standard (SD)</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>Ultra HD (4K supported)</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.imageQuality')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.standardSd')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.ultraHd4kSupported')}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>Watermark</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Yes (GlamAI branding)</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>No (Clean exports)</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.watermark')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.yesGlamaiBranding')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.noCleanExports')}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>AI Queue Priority</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Normal Speed</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>3x Faster (Instant render)</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.aiQueuePriority')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.normalSpeed')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.3xFasterInstantRender')}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '1rem', fontWeight: 600 }}>Ads</td>
-                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>Supported by ads</td>
-                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>100% Ad-Free</td>
+                  <td style={{ padding: '1rem', fontWeight: 600 }}>{t('audit.pricing.ads')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>{t('audit.pricing.supportedByAds')}</td>
+                  <td style={{ padding: '1rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.pricing.100Adfree')}</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '1.5rem', textAlign: 'left', lineHeight: '1.4' }}>
-            * Fair use limits may apply. Unlimited generations are intended for individual creative use and not commercial bot pipelines.
+            * Billed weekly, monthly or yearly according to your subscription tier. One-time credits never expire.
           </p>
+
         </div>
 
         {/* Pricing FAQs */}

@@ -33,14 +33,24 @@ const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://glamai-353ae.we
 const GUEST_TRIALS_ALLOWED = Number(process.env.GUEST_FREE_TRIALS ?? '1');
 
 const PACKS = {
+  // VIP Subscriptions
+  'weekly-vip':    { credits: 500,   priceId: process.env.STRIPE_PRICE_WEEKLY        || '', label: 'Weekly VIP' },
+  'monthly-vip':   { credits: 2000,  priceId: process.env.STRIPE_PRICE_PRO_MONTHLY   || '', label: 'Monthly VIP' },
+  'yearly-vip':    { credits: 24000, priceId: process.env.STRIPE_PRICE_PRO_YEARLY    || '', label: 'Yearly VIP' },
+  // New Credit Packs
+  'mini-pack':     { credits: 100,   priceId: process.env.STRIPE_PRICE_LITE_ONETIME  || '', label: 'Mini Pack' },
+  'standart-pack': { credits: 300,   priceId: process.env.STRIPE_PRICE_PRO_ONETIME   || '', label: 'Standart Pack' },
+  'max-pack':      { credits: 1000,  priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '', label: 'Max Pack' },
+  // Legacy / fallbacks
   'lite-monthly':  { credits: 200,  priceId: process.env.STRIPE_PRICE_LITE_MONTHLY  || '', label: 'Lite Monthly' },
-  'pro-monthly':   { credits: 3000, priceId: process.env.STRIPE_PRICE_PRO_MONTHLY   || '', label: 'Pro Monthly' },
-  'lite-yearly':   { credits: 200,  priceId: process.env.STRIPE_PRICE_LITE_YEARLY   || '', label: 'Lite Yearly' },
-  'pro-yearly':    { credits: 3000, priceId: process.env.STRIPE_PRICE_PRO_YEARLY    || '', label: 'Pro Yearly' },
-  'lite-onetime':  { credits: 200,  priceId: process.env.STRIPE_PRICE_LITE_ONETIME  || '', label: 'Lite One-Time' },
-  'pro-onetime':   { credits: 3000, priceId: process.env.STRIPE_PRICE_PRO_ONETIME   || '', label: 'Pro One-Time' },
-  'ultra-onetime': { credits: 6000, priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '', label: 'Ultra One-Time' },
+  'pro-monthly':   { credits: 2000, priceId: process.env.STRIPE_PRICE_PRO_MONTHLY   || '', label: 'Pro Monthly' },
+  'lite-yearly':   { credits: 2000, priceId: process.env.STRIPE_PRICE_LITE_YEARLY   || '', label: 'Lite Yearly' },
+  'pro-yearly':    { credits: 24000, priceId: process.env.STRIPE_PRICE_PRO_YEARLY    || '', label: 'Pro Yearly' },
+  'lite-onetime':  { credits: 100,  priceId: process.env.STRIPE_PRICE_LITE_ONETIME  || '', label: 'Lite One-Time' },
+  'pro-onetime':   { credits: 300,  priceId: process.env.STRIPE_PRICE_PRO_ONETIME   || '', label: 'Pro One-Time' },
+  'ultra-onetime': { credits: 1000, priceId: process.env.STRIPE_PRICE_ULTRA_ONETIME || '', label: 'Ultra One-Time' },
 };
+
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -173,7 +183,8 @@ app.post('/api/checkout', async (req, res) => {
   if (!pack?.priceId) return res.status(400).json({ error: 'UNKNOWN_PACK_OR_PRICE_NOT_SET' });
 
   try {
-    const isSubscription = packId.endsWith('-monthly') || packId.endsWith('-yearly');
+    const isSubscription = packId.endsWith('-monthly') || packId.endsWith('-yearly') || packId.includes('weekly') || packId.includes('monthly') || packId.includes('yearly') || packId.includes('vip');
+
     const mode = isSubscription ? 'subscription' : 'payment';
 
     const session = await stripe.checkout.sessions.create({

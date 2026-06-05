@@ -8,6 +8,7 @@ import AuthModal from './components/AuthModal';
 import PaymentModal from './components/PaymentModal';
 import { ToastProvider } from './components/Toast';
 import CookieBanner from './components/CookieBanner';
+import { getLanguage, setLanguage } from './utils/i18n';
 
 // Lazy loaded components for code splitting & better LCP
 const Playground = lazy(() => import('./components/Playground'));
@@ -49,6 +50,7 @@ export default function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [allowMockPayment, setAllowMockPayment] = useState(true);
 
   const handleOpenAuth = useCallback(() => {
     if (openSignIn) {
@@ -109,8 +111,27 @@ export default function App() {
       .then(res => res.json())
       .then(config => {
         setStripeEnabled(config.stripeEnabled);
+        setAllowMockPayment(config.allowMockPayment ?? true);
         if (config.guestTokensRemaining !== undefined) {
           setGuestTokens(config.guestTokensRemaining);
+        }
+        
+        // Auto-detect language by IP country if not set manually by the user
+        if (config.country && !localStorage.getItem('glamai_language')) {
+          const country = config.country.toUpperCase();
+          const countryToLang = {
+            'RU': 'ru', 'BY': 'ru', 'KZ': 'ru', 'UA': 'ru', 'UZ': 'ru', 'KG': 'ru', 'AM': 'ru',
+            'ES': 'es', 'MX': 'es', 'AR': 'es', 'CO': 'es', 'CL': 'es', 'PE': 'es', 'VE': 'es',
+            'FR': 'fr', 'BE': 'fr', 'CH': 'fr', 'CA': 'fr', 'LU': 'fr',
+            'DE': 'de', 'AT': 'de', 'LI': 'de'
+          };
+          const detectedLang = countryToLang[country];
+          if (detectedLang) {
+            if (getLanguage() !== detectedLang) {
+              setLanguage(detectedLang);
+              window.location.reload();
+            }
+          }
         }
       })
       .catch(err => console.warn('Failed to load public config:', err));
@@ -170,18 +191,43 @@ export default function App() {
   }, [isLoaded, userId, clerkUser]);
 
   // 2. Load History for specific user
-  const loadHistory = useCallback((email) => {
+  const loadHistory = useCallback(async (email) => {
+    // 1. Try fetching from server first if authenticated
+    try {
+      const res = await authFetch('/api/user/history?type=all');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.history) {
+          const mapped = data.history.map(row => ({
+            id: row.id,
+            style: row.task_type === 'hairstyle' ? (row.style || 'Custom style') : (row.makeup || row.nails || 'Custom Look'),
+            color: row.color || 'Default',
+            result: row.result_url,
+            original: null,
+            date: new Date(row.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+            task_type: row.task_type
+          }));
+          setHistory(mapped);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch history from server, falling back to local:", err);
+    }
+
+    // 2. Fallback to localStorage
     const key = `glamai_history_${email.toLowerCase()}`;
     try {
       const raw = localStorage.getItem(key);
       if (!raw) { setHistory([]); return; }
       const parsed = JSON.parse(raw);
-      // Sanitize: strip base64 originals (they bloat localStorage) and keep max 15
+      // Sanitize: strip base64 originals and keep max 15
       const sanitized = parsed
+        .filter(item => item)
         .slice(0, 15)
         .map(item => ({ ...item, original: null }));
+
       setHistory(sanitized);
-      // Rewrite cleaned version back to free up space
       localStorage.setItem(key, JSON.stringify(sanitized));
     } catch (_) {
       setHistory([]);
@@ -437,6 +483,21 @@ export default function App() {
             {activeTab === 'favorites' && (
               <Favorites setActiveTab={navigateToTab} />
             )}
+
+            {!['playground', 'makeup', 'scanner', 'nails', 'trending', 'dashboard', 'settings', 'pricing', 'history', 'blog', 'privacy', 'terms', 'favorites'].includes(activeTab) && (
+              <div style={{ padding: '8rem 2rem 10rem', textAlign: 'center', background: 'var(--bg-primary)' }}>
+                <div style={{ maxWidth: '500px', margin: '0 auto', padding: '3rem 2rem' }} className="glass-panel animate-fade-in">
+                  <h1 style={{ fontSize: '6rem', fontWeight: 800, background: 'var(--gradient-pink-purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 1rem' }}>404</h1>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>Page Not Found</h2>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', lineHeight: 1.6 }}>
+                    The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+                  </p>
+                  <button className="btn btn-primary" onClick={() => navigateToTab('playground')} style={{ margin: '0 auto' }}>
+                    Return to Studio
+                  </button>
+                </div>
+              </div>
+            )}
           </Suspense>
         </main>
 
@@ -455,6 +516,7 @@ export default function App() {
         {selectedPlan && (
           <PaymentModal
             plan={selectedPlan}
+            allowMockPayment={allowMockPayment}
             onClose={() => setSelectedPlan(null)}
             onPaymentSuccess={handlePaymentSuccess}
           />

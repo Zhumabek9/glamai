@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState } from 'react';
 import { X, Mail, Lock, CheckCircle2, Loader2 } from 'lucide-react';
 import { useSignIn, useSignUp } from '@clerk/react';
@@ -42,10 +43,10 @@ export default function AuthModal({ onClose }) {
 
     if (!isSignInLoaded || !isSignUpLoaded) return;
 
-    if (!email || !password) { setError('Please fill in all fields.'); return; }
-    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (!email || !password) { setError(t('auth.fillAllFields', 'Please fill in all fields.')); return; }
+    if (password.length < 8) { setError(t('auth.passwordMinLength', 'Password must be at least 8 characters.')); return; }
     if (activeTab === 'signup' && password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwordsNotMatch', 'Passwords do not match.'));
       return;
     }
 
@@ -58,10 +59,10 @@ export default function AuthModal({ onClose }) {
         });
         if (result.status === 'complete') {
           await setSignUpActive({ session: result.createdSessionId });
-          setSuccessMsg('Account created! Welcome to GlamAI 🎉');
+          setSuccessMsg(t('auth.welcomeMsg', 'Account created! Welcome to GlamAI 🎉'));
           setTimeout(() => { onClose(); }, 900);
         } else {
-          setError(`Registration status: ${result.status}. Requirements are incomplete.`);
+          setError(t('auth.incompleteRegistration', 'Registration status: {status}. Requirements are incomplete.', { status: result.status }));
         }
       } else {
         const result = await signIn.create({
@@ -70,10 +71,10 @@ export default function AuthModal({ onClose }) {
         });
         if (result.status === 'complete') {
           await setSignInActive({ session: result.createdSessionId });
-          setSuccessMsg('Login successful!');
+          setSuccessMsg(t('auth.loginSuccess', 'Login successful!'));
           setTimeout(() => { onClose(); }, 900);
         } else {
-          setError(`Sign in status: ${result.status}. Requirements are incomplete.`);
+          setError(t('auth.incompleteSignIn', 'Sign in status: {status}. Requirements are incomplete.', { status: result.status }));
         }
       }
     } catch (err) {
@@ -108,8 +109,8 @@ export default function AuthModal({ onClose }) {
 
         {/* Tabs */}
         <div className="auth-tabs">
-          <div className={`auth-tab ${activeTab === 'login'  ? 'active' : ''}`} onClick={() => handleTabChange('login')}>Login</div>
-          <div className={`auth-tab ${activeTab === 'signup' ? 'active' : ''}`} onClick={() => handleTabChange('signup')}>Sign Up</div>
+          <div className={`auth-tab ${activeTab === 'login'  ? 'active' : ''}`} onClick={() => handleTabChange('login')}>{t('audit.authmodal.login')}</div>
+          <div className={`auth-tab ${activeTab === 'signup' ? 'active' : ''}`} onClick={() => handleTabChange('signup')}>{t('audit.authmodal.signUp')}</div>
         </div>
 
         {/* Error / Success banners */}
@@ -150,29 +151,29 @@ export default function AuthModal({ onClose }) {
               </svg>
             )
           }
-          {googleLoading ? 'Signing in…' : 'Continue with Google'}
+          {googleLoading ? t('auth.signingIn', 'Signing in…') : t('auth.continueWithGoogle', 'Continue with Google')}
         </button>
 
         {/* Divider */}
         <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', marginBottom:'1.25rem' }}>
           <div style={{ flex:1, height:'1px', background:'rgba(0,0,0,0.08)' }} />
-          <span style={{ fontSize:'0.75rem', color:'var(--text-muted)', whiteSpace:'nowrap' }}>or continue with email</span>
+          <span style={{ fontSize:'0.75rem', color:'var(--text-muted)', whiteSpace:'nowrap' }}>{t('audit.authmodal.orContinueWithEmail')}</span>
           <div style={{ flex:1, height:'1px', background:'rgba(0,0,0,0.08)' }} />
         </div>
 
         {/* Email/Password form */}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">{t('audit.authmodal.emailAddress')}</label>
             <div style={{ position:'relative' }}>
               <Mail size={16} style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)' }} />
               <input type="email" className="form-input" style={{ paddingLeft:'2.5rem', width:'100%' }}
-                placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                placeholder={t('audit.authmodal.youexamplecom')} value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label">{t('audit.authmodal.password')}</label>
             <div style={{ position:'relative' }}>
               <Lock size={16} style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)' }} />
               <input type="password" className="form-input" style={{ paddingLeft:'2.5rem', width:'100%' }}
@@ -182,7 +183,7 @@ export default function AuthModal({ onClose }) {
 
           {activeTab === 'signup' && (
             <div className="form-group animate-fade-in">
-              <label className="form-label">Confirm Password</label>
+              <label className="form-label">{t('audit.authmodal.confirmPassword')}</label>
               <div style={{ position:'relative' }}>
                 <Lock size={16} style={{ position:'absolute', left:'1rem', top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)' }} />
                 <input type="password" className="form-input" style={{ paddingLeft:'2.5rem', width:'100%' }}
@@ -196,22 +197,22 @@ export default function AuthModal({ onClose }) {
             disabled={loading || googleLoading}
           >
             {loading
-              ? <><Loader2 size={16} style={{ animation:'spin 1s linear infinite' }} /> Processing…</>
-              : activeTab === 'login' ? 'Sign In' : 'Create Account'
+              ? <><Loader2 size={16} style={{ animation:'spin 1s linear infinite' }} /> {t('audit.authmodal.processing', 'Processing...')}</>
+              : activeTab === 'login' ? t('auth.signInButton', 'Sign In') : t('auth.createAccountButton', 'Create Account')
             }
           </button>
         </form>
 
         <div style={{ marginTop:'1.25rem', textAlign:'center', fontSize:'0.8rem', color:'var(--text-muted)' }}>
           {activeTab === 'login' ? (
-            <span>Don't have an account?{' '}
+            <span>{t('auth.noAccount', "Don't have an account?")}{' '}
               <a href="#" onClick={(e) => { e.preventDefault(); handleTabChange('signup'); }}
-                style={{ color:'var(--color-pink-primary)', textDecoration:'none', fontWeight:600 }}>Sign up free</a>
+                style={{ color:'var(--color-pink-primary)', textDecoration:'none', fontWeight:600 }}>{t('audit.authmodal.signUpFree')}</a>
             </span>
           ) : (
-            <span>Already have an account?{' '}
+            <span>{t('auth.alreadyHaveAccount', "Already have an account?")}{' '}
               <a href="#" onClick={(e) => { e.preventDefault(); handleTabChange('login'); }}
-                style={{ color:'var(--color-pink-primary)', textDecoration:'none', fontWeight:600 }}>Sign in</a>
+                style={{ color:'var(--color-pink-primary)', textDecoration:'none', fontWeight:600 }}>{t('audit.authmodal.signIn')}</a>
             </span>
           )}
         </div>

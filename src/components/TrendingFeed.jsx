@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Flame, Eye, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
@@ -97,15 +98,15 @@ export default function TrendingFeed({ setActiveTab }) {
           <div className="glowing-orb pink-orb"></div>
           <div className="glowing-orb purple-orb"></div>
           <h1 className="landing-title">
-            <span className="gradient-text">Trending Beauty</span> Feed
+            <span className="gradient-text">{t('audit.trendingfeed.trendingBeauty')}</span> Feed
           </h1>
           <p className="landing-subtitle">
             Discover AI-powered beauty transformations from our community. Drag the slider to see real before &amp; after results and try your favourite look instantly.
           </p>
           <div className="landing-stats">
-            <div className="stat-badge"><Flame size={14} color="var(--color-pink-primary)" style={{ fill: 'currentColor' }} /> <span>15,000+ Daily Creations</span></div>
-            <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>Trending Looks Updated Hourly</span></div>
-            <div className="stat-badge"><span>🔥 Join the Glow Up Challenge</span></div>
+            <div className="stat-badge"><Flame size={14} color="var(--color-pink-primary)" style={{ fill: 'currentColor' }} /> <span>{t('audit.trendingfeed.15000DailyCreations')}</span></div>
+            <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /> <span>{t('audit.trendingfeed.trendingLooksUpdatedHourly')}</span></div>
+            <div className="stat-badge"><span>{t('audit.trendingfeed.joinTheGlowUpChallenge')}</span></div>
           </div>
         </div>
 
@@ -144,7 +145,7 @@ export default function TrendingFeed({ setActiveTab }) {
               <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>{post.title}</span>
-                  <span style={{ fontSize: '0.72rem', background: 'rgba(255,46,147,0.08)', color: 'var(--color-pink-primary)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 700, whiteSpace: 'nowrap' }}>Trending 🔥</span>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(255,46,147,0.08)', color: 'var(--color-pink-primary)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 700, whiteSpace: 'nowrap' }}>{t('audit.trendingfeed.trending')}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   <span><Eye size={11} style={{ display: 'inline', marginRight: '3px' }} />{post.views}</span>
@@ -158,7 +159,7 @@ export default function TrendingFeed({ setActiveTab }) {
                     onClick={() => setActiveTab(post.targetTab)}
                   >
                     <Sparkles size={13} />
-                    <span>Try This Look</span>
+                    <span>{t('audit.trendingfeed.tryThisLook')}</span>
                   </button>
                   <button
                     className="btn btn-secondary"
@@ -170,7 +171,7 @@ export default function TrendingFeed({ setActiveTab }) {
                     }}
                   >
                     <Share2 size={13} />
-                    <span>Share</span>
+                    <span>{t('audit.slidercomparison.share')}</span>
                   </button>
                 </div>
               </div>
@@ -181,9 +182,9 @@ export default function TrendingFeed({ setActiveTab }) {
         {/* See the Magic in Action - 6 items in one row on desktop */}
         <div style={{ marginBottom: '3rem' }}>
           <div className="section-header" style={{ marginBottom: '2rem' }}>
-            <span className="section-badge">🎬 See the Magic in Action</span>
-            <h2>AI Transformations Gallery</h2>
-            <p>Watch how GlamAI transforms everyday looks into stunning results instantly.</p>
+            <span className="section-badge">{t('audit.trendingfeed.seeTheMagicInAction')}</span>
+            <h2>{t('audit.trendingfeed.aiTransformationsGallery')}</h2>
+            <p>{t('audit.trendingfeed.watchHowGlamaiTransformsEveryd')}</p>
           </div>
           <div className="magic-grid">
             {ACTION_GIFS.map(item => (
@@ -220,11 +221,11 @@ export default function TrendingFeed({ setActiveTab }) {
           <div style={{ fontSize: '1.8rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.75rem' }}>
             Start Your Transformation Today
           </div>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Join 52,000+ users discovering their best look with GlamAI.</p>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{t('audit.trendingfeed.join52000UsersDiscoveringTheir')}</p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" onClick={() => setActiveTab('playground')} style={{ padding: '0.8rem 1.5rem' }}>✂️ Try Hair Styles</button>
-            <button className="btn btn-secondary" onClick={() => setActiveTab('makeup')} style={{ padding: '0.8rem 1.5rem' }}>💄 Try Makeup</button>
-            <button className="btn btn-secondary" onClick={() => setActiveTab('nails')} style={{ padding: '0.8rem 1.5rem' }}>💅 Try Nails</button>
+            <button className="btn btn-primary" onClick={() => setActiveTab('playground')} style={{ padding: '0.8rem 1.5rem' }}>{t('audit.trendingfeed.tryHairStyles')}</button>
+            <button className="btn btn-secondary" onClick={() => setActiveTab('makeup')} style={{ padding: '0.8rem 1.5rem' }}>{t('audit.favorites.tryMakeup')}</button>
+            <button className="btn btn-secondary" onClick={() => setActiveTab('nails')} style={{ padding: '0.8rem 1.5rem' }}>{t('audit.trendingfeed.tryNails')}</button>
           </div>
         </div>
       </div>
@@ -265,12 +266,12 @@ function BeforeAfterSlider({ before, after, category }) {
       style={{ position: 'relative', width: '100%', height: '300px', overflow: 'hidden', cursor: 'ew-resize', background: '#000', userSelect: 'none' }}
     >
       <img src={after} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(255,46,147,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>AFTER</div>
+      <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(255,46,147,0.85)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{t('audit.trendingfeed.after')}</div>
       {category && <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(255,46,147,0.9)', color: '#fff', fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '6px' }}>{category}</div>}
 
       <div style={{ position: 'absolute', top: 0, left: 0, width: `${sliderPosition}%`, height: '100%', overflow: 'hidden', borderRight: '2px solid #fff' }}>
         <img src={before} alt="Before" style={{ width: containerWidth ? `${containerWidth}px` : '100%', height: '300px', objectFit: 'cover', maxWidth: 'none', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>BEFORE</div>
+        <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{t('audit.trendingfeed.before')}</div>
       </div>
 
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${sliderPosition}%`, width: '2px', background: '#fff', transform: 'translateX(-50%)', pointerEvents: 'none' }}>

@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Download, Share2 } from 'lucide-react';
 
@@ -115,8 +116,8 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
         </div>
 
         {/* Labels: Before on left side of divider, After on right side */}
-        <span className="slider-label-before">Before</span>
-        <span className="slider-label-after" style={{ left: `calc(${position}% + 0.75rem)` }}>After</span>
+        <span className="slider-label-before">{t('audit.retouch.before')}</span>
+        <span className="slider-label-after" style={{ left: `calc(${position}% + 0.75rem)` }}>{t('audit.retouch.after')}</span>
       </div>
 
       {/* Action buttons */}
@@ -129,11 +130,11 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
             onClick={onDownload}
           >
             <Download size={16} />
-            <span>Download HD</span>
+            <span>{t('audit.slidercomparison.downloadHd')}</span>
           </a>
           <button className="btn btn-secondary" onClick={onShare}>
             <Share2 size={16} />
-            <span>Share</span>
+            <span>{t('audit.slidercomparison.share')}</span>
           </button>
         </div>
       )}

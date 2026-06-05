@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Shield, X, Check } from 'lucide-react';
 
@@ -70,7 +71,7 @@ export default function CookieBanner() {
             padding: '4px',
             display: 'inline-flex',
           }}
-          aria-label="Close cookie banner"
+          aria-label={t('audit.cookiebanner.closeCookieBanner')}
         >
           <X size={16} />
         </button>
@@ -107,7 +108,7 @@ export default function CookieBanner() {
           }}
         >
           <Check size={14} />
-          <span>Accept All</span>
+          <span>{t('audit.cookiebanner.acceptAll')}</span>
         </button>
       </div>
     </div>

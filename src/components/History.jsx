@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState } from 'react';
 import { History as HistoryIcon, Download, Calendar, Eye, Trash2, X } from 'lucide-react';
 
@@ -20,7 +21,7 @@ export default function History({ history, onClearItem, onStartClick }) {
         <div>
           <h2 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <HistoryIcon size={24} color="var(--color-pink-primary)" />
-            <span>My Style History</span>
+            <span>{t('audit.history.myStyleHistory')}</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             Your personal gallery of photorealistic hairstyle transformations.
@@ -57,12 +58,12 @@ export default function History({ history, onClearItem, onStartClick }) {
           >
             <HistoryIcon size={24} />
           </div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Your Style Gallery is Empty</h3>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{t('audit.history.yourStyleGalleryIsEmpty')}</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '350px', marginBottom: '1.5rem' }}>
             Once you start generating styles in the customizer, your creations will appear here.
           </p>
           <button className="btn btn-primary" onClick={onStartClick}>
-            <span>Open Customizer Studio</span>
+            <span>{t('audit.history.openCustomizerStudio')}</span>
           </button>
         </div>
       ) : (
@@ -89,7 +90,7 @@ export default function History({ history, onClearItem, onStartClick }) {
                         className="btn btn-secondary" 
                         style={{ padding: '0.25rem', borderRadius: '4px' }}
                         onClick={(e) => { e.stopPropagation(); handleDownload(item.result, `glamai_${item.style}.png`); }}
-                        title="Download"
+                        title={t('audit.favorites.download')}
                       >
                         <Download size={12} />
                       </button>
@@ -97,7 +98,7 @@ export default function History({ history, onClearItem, onStartClick }) {
                         className="btn btn-secondary" 
                         style={{ padding: '0.25rem', borderRadius: '4px' }}
                         onClick={(e) => { e.stopPropagation(); onClearItem(item.id); }}
-                        title="Delete"
+                        title={t('audit.history.delete')}
                       >
                         <Trash2 size={12} />
                       </button>
@@ -126,7 +127,7 @@ export default function History({ history, onClearItem, onStartClick }) {
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{selectedItem.style} Hairstyle Transition</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Selected Style: <strong>{selectedItem.style}</strong> dyed with <strong>{selectedItem.color}</strong>. Rendered on {selectedItem.date}.
+                Selected Style: <strong>{selectedItem.style}</strong> {t('audit.history.dyedWith')} <strong>{selectedItem.color}</strong>. Rendered on {selectedItem.date}.
               </p>
             </div>
 
@@ -165,7 +166,7 @@ export default function History({ history, onClearItem, onStartClick }) {
                 onClick={() => handleDownload(selectedItem.result, `glamai_${selectedItem.style}.png`)}
               >
                 <Download size={16} />
-                <span>Download HD Image</span>
+                <span>{t('audit.history.downloadHdImage')}</span>
               </button>
             </div>
           </div>

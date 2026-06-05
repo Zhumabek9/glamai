@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import { useRef, useEffect, useState } from 'react';
 import { X, Download, Copy } from 'lucide-react';
 import { useToast } from './Toast';
@@ -158,8 +159,8 @@ export default function ShareStoriesModal({ imageUrl, styleName, onClose }) {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Share to Stories 📤</h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>Download your 9:16 story card</p>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{t('audit.sharestoriesmodal.shareToStories')}</h2>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>{t('audit.sharestoriesmodal.downloadYour916StoryCard')}</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.25rem' }}>
             <X size={20} />
@@ -188,14 +189,14 @@ export default function ShareStoriesModal({ imageUrl, styleName, onClose }) {
             disabled={isRendering}
           >
             <Download size={16} />
-            <span>Download Story</span>
+            <span>{t('audit.sharestoriesmodal.downloadStory')}</span>
           </button>
           <button
             className="btn btn-secondary"
             style={{ flex: 1, padding: '0.75rem 0', fontSize: '0.9rem' }}
             onClick={handleCopy}
             disabled={isRendering}
-            title="Copy to clipboard"
+            title={t('audit.sharestoriesmodal.copyToClipboard')}
           >
             <Copy size={16} />
           </button>

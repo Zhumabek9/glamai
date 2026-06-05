@@ -1,10 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen, Paintbrush, Gem } from 'lucide-react';
-import { t } from '../utils/i18n';
+import { Sparkles, Coins, LogOut, User, LogIn, Menu, X, Scissors, Smile, Compass, Sparkle, Settings as SettingsIcon, CreditCard, BookOpen, Paintbrush, Gem, Globe } from 'lucide-react';
+import { t, getLanguage, setLanguage } from '../utils/i18n';
 
 export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onLogout, onOpenAuth }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const drawerRef = useRef(null);
+  const langDropdownRef = useRef(null);
+  const currentLang = getLanguage();
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const handleOutsideClick = (e) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [langOpen]);
+
+  const handleLanguageChange = (langCode) => {
+    setLanguage(langCode);
+    setLangOpen(false);
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -72,8 +92,8 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <div className="container nav-container">
           <a href="#" className="logo" onClick={(e) => { e.preventDefault(); navigate('playground'); }}>
             <Sparkles size={24} fill="var(--color-pink-primary)" />
-            <span>GlamAI</span>
-            {isPremium && <span className="vip-badge-mini">PRO</span>}
+            <span>{t('audit.navbar.glamai')}</span>
+            {isPremium && <span className="vip-badge-mini">{t('audit.navbar.pro')}</span>}
           </a>
 
           {/* Desktop nav-links */}
@@ -84,7 +104,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('playground'); }}
             >
               <Scissors size={14} />
-              <span>Hair</span>
+              <span>{t('audit.navbar.hair')}</span>
             </a>
 
             <a 
@@ -93,7 +113,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('makeup'); }}
             >
               <Sparkle size={14} />
-              <span>Makeup</span>
+              <span>{t('audit.navbar.makeup')}</span>
             </a>
 
 
@@ -103,7 +123,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('nails'); }}
             >
               <Sparkles size={14} />
-              <span>Nails</span>
+              <span>{t('audit.navbar.nails')}</span>
             </a>
 
             <a 
@@ -112,7 +132,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('scanner'); }}
             >
               <Smile size={14} />
-              <span>Scanner</span>
+              <span>{t('audit.navbar.scanner')}</span>
             </a>
 
             <a 
@@ -121,7 +141,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('trending'); }}
             >
               <Compass size={14} />
-              <span>Trending</span>
+              <span>{t('audit.navbar.trending')}</span>
             </a>
 
             <a 
@@ -130,7 +150,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('blog'); }}
             >
               <BookOpen size={14} />
-              <span>Blog</span>
+              <span>{t('audit.navbar.blog')}</span>
             </a>
 
             <a 
@@ -139,7 +159,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               onClick={(e) => { e.preventDefault(); navigate('pricing'); }}
             >
               <CreditCard size={14} />
-              <span>Pricing</span>
+              <span>{t('audit.navbar.pricing')}</span>
             </a>
 
             {user && (
@@ -148,7 +168,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                 className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
                 onClick={(e) => { e.preventDefault(); navigate('dashboard'); }}
               >
-                <span>Dashboard</span>
+                <span>{t('audit.navbar.dashboard')}</span>
               </a>
             )}
 
@@ -163,7 +183,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                 <button 
                   className="user-profile-badge"
                   onClick={() => navigate('settings')}
-                  aria-label="User settings"
+                  aria-label={t('audit.navbar.userSettings')}
                   style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -226,6 +246,28 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                 </button>
               </div>
             )}
+
+            {/* Language Switcher */}
+            <div className="lang-switcher-container" ref={langDropdownRef}>
+              <button 
+                className="lang-switcher-btn"
+                onClick={() => setLangOpen(!langOpen)}
+                aria-label={t('audit.navbar.selectLanguage')}
+                style={{ marginLeft: '0.4rem' }}
+              >
+                <Globe size={14} />
+                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>{currentLang}</span>
+              </button>
+              {langOpen && (
+                <div className="lang-dropdown-menu">
+                  <button className={currentLang === 'en' ? 'active' : ''} onClick={() => handleLanguageChange('en')}>{t('audit.navbar.english')}</button>
+                  <button className={currentLang === 'es' ? 'active' : ''} onClick={() => handleLanguageChange('es')}>{t('audit.navbar.espaol')}</button>
+                  <button className={currentLang === 'fr' ? 'active' : ''} onClick={() => handleLanguageChange('fr')}>{t('audit.navbar.franais')}</button>
+                  <button className={currentLang === 'de' ? 'active' : ''} onClick={() => handleLanguageChange('de')}>{t('audit.navbar.deutsch')}</button>
+                  <button className={currentLang === 'ru' ? 'active' : ''} onClick={() => handleLanguageChange('ru')}>{t('audit.navbar.text')}</button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile right side: tokens + hamburger */}
@@ -243,12 +285,12 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
               </div>
             )}
             {isPremium && (
-              <span className="vip-badge-mini" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>PRO ∞</span>
+              <span className="vip-badge-mini" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>{t('audit.navbar.pro1')}</span>
             )}
             <button
               className="hamburger-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('audit.navbar.toggleMenu')}
             >
               {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -262,21 +304,49 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             className="mobile-drawer"
             role="dialog"
             aria-modal="true"
-            aria-label="Mobile navigation drawer"
+            aria-label={t('audit.navbar.mobileNavigationDrawer')}
           >
-            <a href="/" className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('playground'); }}>Hair Transformation</a>
-            <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>AI Makeup Salon</a>
-            <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>AI Nails Studio</a>
-            <a href="/scanner" className={`mobile-nav-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('scanner'); }}>AI Face Scanner</a>
-            <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>Trending Feed</a>
-            <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog & Trends</a>
-            <a href="/pricing" className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('pricing'); }}>Pricing Plans</a>
+            <a href="/" className={`mobile-nav-item ${activeTab === 'playground' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('playground'); }}>{t('audit.navbar.hairTransformation')}</a>
+            <a href="/makeup" className={`mobile-nav-item ${activeTab === 'makeup' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('makeup'); }}>{t('audit.navbar.aiMakeupSalon')}</a>
+            <a href="/nails" className={`mobile-nav-item ${activeTab === 'nails' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('nails'); }}>{t('audit.navbar.aiNailsStudio')}</a>
+            <a href="/scanner" className={`mobile-nav-item ${activeTab === 'scanner' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('scanner'); }}>{t('audit.faceanalysis.aiFaceScanner')}</a>
+            <a href="/trending" className={`mobile-nav-item ${activeTab === 'trending' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('trending'); }}>{t('audit.navbar.trendingFeed')}</a>
+            <a href="/blog" className={`mobile-nav-item ${activeTab === 'blog' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>{t('audit.navbar.blogTrends')}</a>
+            <a href="/pricing" className={`mobile-nav-item ${activeTab === 'pricing' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('pricing'); }}>{t('audit.navbar.pricingPlans')}</a>
             {user && (
               <>
-                <a href="/dashboard" className={`mobile-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('dashboard'); }}>Dashboard</a>
-                <a href="/settings" className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('settings'); }}>Settings</a>
+                <a href="/dashboard" className={`mobile-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('dashboard'); }}>{t('audit.navbar.dashboard')}</a>
+                <a href="/settings" className={`mobile-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); navigate('settings'); }}>{t('audit.navbar.settings')}</a>
               </>
             )}
+
+            {/* Mobile Language Switcher Row */}
+            <div className="mobile-lang-row" style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem 1.5rem', borderTop: '1px solid rgba(255, 46, 147, 0.07)' }}>
+              {['en', 'es', 'fr', 'de', 'ru'].map((langCode) => (
+                <button
+                  key={langCode}
+                  onClick={() => handleLanguageChange(langCode)}
+                  className={`mobile-lang-btn ${currentLang === langCode ? 'active' : ''}`}
+                  style={{
+                    background: currentLang === langCode ? 'rgba(255, 46, 147, 0.1)' : 'transparent',
+                    border: '1px solid ' + (currentLang === langCode ? 'var(--color-pink-primary)' : 'rgba(0,0,0,0.05)'),
+                    color: currentLang === langCode ? 'var(--color-pink-primary)' : 'var(--text-secondary)',
+                    borderRadius: '8px',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {langCode === 'en' && '🇬🇧 EN'}
+                  {langCode === 'es' && '🇪🇸 ES'}
+                  {langCode === 'fr' && '🇫🇷 FR'}
+                  {langCode === 'de' && '🇩🇪 DE'}
+                  {langCode === 'ru' && '🇷🇺 RU'}
+                </button>
+              ))}
+            </div>
+
             <div className="mobile-drawer-footer">
               {user ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
@@ -294,7 +364,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                   )}
                   {isPremium && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,46,147,0.06)', borderRadius: '12px', padding: '0.6rem 1rem' }}>
-                      <span className="vip-badge-mini">PRO</span>
+                      <span className="vip-badge-mini">{t('audit.navbar.pro')}</span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('nav.unlimited')}</span>
                     </div>
                   )}
@@ -335,34 +405,34 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'playground' ? 'active' : ''}`}
           onClick={() => navigate('playground')}
-          aria-label="Hair Transformation Tab"
+          aria-label={t('audit.navbar.hairTransformationTab')}
         >
           <Scissors size={20} />
-          <span>Hair</span>
+          <span>{t('audit.navbar.hair')}</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'makeup' ? 'active' : ''}`}
           onClick={() => navigate('makeup')}
-          aria-label="Makeup try-on tab"
+          aria-label={t('audit.navbar.makeupTryonTab')}
         >
           <Paintbrush size={20} />
-          <span>Makeup</span>
+          <span>{t('audit.navbar.makeup')}</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'nails' ? 'active' : ''}`}
           onClick={() => navigate('nails')}
-          aria-label="Nails Try-On Tab"
+          aria-label={t('audit.navbar.nailsTryonTab')}
         >
           <Gem size={20} />
-          <span>Nails</span>
+          <span>{t('audit.navbar.nails')}</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'trending' ? 'active' : ''}`}
           onClick={() => navigate('trending')}
-          aria-label="Trending Feed Tab"
+          aria-label={t('audit.navbar.trendingFeedTab')}
         >
           <Compass size={20} />
-          <span>Feed</span>
+          <span>{t('audit.navbar.feed')}</span>
         </button>
         <button 
           className={`dock-item ${activeTab === 'dashboard' || activeTab === 'settings' ? 'active' : ''}`}

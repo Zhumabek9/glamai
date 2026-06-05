@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Coins, User, Calendar, CreditCard, Copy, Check, Grid, RefreshCw, Scissors, Sparkles, Smile, Eye } from 'lucide-react';
 import { authFetch } from '../apiClient';
@@ -137,8 +138,9 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
   const isPremium = user && user.subscriptionTier === 'premium';
 
   return (
-    <div style={{ background: 'var(--bg-primary)', padding: '4rem 0 6rem' }}>
+    <div className="dashboard-page-container">
       <div className="container animate-fade-in dashboard-grid" style={{ gap: '2rem' }}>
+
         
         {/* Left Side: Profile & Referral card */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -154,7 +156,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '1.5rem 0' }}>
               {isPremium ? (
-                <span className="vip-badge-mini" style={{ padding: '0.35rem 1rem', borderRadius: '100px', fontSize: '0.8rem' }}>VIP PREMIUM</span>
+                <span className="vip-badge-mini" style={{ padding: '0.35rem 1rem', borderRadius: '100px', fontSize: '0.8rem' }}>{t('audit.dashboard.vipPremium')}</span>
               ) : (
                 <div className="token-pill" style={{ padding: '0.35rem 1rem', background: 'rgba(255,46,147,0.06)' }}>
                   <Coins size={14} />
@@ -170,7 +172,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
 
           {/* Referral card */}
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Referral Program</h4>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('audit.dashboard.referralProgram')}</h4>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginBottom: '1rem' }}>
               Invite friends. When they register, you both get 50 free credits!
             </p>
@@ -188,7 +190,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
-              <span>Friends Invited:</span>
+              <span>{t('audit.dashboard.friendsInvited')}</span>
               <span>{referralData.referralsCount}</span>
             </div>
           </div>
@@ -234,46 +236,68 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   </button>
                 </div>
               ) : (
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Transformation History</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{t('audit.dashboard.transformationHistory')}</h2>
               )}
               
               {/* Category selector filter (only shown for history tab) */}
               {activeSubTab === 'history' && (
-                <div style={{ display: 'flex', gap: '0.35rem', background: 'rgba(0,0,0,0.03)', padding: '0.2rem', borderRadius: '100px' }}>
-                  {['all', 'hairstyle', 'makeup', 'beard', 'nails', 'retouch'].map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setFilterType(t)}
-                      style={{
-                        border: 'none',
-                        background: filterType === t ? 'var(--gradient-pink-purple)' : 'transparent',
-                        color: filterType === t ? '#fff' : 'var(--text-secondary)',
-                        padding: '0.35rem 0.85rem',
-                        fontSize: '0.75rem',
-                        borderRadius: '100px',
-                        cursor: 'pointer',
-                        fontWeight: 700,
-                        textTransform: 'capitalize'
-                      }}
-                    >
-                      {t === 'playground' ? 'Hair' : t}
-                    </button>
-                  ))}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '0.35rem', 
+                  background: 'rgba(0,0,0,0.03)', 
+                  padding: '0.2rem', 
+                  borderRadius: '100px',
+                  overflowX: 'auto',
+                  maxWidth: '100%',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none'
+                }}>
+                  {['all', 'hairstyle', 'makeup', 'nails', 'beard', 'retouch'].map(t => {
+                    const labelMap = {
+                      all: 'All',
+                      hairstyle: 'Hair',
+                      makeup: 'Makeup',
+                      nails: 'Nails',
+                      beard: 'Beard',
+                      retouch: 'Retouch'
+                    };
+                    const label = labelMap[t] || t;
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => setFilterType(t)}
+                        style={{
+                          border: 'none',
+                          background: filterType === t ? 'var(--gradient-pink-purple)' : 'transparent',
+                          color: filterType === t ? '#fff' : 'var(--text-secondary)',
+                          padding: '0.35rem 0.85rem',
+                          fontSize: '0.75rem',
+                          borderRadius: '100px',
+                          cursor: 'pointer',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
+
             </div>
 
             {activeSubTab === 'history' ? (
               loadingHistory ? (
                 <div style={{ textAlign: 'center', padding: '4rem 0' }}>
                   <div className="spinner-inner" style={{ margin: '0 auto 1rem' }}></div>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading history...</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.loadingHistory')}</span>
                 </div>
               ) : history.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
                   <Grid size={40} style={{ opacity: 0.4, margin: '0 auto 1rem' }} />
-                  <h3>No generations found</h3>
-                  <p style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>Try one of our AI beauty tools to see transformations here.</p>
+                  <h3>{t('audit.dashboard.noGenerationsFound')}</h3>
+                  <p style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t('audit.dashboard.tryOneOfOurAiBeautyToolsToSeeT')}</p>
                   <button className="btn btn-primary" onClick={() => setActiveTab('playground')}>
                     Try AI Hairstyles
                   </button>
@@ -297,7 +321,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                       
                       <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.task_type === 'hairstyle' ? (item.style || 'Custom style') : (item.makeup || item.beard || item.nails || 'Retouch')}
+                          {item.task_type === 'hairstyle' ? (item.style || 'Custom style') : (item.makeup || item.nails || 'Custom Look')}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           {new Date(item.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
@@ -325,7 +349,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <input
                       type="text"
-                      placeholder="Search users by email..."
+                      placeholder={t('audit.dashboard.searchUsersByEmail')}
                       value={adminSearch}
                       onChange={(e) => setAdminSearch(e.target.value)}
                       style={{
@@ -354,22 +378,22 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   {loadingAdminUsers ? (
                     <div style={{ textAlign: 'center', padding: '3rem 0' }}>
                       <div className="spinner-inner" style={{ margin: '0 auto 1rem' }}></div>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading users...</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.loadingUsers')}</span>
                     </div>
                   ) : adminUsers.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
-                      <p>No users found.</p>
+                      <p>{t('audit.dashboard.noUsersFound')}</p>
                     </div>
                   ) : (
                     <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left', background: 'rgba(255,255,255,0.5)' }}>
                         <thead>
                           <tr style={{ background: 'rgba(255,46,147,0.06)', borderBottom: '1px solid var(--glass-border)' }}>
-                            <th style={{ padding: '0.75rem 1rem' }}>Email</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Credits</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Plan</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Role</th>
-                            <th style={{ padding: '0.75rem 1rem' }}>Actions</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{t('audit.dashboard.email')}</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{t('audit.dashboard.credits')}</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{t('audit.dashboard.plan')}</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{t('audit.dashboard.role')}</th>
+                            <th style={{ padding: '0.75rem 1rem' }}>{t('audit.dashboard.actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -492,7 +516,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
           {user?.role === 'admin' && activeSubTab === 'admin' && (
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Monetization Analytics</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{t('audit.dashboard.monetizationAnalytics')}</h3>
                 <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={fetchAnalytics}>
                   <RefreshCw size={14} />
                   Refresh
@@ -500,26 +524,26 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
               </div>
 
               {analytics.loading ? (
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading funnel metrics...</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.loadingFunnelMetrics')}</p>
               ) : analytics.error ? (
                 <p style={{ fontSize: '0.85rem', color: '#dc2626' }}>{analytics.error}</p>
               ) : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Paywall Views</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.paywallViews')}</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.paywallView ?? 0}</div>
                     </div>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Recommended Clicks</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.recommendedClicks')}</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.recommendedPlanClick ?? 0}</div>
                     </div>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Upgrade Starts</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.upgradeStarts')}</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{analytics.summary?.funnel?.upgradeStart ?? 0}</div>
                     </div>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.75rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Paywall → Upgrade</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t('audit.dashboard.paywallUpgrade')}</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>
                         {analytics.summary?.conversion?.paywallToUpgradeStartPct ?? 0}%
                       </div>
@@ -528,7 +552,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.85rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Top Source (Conversion)</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>{t('audit.dashboard.topSourceConversion')}</div>
                       <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                         {analytics.winners?.winners?.topSourceByConversion?.source || 'n/a'}
                       </div>
@@ -537,7 +561,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                       </div>
                     </div>
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.85rem', background: 'rgba(255,255,255,0.7)' }}>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>Top Plan (Conversion)</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>{t('audit.dashboard.topPlanConversion')}</div>
                       <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                         {analytics.winners?.winners?.topPlanByConversion?.planId || 'n/a'}
                       </div>

@@ -1,3 +1,4 @@
+import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Clock, ArrowRight, ArrowLeft, Tag, Sparkles, Star, Users } from 'lucide-react';
 
@@ -509,7 +510,7 @@ function ArticlePage({ article, onBack, onStartClick }) {
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginBottom: '1rem' }}>
                   {[...Array(5)].map((_, si) => <Star key={si} size={16} fill="var(--color-pink-primary)" color="var(--color-pink-primary)" />)}
                 </div>
-                <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.6rem' }}>Ready to try it yourself?</p>
+                <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.6rem' }}>{t('audit.blog.readyToTryItYourself')}</p>
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.5rem', lineHeight: 1.6 }}>{parseMarkdownBold(block.text)}</p>
                 <button className="btn btn-primary" onClick={onStartClick} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
                   <Sparkles size={16} /> Try GlamAI for Free
