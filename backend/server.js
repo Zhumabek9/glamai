@@ -948,7 +948,35 @@ app.delete(['/api/user/profile', '/user/profile'], async (req, res) => {
     }
 });
 
-app.get('/api/user/history', async (req, res) => {
+app.get(['/api/proxy-image', '/proxy-image'], async (req, res) => {
+    const { url } = req.query;
+    if (!url) {
+        return res.status(400).send('URL is required');
+    }
+
+    try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.hostname !== 'replicate.delivery' && !parsedUrl.hostname.endsWith('.replicate.delivery')) {
+            return res.status(403).send('Forbidden: Only replicate.delivery URLs are allowed');
+        }
+
+        const imgRes = await fetch(url);
+        if (!imgRes.ok) {
+            return res.status(imgRes.status).send('Failed to fetch image');
+        }
+
+        res.setHeader('Content-Type', imgRes.headers.get('content-type') || 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        
+        const arrayBuffer = await imgRes.arrayBuffer();
+        res.send(Buffer.from(arrayBuffer));
+    } catch (err) {
+        console.error('Error proxying image:', err.message);
+        res.status(500).send('Error proxying image');
+    }
+});
+
+app.get(['/api/user/history', '/user/history'], async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
 
@@ -962,7 +990,18 @@ app.get('/api/user/history', async (req, res) => {
             const resRows = await db.query('SELECT * FROM generations WHERE user_id = $1 AND task_type = $2 ORDER BY id DESC', [u.id, type]);
             rows = resRows.rows;
         }
-        res.json({ success: true, history: rows });
+
+        const mappedRows = rows.map(row => {
+            if (row.result_url && !row.result_url.startsWith('data:') && !row.result_url.startsWith('/')) {
+                return {
+                    ...row,
+                    result_url: `/api/proxy-image?url=${encodeURIComponent(row.result_url)}`
+                };
+            }
+            return row;
+        });
+
+        res.json({ success: true, history: mappedRows });
     } catch (e) {
         res.status(500).json({ error: 'HISTORY_FETCH_FAILED' });
     }
@@ -1163,9 +1202,13 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
         const refreshed = userRow ? await auth.userById(userRow.id) : null;
 
+        const clientImageUrl = (imageUrl && !imageUrl.startsWith('data:'))
+            ? `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`
+            : imageUrl;
+
         res.json({
             success: true,
-            imageUrl,
+            imageUrl: clientImageUrl,
             creditsRemaining: refreshed?.credits,
             trialNote: paidWith === 'guest' ? 'guest_trial_used' : undefined,
         });
