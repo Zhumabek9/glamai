@@ -74,8 +74,8 @@ const PLANS = {
       highlighted: false
     },
     {
-      id: "standart-pack",
-      name: "Standart Pack",
+      id: "standard-pack",
+      name: "Standard Pack",
       badge: "Popular",
       price: "$9.99",
       tokens: 300,
@@ -117,6 +117,50 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const monthlyPlan = PLANS.subscription.find((p) => p.id === 'monthly-vip');
   const [recommendedPlanId, setRecommendedPlanId] = useState(null);
 
+  const getPlanName = (plan) => {
+    const key = `pricing.planName.${plan.id}`;
+    const val = t(key);
+    return val === key ? plan.name : val;
+  };
+
+  const getBadgeTranslation = (plan) => {
+    if (!plan.badge) return null;
+    const keyMap = {
+      'weekly-vip': 'pricing.badge.flexible',
+      'monthly-vip': 'pricing.badge.mostPopular',
+      'yearly-vip': 'pricing.badge.bestValueSave',
+      'standard-pack': 'pricing.badge.popular',
+      'max-pack': 'pricing.badge.bestDeal'
+    };
+    const key = keyMap[plan.id];
+    if (key) {
+      const val = t(key);
+      if (val !== key) return val;
+    }
+    return plan.badge;
+  };
+
+  const getPlanGenerations = (plan) => {
+    if (plan.id === 'weekly-vip') {
+      return t('pricing.generations', { count: 50 }) + t('pricing.perWeek');
+    }
+    if (plan.id === 'monthly-vip') {
+      return t('pricing.generationsPerMonth', { count: 200 });
+    }
+    if (plan.id === 'yearly-vip') {
+      return t('pricing.yearlyGenerationsDescription');
+    }
+    if (plan.id === 'mini-pack') {
+      return t('pricing.generations', { count: 10 });
+    }
+    if (plan.id === 'standard-pack') {
+      return t('pricing.generations', { count: 30 });
+    }
+    if (plan.id === 'max-pack') {
+      return t('pricing.generations', { count: 100 });
+    }
+    return plan.generations;
+  };
 
   const handleBuyClick = (plan) => {
     trackEvent('upgrade_start', {
@@ -168,7 +212,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
       return;
     }
     const credits = user?.tokens ?? 0;
-    if (credits <= 30) setRecommendedPlanId('standart-pack');
+    if (credits <= 30) setRecommendedPlanId('standard-pack');
     else setRecommendedPlanId('monthly-vip');
   }, [user]);
 
@@ -210,8 +254,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 border: 'none'
               }}
             >
-              VIP Subscriptions
-
+              {t('audit.pricing.vipSubscriptions')}
             </button>
             <button 
               onClick={() => setBillingPeriod('one-time')}
@@ -227,7 +270,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 border: 'none'
               }}
             >
-              Credit Packs
+              {t('audit.pricing.creditPacks')}
             </button>
           </div>
         </div>
@@ -263,6 +306,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
         >
           {activePlans.map((plan) => {
             const isRecommended = recommendedPlanId === plan.id;
+            const badgeText = getBadgeTranslation(plan);
             return (
             <div 
               key={plan.id}
@@ -283,17 +327,17 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
             >
               {isRecommended && (
                 <div style={{ position: 'absolute', top: '-14px', right: '14px', background: '#10b981', color: '#fff', padding: '0.3rem 0.65rem', borderRadius: '9999px', fontSize: '0.68rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                  Recommended
+                  {t('audit.pricing.recommended')}
                 </div>
               )}
-              {plan.badge && (
+              {badgeText && (
                 <div className="featured-badge" style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: plan.highlighted ? 'var(--gradient-pink-purple)' : 'rgba(255, 46, 147, 0.12)', color: plan.highlighted ? '#fff' : 'var(--color-pink-primary)', boxShadow: plan.highlighted ? '0 4px 10px var(--color-pink-glow)' : 'none', padding: '0.4rem 1.25rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {plan.badge}
+                  {badgeText}
                 </div>
               )}
 
               <span className="tier-name" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {plan.name}
+                {getPlanName(plan)}
               </span>
               
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.2rem', margin: '1rem 0 1.5rem' }}>
@@ -301,16 +345,19 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                   {plan.price}
                 </span>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                  {plan.billingPeriod === 'one-time' ? '' : `/${plan.billingPeriod}`}
+                  {plan.billingPeriod === 'one-time' ? '' : 
+                   plan.billingPeriod === 'month' ? t('pricing.perMonth') : 
+                   plan.billingPeriod === 'year' ? t('pricing.perYear') : 
+                   plan.billingPeriod === 'week' ? t('pricing.perWeek') : 
+                   `/${plan.billingPeriod}`}
                 </span>
               </div>
               {plan.billingPeriod !== 'one-time' && (
                 <p style={{ margin: '-0.75rem 0 1.2rem', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  {plan.id === 'weekly-vip' ? 'Equals ~$7.99/weekly' : 
-                   plan.id === 'monthly-vip' ? 'Equals ~$19.99/monthly' : 
-                   plan.id === 'yearly-vip' ? 'Equals ~$149.99/yearly' : 
-                   `Equals ~${plan.price}/${plan.billingPeriod}`}
-                  {plan.id === 'yearly-vip' && ' (approx. ~$12.50/month)'}
+                  {plan.id === 'weekly-vip' ? t('pricing.equalsWeekly', { price: '$7.99' }) : 
+                   plan.id === 'monthly-vip' ? t('pricing.equalsMonthly', { price: '$19.99' }) : 
+                   plan.id === 'yearly-vip' ? (t('pricing.equalsYearly', { price: '$149.99' }) + t('pricing.approxMonthly', { price: '$12.50' })) : 
+                   t('pricing.equalsPack', { price: plan.price, period: plan.billingPeriod })}
                 </p>
               )}
 
@@ -320,10 +367,10 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 <Coins size={20} color="var(--color-pink-primary)" />
                 <div style={{ textAlign: 'left' }}>
                   <p style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                    {plan.tokens} {billingPeriod === 'subscription' ? 'VIP Access' : 'Credits'}
+                    {plan.tokens} {billingPeriod === 'subscription' ? t('pricing.vipAccess') : t('pricing.credits')}
                   </p>
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                    {plan.generations}
+                    {getPlanGenerations(plan)}
                   </p>
                 </div>
               </div>
@@ -332,8 +379,8 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
               <ul className="tier-features" style={{ margin: '0 0 2.5rem', width: '100%', listStyle: 'none', padding: 0 }}>
                 {plan.features.map((featKey, idx) => (
                   <li key={idx} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                    <Check size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
-                    <span style={{ textAlign: 'left' }}>{t(featKey)}</span>
+                     <Check size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0 }} />
+                     <span style={{ textAlign: 'left' }}>{t(featKey)}</span>
                   </li>
                 ))}
               </ul>
@@ -352,10 +399,10 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 }}
                 style={{ width: '100%', padding: '0.9rem 0' }}
               >
-                {isRecommended ? 'Start with this plan' : t('pricing.getStarted')}
+                {isRecommended ? t('audit.pricing.startWithThisPlan') : t('pricing.getStarted')}
               </button>
               <p style={{ marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                Secure checkout. Start in under 30 seconds.
+                {t('audit.pricing.secureCheckoutNotice')}
               </p>
             </div>
           )})}
@@ -364,7 +411,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
         {/* Feature Comparison Table */}
         <div style={{ maxWidth: '800px', margin: '0 auto 6rem', background: 'rgba(255,255,255,0.7)', borderRadius: '24px', border: '1px solid rgba(255, 46, 147, 0.1)', padding: isMobile ? '2rem 1rem' : '3.5rem 2.5rem', boxShadow: 'var(--glass-shadow)' }}>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2rem' }}>
-            VIP vs Free Plan
+            {t('audit.pricing.vipVsFreePlan')}
           </h2>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left' }}>

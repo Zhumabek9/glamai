@@ -449,7 +449,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
         </div>
         <div className="transformations-grid">
           {[
-            { id: 1, title: 'Blemish Clearance', path: '/styles/makeup_matte.png', hot: true },
+            { id: 1, title: 'Blemish Clearance', path: '/styles/makeup_matte.webp', hot: true },
             { id: 2, title: 'Velvet Skin Smoothing', path: '/styles/makeup_natural.png' },
             { id: 3, title: 'Dewy Skin Glow', path: '/styles/makeup_bridal.png' },
             { id: 4, title: 'Symmetry Enhancements', path: '/styles/makeup_korean.png' },

@@ -177,7 +177,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                 {!isPremium && (
                   <div className="token-pill">
                     <Coins size={14} />
-                    <span>{user.tokens} credits</span>
+                    <span>{user.tokens} {t('nav.credits')}</span>
                   </div>
                 )}
                 <button 
@@ -237,7 +237,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                 {guestTokens > 0 && (
                   <div className="token-pill" style={{ background: 'rgba(255,46,147,0.12)', border: '1px solid rgba(255,46,147,0.3)', padding: '0.35rem 0.6rem' }}>
                     <Coins size={12} color="var(--color-pink-primary)" />
-                    <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, fontSize: '0.8rem' }}>{guestTokens} Free</span>
+                    <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, fontSize: '0.8rem' }}>{t('audit.navbar.freeCredits', { count: guestTokens })}</span>
                   </div>
                 )}
                 <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={onOpenAuth}>
@@ -275,7 +275,7 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
             {!isPremium && !user && guestTokens > 0 && (
               <div className="token-pill" style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', background: 'rgba(255,46,147,0.12)', border: '1px solid rgba(255,46,147,0.3)' }}>
                 <Coins size={13} color="var(--color-pink-primary)" />
-                <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{guestTokens} Free</span>
+                <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700 }}>{t('audit.navbar.freeCredits', { count: guestTokens })}</span>
               </div>
             )}
             {!isPremium && user && (
@@ -437,10 +437,10 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
         <button 
           className={`dock-item ${activeTab === 'dashboard' || activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => user ? navigate('dashboard') : onOpenAuth()}
-          aria-label={user ? "Dashboard Tab" : "Sign In Tab"}
+          aria-label={user ? t('audit.navbar.dashboard') : t('nav.signIn')}
         >
           {user ? <User size={20} /> : <LogIn size={20} />}
-          <span>{user ? 'Profile' : 'Sign In'}</span>
+          <span>{user ? t('audit.navbar.profile') : t('nav.signIn')}</span>
         </button>
       </div>
     </>

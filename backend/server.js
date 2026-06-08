@@ -47,10 +47,10 @@ const PACKS = {
     priceId: process.env.STRIPE_PRICE_LITE_ONETIME || '',
     label: 'Mini Pack',
   },
-  'standart-pack': {
+  'standard-pack': {
     credits: 300,
     priceId: process.env.STRIPE_PRICE_PRO_ONETIME || '',
-    label: 'Standart Pack',
+    label: 'Standard Pack',
   },
   'max-pack': {
     credits: 1000,

@@ -438,7 +438,7 @@ function ArticlePage({ article, onBack, onStartClick }) {
             onClick={onBack}
             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--color-pink-primary)', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', padding: 0 }}
           >
-            <ArrowLeft size={16} /> Back to blog
+            <ArrowLeft size={16} /> {t('audit.blog.backToBlogBtn')}
           </button>
         </div>
       </div>
@@ -467,7 +467,7 @@ function ArticlePage({ article, onBack, onStartClick }) {
       <div style={{ borderBottom: '1px solid rgba(255,46,147,0.06)', padding: '1rem 0' }}>
         <div className="container" style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-            <Clock size={13} /> <span>{article.minRead} min read</span>
+            <Clock size={13} /> <span>{article.minRead} {t('audit.blog.minRead')}</span>
           </div>
           <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{article.date}</span>
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
@@ -513,7 +513,7 @@ function ArticlePage({ article, onBack, onStartClick }) {
                 <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.6rem' }}>{t('audit.blog.readyToTryItYourself')}</p>
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.5rem', lineHeight: 1.6 }}>{parseMarkdownBold(block.text)}</p>
                 <button className="btn btn-primary" onClick={onStartClick} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
-                  <Sparkles size={16} /> Try GlamAI for Free
+                  <Sparkles size={16} /> {t('audit.blog.tryGlamaiFreeBtn')}
                 </button>
               </div>
             );
@@ -588,13 +588,13 @@ export default function Blog({ onStartClick }) {
       <section style={{ padding: '4rem 0 3rem', textAlign: 'center', background: 'linear-gradient(180deg, rgba(255,46,147,0.05) 0%, transparent 100%)', borderBottom: '1px solid rgba(255,46,147,0.06)' }}>
         <div className="container" style={{ maxWidth: '720px', margin: '0 auto' }}>
           <div className="section-badge" style={{ display: 'inline-flex', marginBottom: '1.25rem' }}>
-            ✨ GlamAI Magazine
+            ✨ {t('blog.magazineTitle')}
           </div>
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(2rem, 5vw, 2.75rem)', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem', lineHeight: 1.15 }}>
-            Inspiration & Expert Hair Care Advice
+            {t('blog.inspiration')}
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-            Trends, guides, and tips to help you find your perfect look. Try any hairstyle online in seconds.
+            {t('blog.subtitle')}
           </p>
         </div>
       </section>
@@ -603,24 +603,35 @@ export default function Blog({ onStartClick }) {
       <div style={{ padding: '2rem 0', borderBottom: '1px solid rgba(255,46,147,0.06)' }}>
         <div className="container">
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: activeCategory === cat ? '1px solid var(--color-pink-primary)' : '1px solid rgba(255,46,147,0.15)',
-                  background: activeCategory === cat ? 'var(--gradient-pink-purple)' : 'rgba(255,255,255,0.05)',
-                  color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: activeCategory === cat ? '0 4px 12px rgba(255,46,147,0.2)' : 'none',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
+            {CATEGORIES.map(cat => {
+              const catKeys = {
+                'All': 'blog.category.all',
+                'Guides': 'blog.category.guides',
+                'Trends': 'blog.category.trends',
+                'AI Tools': 'blog.category.aiTools',
+                'Styles': 'blog.category.styles',
+                'Hair Care': 'blog.category.hairCare',
+                'About Us': 'blog.category.aboutUs'
+              };
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  style={{
+                    padding: '0.5rem 1.25rem',
+                    borderRadius: 'var(--radius-full)',
+                    border: activeCategory === cat ? '1px solid var(--color-pink-primary)' : '1px solid rgba(255,46,147,0.15)',
+                    background: activeCategory === cat ? 'var(--gradient-pink-purple)' : 'rgba(255,255,255,0.05)',
+                    color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
+                    fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: activeCategory === cat ? '0 4px 12px rgba(255,46,147,0.2)' : 'none',
+                  }}
+                >
+                  {t(catKeys[cat] || cat)}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -651,7 +662,15 @@ export default function Blog({ onStartClick }) {
                   />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%)' }} />
                   <span style={{ position: 'absolute', top: '1rem', left: '1rem', background: 'var(--gradient-pink-purple)', color: '#fff', fontSize: '0.68rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {article.category}
+                    {t({
+                      'All': 'blog.category.all',
+                      'Guides': 'blog.category.guides',
+                      'Trends': 'blog.category.trends',
+                      'AI Tools': 'blog.category.aiTools',
+                      'Styles': 'blog.category.styles',
+                      'Hair Care': 'blog.category.hairCare',
+                      'About Us': 'blog.category.aboutUs'
+                    }[article.category] || article.category)}
                   </span>
                 </div>
 
@@ -661,7 +680,7 @@ export default function Blog({ onStartClick }) {
                     <span>{article.date}</span>
                     <span>·</span>
                     <Clock size={12} />
-                    <span>{article.minRead} min read</span>
+                    <span>{article.minRead} {t('audit.blog.minRead')}</span>
                   </div>
 
                   <h2 style={{ 
@@ -696,7 +715,7 @@ export default function Blog({ onStartClick }) {
                   <button
                     style={{ marginTop: '0.25rem', background: 'transparent', border: 'none', color: 'var(--color-pink-primary)', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                   >
-                    Read article <ArrowRight size={14} />
+                    {t('audit.blog.readArticleBtn')} <ArrowRight size={14} />
                   </button>
                 </div>
               </article>
@@ -709,13 +728,13 @@ export default function Blog({ onStartClick }) {
       <div style={{ background: 'linear-gradient(135deg, rgba(255,46,147,0.06) 0%, rgba(138,43,226,0.06) 100%)', borderTop: '1px solid rgba(255,46,147,0.08)', padding: '4rem 0', textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '600px', margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '0.75rem' }}>
-            Stop imagining. Start seeing.
+            {t('audit.blog.ctaTitle')}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '2rem', lineHeight: 1.6 }}>
-            Any look from these articles is available to try on your photo in GlamAI. No salon visits, no risks — instant transformation with AI.
+            {t('audit.blog.ctaDesc')}
           </p>
           <button className="btn btn-primary" onClick={onStartClick} style={{ padding: '0.9rem 2rem', fontSize: '1rem' }}>
-            <Sparkles size={16} /> Try GlamAI for Free
+            <Sparkles size={16} /> {t('audit.blog.tryGlamaiFreeBtn')}
           </button>
         </div>
       </div>

@@ -83,7 +83,7 @@ const ACTION_GIFS = [
   { id: 2, emoji: '💄', title: 'Soft Glam Makeup', desc: 'Bare → Runway Glam', img: '/styles/makeup_soft_girl.png', tab: 'makeup' },
   { id: 3, emoji: '💅', title: 'Chrome Nails', desc: 'Plain → Mirror Chrome', img: '/styles/nails_chrome.png', tab: 'nails' },
   { id: 4, emoji: '✂️', title: 'Pixie Cut', desc: 'Long → Chic Pixie', img: '/styles/female_pixie-cut.webp', tab: 'playground' },
-  { id: 5, emoji: '💄', title: 'Cat Eye Look', desc: 'Natural → Seductive Cat Eye', img: '/styles/makeup_siren_eyes.png', tab: 'makeup' },
+  { id: 5, emoji: '💄', title: 'Cat Eye Look', desc: 'Natural → Seductive Cat Eye', img: '/styles/makeup_siren_eyes.webp', tab: 'makeup' },
   { id: 6, emoji: '💅', title: 'Gold Foil Art', desc: 'Bare → Luxury Gold', img: '/styles/nails_luxury.png', tab: 'nails' },
 ];
 

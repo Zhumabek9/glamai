@@ -95,55 +95,49 @@ export default function Footer({ setActiveTab }) {
               <Sparkles size={20} fill="var(--color-pink-primary)" style={{ WebkitTextFillColor: 'initial' }} />
               GlamAI
             </a>
-            <p style={{
-              fontSize: '0.88rem',
-              color: 'var(--text-secondary)',
-              lineHeight: 1.65,
-              maxWidth: '280px',
-              margin: '0 0 1.5rem',
-            }}>
-              {t('footer.brandDesc', 'Try 100+ hairstyles, makeup looks, and nail art styles on your own photo with AI. Photorealistic results in seconds — free to start.')}
-            </p>
-            {/* Social icons */}
-            <div style={{ display: 'flex', gap: '0.6rem' }}>
-              {socialLinks.map(s => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  title={s.label}
-                  aria-label={s.aria}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    border: '1px solid rgba(255, 46, 147, 0.15)',
-                    background: 'rgba(255,46,147,0.04)',
-                    color: 'var(--text-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'var(--color-pink-primary)';
-                    e.currentTarget.style.color = '#fff';
-                    e.currentTarget.style.borderColor = 'var(--color-pink-primary)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255,46,147,0.04)';
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                    e.currentTarget.style.borderColor = 'rgba(255, 46, 147, 0.15)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  {s.svg}
-                </a>
-              ))}
-            </div>
+
+            {/* Social icons (Temporarily hidden) */}
+            {false && (
+              <div style={{ display: 'flex', gap: '0.6rem' }}>
+                {socialLinks.map(s => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    title={s.label}
+                    aria-label={s.aria}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      border: '1px solid rgba(255, 46, 147, 0.15)',
+                      background: 'rgba(255,46,147,0.04)',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = 'var(--color-pink-primary)';
+                      e.currentTarget.style.color = '#fff';
+                      e.currentTarget.style.borderColor = 'var(--color-pink-primary)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'rgba(255,46,147,0.04)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 46, 147, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {s.svg}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Link columns */}
@@ -191,7 +185,6 @@ export default function Footer({ setActiveTab }) {
         >
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
             {t('footer.copyright').replace('{year}', year)}
-            {' '}{t('footer.madeWithPart1', 'Made with')}{' '}<Heart size={12} color="var(--color-pink-primary)" fill="var(--color-pink-primary)" style={{ display: 'inline', verticalAlign: 'middle' }} />{' '}{t('footer.madeWithPart2', 'for your style journey.')}
           </p>
           <div style={{ display: 'flex', gap: '1.25rem' }}>
             <button

@@ -1,4 +1,4 @@
-import t from '../utils/i18n';
+import { t, getLanguage } from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Coins, User, Calendar, CreditCard, Copy, Check, Grid, RefreshCw, Scissors, Sparkles, Smile, Eye } from 'lucide-react';
 import { authFetch } from '../apiClient';
@@ -160,13 +160,13 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
               ) : (
                 <div className="token-pill" style={{ padding: '0.35rem 1rem', background: 'rgba(255,46,147,0.06)' }}>
                   <Coins size={14} />
-                  <span>{user.tokens} Credits</span>
+                  <span>{user.tokens} {t('pricing.credits')}</span>
                 </div>
               )}
             </div>
 
             <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.85rem' }} onClick={() => setActiveTab('settings')}>
-              Manage Profile
+              {t('audit.dashboard.manageProfile')}
             </button>
           </div>
 
@@ -174,7 +174,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('audit.dashboard.referralProgram')}</h4>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginBottom: '1rem' }}>
-              Invite friends. When they register, you both get 50 free credits!
+              {t('audit.dashboard.referralInviteText')}
             </p>
             
             <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(0,0,0,0.03)', border: '1px solid var(--glass-border)', padding: '0.5rem', borderRadius: '8px', marginBottom: '1rem' }}>
@@ -217,7 +217,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                       cursor: 'pointer'
                     }}
                   >
-                    My History
+                    {t('audit.dashboard.myHistory')}
                   </button>
                   <button 
                     onClick={() => setActiveSubTab('admin')}
@@ -232,7 +232,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                       cursor: 'pointer'
                     }}
                   >
-                    Admin Control Panel
+                    {t('audit.dashboard.adminControlPanel')}
                   </button>
                 </div>
               ) : (
@@ -252,24 +252,24 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   WebkitOverflowScrolling: 'touch',
                   scrollbarWidth: 'none'
                 }}>
-                  {['all', 'hairstyle', 'makeup', 'nails', 'beard', 'retouch'].map(t => {
+                  {['all', 'hairstyle', 'makeup', 'nails', 'beard', 'retouch'].map(filterCode => {
                     const labelMap = {
-                      all: 'All',
-                      hairstyle: 'Hair',
-                      makeup: 'Makeup',
-                      nails: 'Nails',
-                      beard: 'Beard',
-                      retouch: 'Retouch'
+                      all: t('audit.dashboard.filter.all'),
+                      hairstyle: t('audit.dashboard.filter.hair'),
+                      makeup: t('audit.dashboard.filter.makeup'),
+                      nails: t('audit.dashboard.filter.nails'),
+                      beard: t('audit.dashboard.filter.beard'),
+                      retouch: t('audit.dashboard.filter.retouch')
                     };
-                    const label = labelMap[t] || t;
+                    const label = labelMap[filterCode] || filterCode;
                     return (
                       <button
-                        key={t}
-                        onClick={() => setFilterType(t)}
+                        key={filterCode}
+                        onClick={() => setFilterType(filterCode)}
                         style={{
                           border: 'none',
-                          background: filterType === t ? 'var(--gradient-pink-purple)' : 'transparent',
-                          color: filterType === t ? '#fff' : 'var(--text-secondary)',
+                          background: filterType === filterCode ? 'var(--gradient-pink-purple)' : 'transparent',
+                          color: filterType === filterCode ? '#fff' : 'var(--text-secondary)',
                           padding: '0.35rem 0.85rem',
                           fontSize: '0.75rem',
                           borderRadius: '100px',
@@ -299,7 +299,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                   <h3>{t('audit.dashboard.noGenerationsFound')}</h3>
                   <p style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>{t('audit.dashboard.tryOneOfOurAiBeautyToolsToSeeT')}</p>
                   <button className="btn btn-primary" onClick={() => setActiveTab('playground')}>
-                    Try AI Hairstyles
+                    {t('audit.dashboard.tryAiHairstyles')}
                   </button>
                 </div>
               ) : (
@@ -315,16 +315,16 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                         />
                         
                         <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: 'rgba(255, 46, 147, 0.9)', color: '#fff', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'capitalize', fontWeight: 800 }}>
-                          {item.task_type}
+                          {t('audit.dashboard.filter.' + (item.task_type === 'hairstyle' ? 'hair' : item.task_type))}
                         </div>
                       </div>
                       
                       <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {item.task_type === 'hairstyle' ? (item.style || 'Custom style') : (item.makeup || item.nails || 'Custom Look')}
+                          {item.task_type === 'hairstyle' ? (item.style || t('audit.dashboard.customStyle')) : (item.makeup || item.nails || t('audit.dashboard.customLook'))}
                         </span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {new Date(item.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                          {new Date(item.created_at).toLocaleDateString(getLanguage(), { day: 'numeric', month: 'short' })}
                         </span>
                         
                         {item.result_url && (
@@ -334,7 +334,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                             className="btn btn-secondary" 
                             style={{ marginTop: '0.75rem', padding: '0.35rem 0', fontSize: '0.75rem', width: '100%' }}
                           >
-                            Download HD
+                            {t('audit.dashboard.downloadHd')}
                           </a>
                         )}
                       </div>
@@ -371,7 +371,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                       onClick={() => fetchAdminUsers(adminSearch)}
                       style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}
                     >
-                      Search
+                      {t('audit.dashboard.searchBtn')}
                     </button>
                   </div>
 
@@ -433,7 +433,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                                         fontWeight: 700
                                       }}
                                     >
-                                      Save
+                                      {t('audit.dashboard.saveBtn')}
                                     </button>
                                   </div>
                                 </td>
@@ -448,7 +448,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                                     display: 'inline-block',
                                     marginBottom: '0.25rem'
                                   }}>
-                                    {isUserPremium ? 'VIP' : 'FREE'}
+                                    {isUserPremium ? 'VIP' : t('audit.pricing.freePlan').toUpperCase()}
                                   </span>
                                   <button
                                     onClick={() => handleUpdateUser(u.id, {
@@ -466,7 +466,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                                       fontWeight: 600
                                     }}
                                   >
-                                    Toggle VIP
+                                    {t('audit.dashboard.toggleVip')}
                                   </button>
                                 </td>
                                 <td style={{ padding: '0.75rem 1rem' }}>
@@ -480,7 +480,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                                     display: 'inline-block',
                                     marginBottom: '0.25rem'
                                   }}>
-                                    {u.role.toUpperCase()}
+                                    {u.role === 'admin' ? t('audit.dashboard.roleAdmin').toUpperCase() : t('audit.dashboard.roleUser').toUpperCase()}
                                   </span>
                                   <button
                                     onClick={() => handleUpdateUser(u.id, {
@@ -497,7 +497,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                                       fontWeight: 600
                                     }}
                                   >
-                                    Make {u.role === 'admin' ? 'User' : 'Admin'}
+                                    {u.role === 'admin' ? t('audit.dashboard.makeUser') : t('audit.dashboard.makeAdmin')}
                                   </button>
                                 </td>
                               </tr>
@@ -519,7 +519,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{t('audit.dashboard.monetizationAnalytics')}</h3>
                 <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }} onClick={fetchAnalytics}>
                   <RefreshCw size={14} />
-                  Refresh
+                  {t('audit.dashboard.refreshBtn')}
                 </button>
               </div>
 

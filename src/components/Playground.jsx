@@ -398,11 +398,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     toast.success("Thank you for helping us improve!");
   };
 
-  const activeColorObj = COLORS.find(c => c.id === selectedColor);
-  const colorFilterStyle = {};
-  if (activeColorObj && activeColorObj.id !== 'ai-recommended' && activeColorObj.id !== 'no-change') {
-    colorFilterStyle.filter = `hue-rotate(${activeColorObj.hue}deg) saturate(${activeColorObj.saturate}%) brightness(${activeColorObj.brightness}%)`;
-  }
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -544,11 +539,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
     try {
       const colorObj = COLORS.find(c => c.id === selectedColor);
-      const colorFilterVal = (colorObj && colorObj.id !== 'ai-recommended' && colorObj.id !== 'no-change') ? {
-        hue: colorObj.hue,
-        saturate: colorObj.saturate,
-        brightness: colorObj.brightness
-      } : null;
 
       // Initialize progressive result list with 'pending' and first one as 'generating'
       const initialResults = activeStyles.map((styleId, idx) => {
@@ -560,8 +550,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           status: idx === 0 ? 'generating' : 'pending',
           result: null,
           original: image,
-          colorName: colorObj ? colorObj.name : 'Custom Color',
-          colorFilter: colorFilterVal
+          colorName: colorObj ? colorObj.name : 'Custom Color'
         };
       });
 
@@ -647,7 +636,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             result: data.imageUrl,
             style: styleName,
             color: colorObj ? colorObj.name : 'Custom Color',
-            colorFilter: colorFilterVal,
             date: new Date().toLocaleDateString('en-US', {
               day: 'numeric',
               month: 'short',
@@ -804,7 +792,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,46,147,0.2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,46,147,0.1)'}
               >
-                🎲 Random
+                {t('audit.playground.random')}
               </button>
             </div>
             <div className="smart-presets-row">
@@ -846,7 +834,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
           {/* Hairstyle options */}
           <div className="selector-group">
-            <span className="selector-title">HAIRSTYLE TEMPLATE ({filteredHairstyles.length})</span>
+            <span className="selector-title">{t('audit.playground.hairstyleTemplate')} ({filteredHairstyles.length})</span>
             {image && selectedStyles.every(s => s === 'no_change') && (
               <div className="onboarding-hint">
                 <TrendingUp size={15} />
@@ -928,10 +916,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
+                {isGuest ? t('audit.playground.freeCreditsRemaining', { count: guestTokens ?? 0 }) : t('audit.playground.creditsRemaining', { count: user?.tokens ?? 0 })}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
-                This render: {selectedStyles.length * 10} Tokens
+                {t('audit.playground.thisRender', { count: selectedStyles.length * 10 })}
               </span>
             </div>
             {(isGuest || (user?.tokens ?? 0) < selectedStyles.length * 10) && (
@@ -941,7 +929,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 style={{ marginTop: '0.6rem', width: '100%', padding: '0.55rem 0.85rem', fontSize: '0.8rem' }}
                 onClick={() => setActiveTab('pricing')}
               >
-                Get more credits
+                {t('audit.playground.getMoreCredits')}
               </button>
             )}
           </div>
@@ -956,7 +944,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
               
               <div className="eta-badge">
-                <span>⏱️ Estimated time remaining: {etaRemaining}s</span>
+                <span>{t('audit.playground.estimatedTimeRemaining', { count: etaRemaining })}</span>
               </div>
 
               <div className="progress-track">
@@ -977,7 +965,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
 
               <span className="loading-text">{loadingText}</span>
-              <span className="loading-subtext">{progress}% Completed</span>
+              <span className="loading-subtext">{t('audit.playground.completed', { count: progress })}</span>
             </div>
           )}
 
@@ -1015,7 +1003,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                         </div>
 
                         <div className={`generation-card-status-badge ${res.status}`}>
-                          {res.status === 'generating' ? 'rendering' : res.status}
+                          {res.status === 'generating' ? t('audit.playground.rendering') : (res.status === 'pending' ? t('audit.playground.waiting') : res.status)}
                         </div>
 
                         <div className="generation-card-image-wrapper">
@@ -1088,14 +1076,14 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                               </a>
                               <button
                                 className="generation-card-btn"
-                                title={isFavorite(res.id) ? 'Remove from favourites' : 'Save to favourites'}
+                                title={isFavorite(res.id) ? t('audit.playground.removeFromFavourites') : t('audit.playground.saveToFavourites')}
                                 onClick={() => {
                                   if (isFavorite(res.id)) {
                                     removeFavorite(res.id);
-                                    toast.success('Removed from favourites');
+                                    toast.success(t('audit.playground.removedFromFavourites'));
                                   } else {
                                     addFavorite({ id: res.id, result: res.result, style: res.styleName, color: res.colorName, category: '✂️ Hair', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) });
-                                    toast.success('Saved to favourites ❤️');
+                                    toast.success(t('audit.playground.savedToFavourites'));
                                   }
                                 }}
                                 style={{ color: isFavorite(res.id) ? '#ff2e93' : 'inherit' }}
@@ -1151,7 +1139,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                       onDownload={() => {
                         triggerAchievement('first_save');
                       }}
-                      colorFilter={colorFilterStyle}
                     />
 
                     {/* 👍/👎 Feedback Panel */}
@@ -1210,7 +1197,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 {resultImages.length > 0 && (
                   <div className="batch-thumbnails-container">
                     <div className="batch-thumbnails-title">
-                      Generated Styles ({resultImages.length})
+                      {t('audit.playground.generatedStylesTitle', { count: resultImages.length })}
                     </div>
                     <div className="batch-thumbnails-grid">
                       {resultImages.map((res, index) => {
@@ -1254,11 +1241,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   <div style={{ marginTop: '1rem', border: '1px solid rgba(255,46,147,0.2)', background: 'rgba(255,46,147,0.04)', borderRadius: '14px', padding: '0.9rem' }}>
                     <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '0.65rem', lineHeight: 1.5 }}>
                       {isGuest
-                        ? 'Like your result? Unlock multi-style batches, HD exports, and faster generation.'
-                        : 'Keep creating without interruptions. Upgrade now to avoid running out of credits.'}
+                        ? t('audit.playground.upsellGuest')
+                        : t('audit.playground.upsellUser')}
                     </p>
                     <button className="btn btn-primary" style={{ width: '100%', padding: '0.7rem 0.9rem' }} onClick={openPricingWithRecommendation}>
-                      View recommended plan
+                      {t('audit.playground.viewRecommendedPlan')}
                     </button>
                   </div>
                 )}
