@@ -6,7 +6,7 @@ import { Download, Share2 } from 'lucide-react';
  * SliderComparison — Interactive drag before/after comparison slider
  * Touch + mouse compatible
  */
-export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, onDownload, colorFilter, hideActions }) {
+export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, onDownload, hideActions }) {
   const [position, setPosition] = useState(50); // percentage 0–100
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
@@ -83,7 +83,6 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
           alt="After"
           className="slider-img slider-img-before"
           draggable={false}
-          style={colorFilter}
         />
 
         {/* Before image (clipped to left portion — original photo) */}
