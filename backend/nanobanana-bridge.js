@@ -653,7 +653,7 @@ CRITICAL INSTRUCTION: Do NOT apply any color filters, tints, or atmospheric over
     console.log(`[Replicate] Calling Image-to-Image model for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
 
     try {
-        const modelString = "x-flux/flux-kontext-apps";
+        const modelString = "xai/grok-imagine-image";
         const modelInput = {
             image: dataUri,
             prompt: promptText
