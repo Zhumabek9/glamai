@@ -647,17 +647,20 @@ Ensure the transition between the head and the new hair looks completely natural
         }
     }
 
-    console.log(`[Replicate] Calling Grok Imagine for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
+    console.log(`[Replicate] Calling FLUX.2 Pro for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
 
     try {
+        const modelString = "black-forest-labs/flux-2-pro";
+        const modelInput = {
+            prompt: promptText,
+            image: dataUri,
+            prompt_upsampling: false,
+            output_format: "png"
+        };
+
         const output = await replicate.run(
-            "xai/grok-imagine-image",
-            {
-                input: {
-                    prompt: promptText,
-                    image: dataUri
-                }
-            }
+            modelString,
+            { input: modelInput }
         );
 
         const finalUrl = Array.isArray(output) ? output[0] : (typeof output === 'string' ? output : (output && output.toString ? output.toString() : ''));
