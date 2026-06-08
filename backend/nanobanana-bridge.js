@@ -645,6 +645,7 @@ Hair modification (CRITICAL):
 - Hair color: Change the hair color to ${hairColorInstruction}.
 Ensure the transition between the head and the new hair looks completely natural, clean, and photorealistic. The only change in the photo must be the hair.`;
         }
+    }
     console.log(`[Replicate] Calling Grok Imagine for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
 
     try {
