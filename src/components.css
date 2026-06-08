@@ -2673,10 +2673,10 @@
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  gap: 2px;
-  padding: 4px 0;
+  gap: 1px;
+  padding: 4px 1px;
   transition: color 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
