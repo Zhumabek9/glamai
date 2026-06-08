@@ -581,25 +581,23 @@ async function callNanoBanana(imagePath, options) {
     if (options.taskType === 'makeup') {
         const makeupStyle = options.makeup || 'Natural';
         const makeupPrompt = parseMakeupDescription(makeupStyle);
-        promptText = `A highly realistic close-up photo of the same ${genderWord} from the input image.
-Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
-Modify only the makeup: apply ${makeupPrompt}.
-Ensure the makeup looks professionally applied, photorealistic, and blends naturally with the skin pore texture under the original photo's lighting.`;
+        promptText = `A stunning, highly realistic close-up beauty portrait of a beautiful ${genderWord} looking directly at the camera.
+Professional beauty makeup: ${makeupPrompt}.
+Ensure the makeup looks professionally applied, photorealistic, and blends naturally with the skin pore texture under studio lighting. 8k resolution, cinematic lighting, sharp focus.`;
 
     } else if (options.taskType === 'beard') {
         const beardStyle = options.beard || 'stubble';
         const beardPrompt = parseBeardDescription(beardStyle);
-        promptText = `A highly realistic photo of the same ${genderWord} from the input image.
-Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, hairstyle, hair color, clothing, background, and pose.
-Modify only the facial hair: add or modify to ${beardPrompt}.
-Ensure the facial hair looks natural and realistic, matching the lighting and skin texture of the original photo.`;
+        promptText = `A stunning, highly realistic portrait of a handsome ${genderWord} looking directly at the camera.
+Facial hair style: ${beardPrompt}.
+Ensure the facial hair looks natural and realistic, matching the lighting and skin texture. 8k resolution, cinematic lighting, sharp focus, professional photography.`;
 
     } else if (options.taskType === 'nails') {
         const nailStyle = options.nails || 'French nails';
         const nailsPrompt = parseNailsDescription(nailStyle);
-        promptText = `A highly realistic photo showing the hands of the same person from the input image.
-Modify only the fingernails: apply ${nailsPrompt}.
-Ensure the nails look professionally done, photorealistic, matching the hand's natural skin texture and lighting.`;
+        promptText = `A highly realistic, aesthetic close-up photo showing a pair of elegant hands resting on a soft surface.
+Nail style: ${nailsPrompt}.
+Ensure the nails look professionally done, photorealistic, matching the hand's natural skin texture and studio lighting. 8k resolution, sharp focus.`;
 
     } else if (options.taskType === 'retouch') {
         let retouchDetails = [];
@@ -622,10 +620,9 @@ Ensure the nails look professionally done, photorealistic, matching the hand's n
         }
         
         const retouchPrompt = retouchDetails.join(', ');
-        promptText = `A highly realistic close-up portrait of the same ${genderWord} from the input image.
-Strict identity preservation: Keep the exact same face, identity, facial structure, hairstyle, hair color, clothing, background, and pose.
-Modify only with professional beauty retouching: ${retouchPrompt}.
-Maintain natural skin texture, shadows, and lighting. Avoid looking plastic, artificial, or over-processed.`;
+        promptText = `A flawless, highly realistic close-up beauty portrait of a beautiful ${genderWord} looking directly at the camera.
+Professional beauty retouching: ${retouchPrompt}.
+Maintain natural skin texture, shadows, and lighting. Avoid looking plastic, artificial, or over-processed. 8k resolution, cinematic lighting, sharp focus.`;
 
     } else {
         const mappedHaircut = HAIRCUT_MAP[options.styleId] || HAIRCUT_MAP[options.style] || options.style || 'keep the exact same hairstyle, only change the hair color';
@@ -635,15 +632,13 @@ Maintain natural skin texture, shadows, and lighting. Avoid looking plastic, art
         const hasNoColorChange = !mappedColor || mappedColor.toLowerCase() === 'no change' || mappedColor.toLowerCase() === 'random';
 
         if (hasNoHaircutChange && hasNoColorChange) {
-            promptText = `A highly realistic photo of the same ${genderWord} from the input image. Keep the exact same hairstyle, hair color, face, expression, clothing, lighting, camera angle, and background as the input image. Absolutely no changes.`;
+            promptText = `A stunning, highly realistic portrait of a beautiful ${genderWord} looking directly at the camera. 
+Photorealistic, 8k resolution, cinematic lighting, highly detailed face, sharp focus, professional photography.`;
         } else {
-            const hairColorInstruction = hasNoColorChange ? 'their original hair color' : mappedColor;
-            promptText = `A highly realistic photo of the same ${genderWord} from the input image.
-Strict identity preservation: Keep the exact same face, identity, facial structure, eyes, expression, skin tone, clothing, jewelry, background, camera angle, lighting, and pose as the input image.
-Hair modification (CRITICAL):
-- Hairstyle: Change the hair to ${mappedHaircut}.
-- Hair color: Change the hair color to ${hairColorInstruction}.
-Ensure the transition between the head and the new hair looks completely natural, clean, and photorealistic. The only change in the photo must be the hair.`;
+            const hairColorInstruction = hasNoColorChange ? 'natural hair color' : mappedColor;
+            promptText = `A stunning, highly realistic portrait of a beautiful ${genderWord} looking directly at the camera. 
+They have a stylish ${mappedHaircut} hairstyle with ${hairColorInstruction} hair.
+Ensure the hair looks completely natural, clean, and photorealistic. 8k resolution, cinematic lighting, highly detailed face, sharp focus, professional photography.`;
         }
     }
     console.log(`[Replicate] Calling Grok Imagine for task '${options.taskType || 'hairstyle'}' with prompt:\n${promptText}`);
