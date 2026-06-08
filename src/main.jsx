@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ClerkProvider } from '@clerk/react'
+import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.jsx'
 
@@ -10,18 +11,22 @@ if (!PUBLISHABLE_KEY) {
   console.warn("VITE_CLERK_PUBLISHABLE_KEY is not set in environment variables.")
   
   createRoot(document.getElementById('root')).render(
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', textAlign: 'center', background: '#fcf6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <h2 style={{ color: '#ff2e93', marginBottom: '1rem' }}>Clerk Configuration Key Missing</h2>
-      <p style={{ color: '#5d4d6d', maxWidth: '480px', lineHeight: 1.6, margin: '0 auto' }}>
-        Please set the <strong>VITE_CLERK_PUBLISHABLE_KEY</strong> environment variable in your local or production environment config to initialize authentication.
-      </p>
-    </div>
+    <>
+      <div style={{ padding: '2rem', fontFamily: 'sans-serif', textAlign: 'center', background: '#fcf6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <h2 style={{ color: '#ff2e93', marginBottom: '1rem' }}>Clerk Configuration Key Missing</h2>
+        <p style={{ color: '#5d4d6d', maxWidth: '480px', lineHeight: 1.6, margin: '0 auto' }}>
+          Please set the <strong>VITE_CLERK_PUBLISHABLE_KEY</strong> environment variable in your local or production environment config to initialize authentication.
+        </p>
+      </div>
+      <Analytics />
+    </>
   );
 } else {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <App />
+        <Analytics />
       </ClerkProvider>
     </StrictMode>,
   )
