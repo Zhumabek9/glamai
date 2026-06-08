@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Smile, Flame, Heart, Wind } from 'lucide-react';
+import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { useFavorites } from './Favorites';
@@ -30,6 +30,14 @@ const QUICK_PRESETS = [
   { id: 'date', name: 'Date Night', icon: '💅', preset: 'soft-glam' },
   { id: 'bold', name: 'Bold & Bright', icon: '💋', preset: 'siren-eyes' },
   { id: 'natural', name: 'Natural Glow', icon: '🌸', preset: 'bronze' },
+];
+
+const COMMUNITY_FEED = [
+  { id: 'bronze', name: 'Sunkissed Bronze', before: '/trending_makeup_before.png', after: '/styles/makeup_natural.png', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
+  { id: 'siren-eyes', name: 'Siren Eyes', before: '/trending_makeup_before.png', after: '/styles/makeup_siren_eyes.png', desc: 'Elongated winged liner, smoked out edges, and dramatic lifted eyes.' },
+  { id: 'latte-makeup', name: 'Latte Contour', before: '/trending_makeup_before.png', after: '/styles/makeup_latte.png', desc: 'Warm caramel tones, soft brown smoky eyes, and nude glossy lips.' },
+  { id: 'clean-girl', name: 'Clean Girl Look', before: '/trending_makeup_before.png', after: '/styles/makeup_clean_girl.webp', desc: 'Minimalist editorial look, fresh hyper-hydrated skin, and natural definition.' },
+  { id: 'soft-glam', name: 'Soft Glamour', before: '/trending_makeup_before.png', after: '/styles/makeup_soft_glam.webp', desc: 'Warm brown smoky eyes, neutral lips, and radiant finish.' }
 ];
 
 const LIPSTICKS = [
@@ -672,8 +680,6 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 </button>
               </div>
               
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
           ) : (
 
@@ -690,12 +696,12 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
                   <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
-                
-                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
               </div>
             )
           )}
+
+          <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
 
           {/* Generate Button (positioned under upload dropzone) */}
           {image && (
@@ -760,7 +766,79 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         </div>
       </div>
 
-
+      {/* Community Preset Feed */}
+      <div className="landing-section community-preset-feed" style={{ marginTop: '3rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '3rem' }}>
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">{t('audit.makeup.communityFeed') || 'Lookbook'}</span>
+            <h2>{t('audit.makeup.communityPresetsTitle') || 'Trending Lookbook & Presets'}</h2>
+            <p>{t('audit.makeup.communityPresetsDesc') || 'Explore community-favorite makeovers. Click "Try Preset" to apply the style instantly.'}</p>
+          </div>
+          
+          <div className="community-presets-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
+            marginTop: '2rem'
+          }}>
+            {COMMUNITY_FEED.map(look => (
+              <div key={look.id} className="preset-feed-card glass-panel" style={{
+                padding: '1rem',
+                borderRadius: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.8rem',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                transition: 'all 0.3s ease',
+                overflow: 'hidden'
+              }}>
+                {/* Before / After side by side */}
+                <div className="side-by-side-wrapper" style={{ display: 'flex', gap: '0.5rem', height: '180px', borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <img src={look.before} alt="Before" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Before</span>
+                  </div>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <img src={look.after} alt="After" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'var(--color-pink-primary)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>After</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0 0.25rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{look.name}</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, minHeight: '38px', lineHeight: '1.4' }}>{look.desc}</p>
+                </div>
+                
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setSelectedPreset(look.id);
+                    setActiveQuickPreset(null);
+                    toast.success(`${t('audit.makeup.presetLoaded') || 'Preset loaded'}: ${look.name}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.65rem 1rem', 
+                    fontSize: '0.8rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justify: 'center', 
+                    gap: '0.5rem',
+                    marginTop: 'auto',
+                    boxShadow: '0 4px 12px rgba(255,46,147,0.15)'
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>{t('audit.makeup.tryPreset') || 'Try Preset'}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* FAQ */}
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
@@ -778,7 +856,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
               const isOpened = openFaq === idx;
               return (
                 <div key={idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
-                  <button onClick={() => toggleFaq(idx)} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <button onClick={() => toggleFaq(idx)} aria-expanded={isOpened} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, paddingRight: '1rem', minWidth: '0' }}>
                       <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
                       <span style={{ flex: 1, minWidth: '0' }}>{item.q}</span>

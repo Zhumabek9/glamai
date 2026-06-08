@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useEffect, useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2, Award, Briefcase, Heart, Flame, Leaf } from 'lucide-react';
+import { Upload, Sparkles, Download, RefreshCw, Scissors, Check, TrendingUp, Camera, Share2, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { trackEvent } from '../utils/analytics';
@@ -134,7 +134,18 @@ const HAIRSTYLES = [
   {"id": "liberty-spikes", "name": "Liberty Spikes", "category": "Vintage & Statement", "image": "/styles/male_liberty-spikes.webp", "gender": "male"},
   {"id": "spiky", "name": "Spiky", "category": "Vintage & Statement", "image": "/styles/male_spiky.webp", "gender": "male"},
   {"id": "bald", "name": "Bald", "category": "Short & Classic", "image": "/styles/male_bald.webp", "gender": "male"},
-
+  {"id": "beard-stubble", "name": "Stubble Beard", "category": "Beards", "image": "/styles/beard_stubble.png", "gender": "male"},
+  {"id": "beard-full", "name": "Full Beard", "category": "Beards", "image": "/styles/beard_full.png", "gender": "male"},
+  {"id": "beard-goatee", "name": "Goatee", "category": "Beards", "image": "/styles/beard_goatee.png", "gender": "male"},
+  {"id": "beard-mustache", "name": "Classic Mustache", "category": "Beards", "image": "/styles/beard_mustache.png", "gender": "male"},
+  {"id": "beard-viking", "name": "Viking Beard", "category": "Beards", "image": "/styles/beard_viking.png", "gender": "male"},
+  {"id": "beard-clean", "name": "Clean Shaven", "category": "Beards", "image": "/styles/beard_clean.png", "gender": "male"},
+  {"id": "beard-beardstache", "name": "Beardstache", "category": "Beards", "image": "/styles/beard_beardstache.png", "gender": "male"},
+  {"id": "beard-corporate", "name": "Corporate Beard", "category": "Beards", "image": "/styles/beard_corporate.png", "gender": "male"},
+  {"id": "beard-imperial", "name": "Imperial Mustache", "category": "Beards", "image": "/styles/beard_imperial.png", "gender": "male"},
+  {"id": "beard-anchor", "name": "Anchor Beard", "category": "Beards", "image": "/styles/beard_anchor.png", "gender": "male"},
+  {"id": "beard-vandyke", "name": "Van Dyke", "category": "Beards", "image": "/styles/beard_vandyke.png", "gender": "male"},
+  {"id": "beard-balbo", "name": "Balbo", "category": "Beards", "image": "/styles/beard_balbo.png", "gender": "male"}
 ];
 
 const FEMALE_CATEGORIES = [
@@ -160,6 +171,7 @@ const MALE_CATEGORIES = [
   'Long',
   'Curly & Textured',
   'Vintage & Statement',
+  'Beards',
 ];
 
 const COLORS = [
@@ -239,9 +251,9 @@ const PROGRESS_STEPS = [
   '✨ Refining details & upscaling...'
 ];
 
-export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
+export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext }) {
   const toast = useToast();
-  const isGuest = !user;
+  const isGuest = !user || user.isGuest;
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [selectedGender, setSelectedGender] = useState('female');
@@ -256,6 +268,87 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [lightboxImage, setLightboxImage] = useState(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [showUpsellBox, setShowUpsellBox] = useState(false);
+
+  // Custom states for new slider UX requirements
+  const [hairLength, setHairLength] = useState(50);
+  const [hairVolume, setHairVolume] = useState(50);
+  const [beardDensity, setBeardDensity] = useState(50);
+
+  const getHairLengthText = (val) => {
+    if (val <= 25) return t('audit.playground.lengthShort') || 'Short';
+    if (val <= 50) return t('audit.playground.lengthMedium') || 'Medium';
+    if (val <= 75) return t('audit.playground.lengthLong') || 'Long';
+    return t('audit.playground.lengthExtraLong') || 'Extra Long';
+  };
+
+  const getHairLengthTextEn = (val) => {
+    if (val <= 25) return 'short';
+    if (val <= 50) return 'medium';
+    if (val <= 75) return 'long';
+    return 'extra long';
+  };
+
+  const getHairVolumeText = (val) => {
+    if (val <= 25) return t('audit.playground.volumeLow') || 'Low';
+    if (val <= 50) return t('audit.playground.volumeModerate') || 'Moderate';
+    if (val <= 75) return t('audit.playground.volumeHigh') || 'High';
+    return t('audit.playground.volumeExtraHigh') || 'Extra High';
+  };
+
+  const getHairVolumeTextEn = (val) => {
+    if (val <= 25) return 'low';
+    if (val <= 50) return 'moderate';
+    if (val <= 75) return 'high';
+    return 'extra high';
+  };
+
+  const getBeardDensityText = (val) => {
+    if (val <= 25) return t('audit.playground.densityLight') || 'Light';
+    if (val <= 50) return t('audit.playground.densityMedium') || 'Medium';
+    if (val <= 75) return t('audit.playground.densityThick') || 'Thick';
+    return t('audit.playground.densityHeavy') || 'Heavy';
+  };
+
+  const getBeardDensityTextEn = (val) => {
+    if (val <= 25) return 'light';
+    if (val <= 50) return 'medium';
+    if (val <= 75) return 'thick';
+    return 'heavy';
+  };
+
+  // Listen for styleContext passed from Face Scanner
+  useEffect(() => {
+    if (styleContext) {
+      if (styleContext.taskType === 'hairstyle') {
+        const matched = HAIRSTYLES.find(h => h.name.toLowerCase() === styleContext.style.toLowerCase() || h.id.toLowerCase() === styleContext.style.toLowerCase());
+        if (matched) {
+          setSelectedGender(matched.gender || 'female');
+          setSelectedStyles([matched.id]);
+          setSelectedCategory('All');
+          toast.info(`${t('audit.playground.styleSelected') || 'Style selected'}: ${matched.name}`);
+        } else {
+          setSelectedStyles([styleContext.style]);
+          toast.info(`${t('audit.playground.styleSelected') || 'Style selected'}: ${styleContext.style}`);
+        }
+        if (setStyleContext) setStyleContext(null);
+      } else if (styleContext.taskType === 'beard') {
+        setSelectedGender('male');
+        const searchName = styleContext.style.toLowerCase();
+        const matched = HAIRSTYLES.find(h => h.category === 'Beards' && (h.name.toLowerCase() === searchName || h.id.toLowerCase() === searchName || h.id === `beard-${searchName.replace(/\s+/g, '-')}`));
+        if (matched) {
+          setSelectedStyles([matched.id]);
+          setSelectedCategory('Beards');
+          toast.info(`${t('audit.playground.beardSelected') || 'Beard style selected'}: ${matched.name}`);
+        } else {
+          const formattedId = `beard-${searchName.replace(/\s+/g, '-')}`;
+          setSelectedStyles([formattedId]);
+          setSelectedCategory('Beards');
+          toast.info(`${t('audit.playground.beardSelected') || 'Beard style selected'}: ${styleContext.style}`);
+        }
+        if (setStyleContext) setStyleContext(null);
+      }
+    }
+  }, [styleContext, setStyleContext, toast]);
 
   // Custom states for new UX requirements
   const [activePreset, setActivePreset] = useState(null);
@@ -278,7 +371,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   useEffect(() => {
     if (prefs) {
       if (prefs.lastColor) setSelectedColor(prefs.lastColor);
-      if (prefs.lastStyles && prefs.lastStyles.length > 0) setSelectedStyles(prefs.lastStyles);
+      if (prefs.lastStyles && prefs.lastStyles.length > 0) setSelectedStyles([prefs.lastStyles[0]]);
     }
   }, [prefs]);
 
@@ -586,7 +679,20 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         try {
           const formData = new FormData();
           formData.append('image', imageFile);
-          formData.append('style', styleName);
+          
+          const isBeard = styleId.startsWith('beard-');
+          const taskType = isBeard ? 'beard' : 'hairstyle';
+          
+          let modulatedStyleName = styleName;
+          if (isBeard) {
+            modulatedStyleName = `${styleName}, density: ${getBeardDensityTextEn(beardDensity)}`;
+            formData.append('beard', modulatedStyleName);
+          } else if (styleId !== 'no_change') {
+            modulatedStyleName = `${styleName}, length: ${getHairLengthTextEn(hairLength)}, volume: ${getHairVolumeTextEn(hairVolume)}`;
+          }
+
+          formData.append('taskType', taskType);
+          formData.append('style', modulatedStyleName);
           formData.append('styleId', styleId);
           formData.append('color', colorObj ? colorObj.name : 'Custom Color');
           formData.append('gender', selectedGender);
@@ -887,6 +993,114 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               })}
             </div>
           </div>
+
+          {/* Style Customizer Sliders */}
+          {selectedStyles.length > 0 && !selectedStyles.includes('no_change') && (
+            <div className="selector-group sliders-group animate-fade-in" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+              <span className="selector-title">{t('audit.playground.customizeIntensity') || 'Customize Style Intensity'}</span>
+              <div className="sliders-container" style={{
+                padding: '1.25rem',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                {selectedStyles.some(id => id.startsWith('beard-')) ? (
+                  <div className="slider-item">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>🧔</span>
+                        <span>{t('audit.playground.beardDensity') || 'Beard Density'}</span>
+                      </span>
+                      <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                        {beardDensity}% ({getBeardDensityText(beardDensity)})
+                      </span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={beardDensity} 
+                      onChange={(e) => setBeardDensity(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        accentColor: 'var(--color-pink-primary)',
+                        height: '6px',
+                        borderRadius: '3px',
+                        background: 'rgba(255,255,255,0.1)',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        WebkitAppearance: 'none'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="slider-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📏</span>
+                          <span>{t('audit.playground.hairLength') || 'Hair Length'}</span>
+                        </span>
+                        <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                          {hairLength}% ({getHairLengthText(hairLength)})
+                        </span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={hairLength} 
+                        onChange={(e) => setHairLength(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          accentColor: 'var(--color-pink-primary)',
+                          height: '6px',
+                          borderRadius: '3px',
+                          background: 'rgba(255,255,255,0.1)',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          WebkitAppearance: 'none'
+                        }}
+                      />
+                    </div>
+                    <div className="slider-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>💨</span>
+                          <span>{t('audit.playground.hairVolume') || 'Hair Volume'}</span>
+                        </span>
+                        <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                          {hairVolume}% ({getHairVolumeText(hairVolume)})
+                        </span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={hairVolume} 
+                        onChange={(e) => setHairVolume(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          accentColor: 'var(--color-pink-primary)',
+                          height: '6px',
+                          borderRadius: '3px',
+                          background: 'rgba(255,255,255,0.1)',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          WebkitAppearance: 'none'
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Color Shade selection */}
           <div className="selector-group">
@@ -1291,9 +1505,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   <span>{t('audit.makeup.uploadFile')}</span>
                 </button>
               </div>
-              
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
             </div>
           ) : (
 
@@ -1310,9 +1521,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
                   <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
-                
-                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
               </div>
             )
           )}
@@ -1345,11 +1553,9 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               </div>
             </div>
           )}
-
-          {/* Privacy Trust Badge */}
-          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>{t('audit.makeup.yourPhotoIsFullySecureAutodele')}</span>
-          </div>
+          
+          <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
         </div>
       </div>
       {lightboxImage && (

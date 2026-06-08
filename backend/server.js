@@ -9,6 +9,7 @@ if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -18,8 +19,122 @@ const auth = require('./auth');
 const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
+const jwksRsa = require('jwks-rsa');
+const jwt = require('jsonwebtoken');
+
+function getClerkFrontendDomain() {
+    const pk = process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY;
+    if (!pk) return null;
+    try {
+        const parts = pk.split('_');
+        const base64Data = parts[2];
+        if (!base64Data) return null;
+        const decoded = Buffer.from(base64Data, 'base64').toString('utf8');
+        return decoded.split('$')[0];
+    } catch (err) {
+        return null;
+    }
+}
+
+let jwksClientInstance = null;
+
+function getJwksClient(jwksUri) {
+    if (!jwksClientInstance) {
+        jwksClientInstance = jwksRsa({
+            jwksUri: jwksUri,
+            cache: true,
+            rateLimit: true,
+            jwksRequestsPerMinute: 10
+        });
+    }
+    return jwksClientInstance;
+}
+
+function verifyClerkToken(token) {
+    return new Promise((resolve, reject) => {
+        if (!token) return reject(new Error('Token is empty'));
+        
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            return reject(new Error('Invalid token structure'));
+        }
+        
+        let payload;
+        try {
+            payload = JSON.parse(
+                Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+            );
+        } catch (e) {
+            return reject(new Error('Invalid token payload encoding'));
+        }
+
+        const isProd = process.env.NODE_ENV === 'production';
+        const pk = process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY;
+        const isDummyKey = pk && pk.includes('dummykey');
+        
+        if (!isProd && isDummyKey) {
+            console.warn('WARNING: Local development with dummy Clerk key. Bypassing cryptographic verification.');
+            if (payload.exp && Date.now() / 1000 > payload.exp) {
+                return reject(new Error('Token expired'));
+            }
+            return resolve(payload);
+        }
+
+        if (process.env.CLERK_JWT_KEY) {
+            const formattedKey = process.env.CLERK_JWT_KEY.replace(/\\n/g, '\n');
+            jwt.verify(token, formattedKey, { algorithms: ['RS256'] }, (err, decoded) => {
+                if (err) return reject(err);
+                resolve(decoded);
+            });
+            return;
+        }
+
+        const expectedDomain = getClerkFrontendDomain();
+        if (!expectedDomain) {
+            return reject(new Error('Clerk configuration missing: CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY not set.'));
+        }
+
+        if (!payload.iss) {
+            return reject(new Error('Missing issuer (iss) claim in token'));
+        }
+
+        try {
+            const issuerUrl = new URL(payload.iss);
+            if (issuerUrl.hostname !== expectedDomain) {
+                return reject(new Error(`Invalid token issuer: expected ${expectedDomain}, got ${issuerUrl.hostname}`));
+            }
+        } catch (e) {
+            return reject(new Error('Invalid issuer URL format in token'));
+        }
+
+        const jwksUri = `${payload.iss}/.well-known/jwks.json`;
+        const client = getJwksClient(jwksUri);
+
+        jwt.verify(token, (header, callback) => {
+            client.getSigningKey(header.kid, (err, key) => {
+                if (err) return callback(err);
+                callback(null, key.getPublicKey());
+            });
+        }, { algorithms: ['RS256'] }, (err, decoded) => {
+            if (err) return reject(err);
+            resolve(decoded);
+        });
+    });
+}
+
 const uploadsDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'uploads');
-const upload = multer({ dest: uploadsDir });
+const upload = multer({
+    dest: uploadsDir,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
+    }
+});
 
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/+$/, '');
 const GUEST_TRIALS_ALLOWED = Number(process.env.GUEST_FREE_TRIALS ?? '1');
@@ -106,6 +221,8 @@ app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; sandbox;");
     next();
 });
 
@@ -123,9 +240,24 @@ if (process.env.TRUST_PROXY === '1') {
 
 app.use(cookieParser());
 
+const allowedOrigins = [
+    'https://tryglamai.com',
+    'https://www.tryglamai.com',
+];
+
 app.use(
     cors({
-        origin: true,
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+                return callback(null, true);
+            }
+            if (allowedOrigins.indexOf(origin) !== -1) {
+                return callback(null, true);
+            } else {
+                return callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
     })
 );
@@ -199,45 +331,172 @@ app.post(
 
 app.use(express.json());
 
-app.use(async (req, res, next) => {
+const verifyTelegramData = (initData, botToken) => {
+    try {
+      const urlParams = new URLSearchParams(initData);
+      const hash = urlParams.get('hash');
+      urlParams.delete('hash');
+      
+      const dataCheckString = Array.from(urlParams.entries())
+        .map(([key, value]) => `${key}=${value}`)
+        .sort()
+        .join('\n');
+        
+      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+      const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+      
+      return calculatedHash === hash;
+    } catch (e) {
+      return false;
+    }
+};
+
+const requireAuth = async (req, res, next) => {
+    const tgData = req.headers['x-telegram-init-data'];
+    if (tgData && process.env.TELEGRAM_BOT_TOKEN) {
+       if (verifyTelegramData(tgData, process.env.TELEGRAM_BOT_TOKEN)) {
+           const parsedData = new URLSearchParams(tgData);
+           req.user = JSON.parse(parsedData.get('user'));
+           req.userId = `tg_${req.user.id}`;
+           return next();
+       } else {
+           return res.status(401).json({ error: 'Invalid Telegram Signature' });
+       }
+    }
+
     try {
         // 1. Try parsing auth cookie
         req.userFromCookie = await auth.parseAuthCookie(req.headers.cookie);
 
-        // 2. Fallback: Parse Bearer token (Clerk session token) from Authorization header
+        // 2. Fallback: Parse and cryptographically verify Bearer token (Clerk session token) from Authorization header
         if (!req.userFromCookie && req.headers.authorization) {
             const authHeader = req.headers.authorization;
             if (authHeader.startsWith('Bearer ')) {
                 const idToken = authHeader.slice(7);
                 try {
-                    const parts = idToken.split('.');
-                    if (parts.length === 3) {
-                        const payload = JSON.parse(
-                            Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-                        );
-                        // Verify that the token is not expired
-                        if (payload.exp && Date.now() / 1000 < payload.exp) {
-                            const email = (payload.email || '').trim().toLowerCase();
-                            if (email) {
-                                const userRow = await auth.userByEmail(email);
-                                if (userRow) {
-                                    req.userFromCookie = await auth.userById(userRow.id);
-                                }
-                            }
+                    const payload = await verifyClerkToken(idToken);
+                    const email = (payload.email || '').trim().toLowerCase();
+                    if (email) {
+                        const userRow = await auth.userByEmail(email);
+                        if (userRow) {
+                            req.userFromCookie = await auth.userById(userRow.id);
                         }
                     }
                 } catch (err) {
-                    console.warn('Authorization header decode failed in middleware:', err.message);
+                    console.warn('Authorization header verification failed in middleware:', err.message);
                 }
             }
+        }
+
+        if (req.userFromCookie) {
+            req.userId = String(req.userFromCookie.id);
         }
     } catch (err) {
         console.error('Auth middleware error:', err);
     }
     next();
+};
+
+// Step 2: Backend - Webhook for Successful Payment
+app.post('/api/telegram/webhook', async (req, res) => {
+    const update = req.body;
+    if (update.pre_checkout_query) {
+        try {
+            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pre_checkout_query_id: update.pre_checkout_query.id, ok: true })
+            });
+        } catch (err) {
+            console.error('answerPreCheckoutQuery error:', err);
+        }
+        return res.sendStatus(200);
+    }
+    if (update.message && update.message.successful_payment) {
+        const payload = update.message.successful_payment.invoice_payload;
+        const parts = payload.split('_');
+        // payload: payment_{userId}_{planId}_{ts}
+        // if userId is tg_123, parts are ['payment', 'tg', '123', 'planId', 'ts']
+        let userId, planId;
+        if (parts[1] === 'tg') {
+            userId = `tg_${parts[2]}`;
+            planId = parts[3];
+        } else {
+            userId = parts[1];
+            planId = parts[2];
+        }
+
+        try {
+            const email = `${userId}@telegram.org`.toLowerCase();
+            let user = await auth.userByEmail(email);
+            if (!user) {
+                const dummyPassword = `tg_${userId}_${Date.now()}`;
+                user = await auth.createUser(email, dummyPassword);
+            }
+
+            if (user) {
+                const pack = PACKS[planId];
+                if (pack) {
+                    await auth.addCredits(user.id, pack.credits);
+                    console.log(`[Telegram] Added ${pack.credits} credits to user ${user.id} (${email})`);
+                    
+                    if (planId.includes('vip')) {
+                        const durationDays = planId.includes('weekly') ? 7 : (planId.includes('yearly') ? 365 : 30);
+                        await db.query(`
+                            UPDATE users 
+                            SET subscription_tier = 'premium', 
+                                subscription_status = 'active', 
+                                subscription_id = $1, 
+                                subscription_end = NOW() + ($2 || ' days')::interval
+                            WHERE id = $3
+                        `, [`tg_sub_${Date.now()}`, durationDays, user.id]);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[Telegram Webhook] processing error:', e);
+        }
+        return res.sendStatus(200);
+    }
+    res.sendStatus(200);
 });
 
+app.use(requireAuth);
+
 app.get('/health', (_, res) => res.json({ ok: true }));
+
+// Step 1: Backend - Add Create Invoice Endpoint
+app.post('/api/telegram/create-invoice', requireAuth, async (req, res) => {
+    if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const { planId } = req.body;
+      // Stars amount logic: weekly-vip (150 XTR), monthly-vip (450 XTR), other (50 XTR)
+      let amount = 50; 
+      if (planId === 'weekly-vip') amount = 150;
+      else if (planId === 'monthly-vip') amount = 450;
+      
+      const payload = {
+        title: "GlamAI Credits",
+        description: `Purchase credits for ${planId}`,
+        payload: `payment_${req.userId}_${planId}_${Date.now()}`,
+        provider_token: "", // Empty for Telegram Stars
+        currency: "XTR",
+        prices: [{ label: "Credits", amount: amount }]
+      };
+      
+      const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/createInvoiceLink`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const tgData = await tgRes.json();
+      if (!tgData.ok) throw new Error(tgData.description);
+      res.json({ invoiceUrl: tgData.result });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+});
 
 app.post(['/api/analytics', '/analytics'], async (req, res) => {
     const event = String(req.body?.event || '').trim();
@@ -650,21 +909,11 @@ app.post('/api/auth/clerk', async (req, res) => {
     }
 
     try {
-        const parts = idToken.split('.');
-        if (parts.length !== 3) return res.status(400).json({ error: 'INVALID_TOKEN' });
-
-        const payload = JSON.parse(
-            Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-        );
-
+        const payload = await verifyClerkToken(idToken);
         const clerkUid = payload.sub || '';
         const userEmail = (email || payload.email || '').trim().toLowerCase();
 
         if (!userEmail) return res.status(400).json({ error: 'NO_EMAIL_PROVIDED' });
-
-        if (payload.exp && Date.now() / 1000 > payload.exp) {
-            return res.status(401).json({ error: 'TOKEN_EXPIRED' });
-        }
 
         let user = await auth.userByEmail(userEmail);
         if (!user) {
@@ -758,6 +1007,11 @@ app.post('/api/checkout', async (req, res) => {
 });
 
 app.post('/api/checkout/mock-success', async (req, res) => {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+        return res.status(403).json({ error: 'MOCK_PAYMENTS_DISABLED_IN_PROD' });
+    }
+
     const u = req.userFromCookie;
     if (!u) {
         return res.status(401).json({ error: 'LOGIN_REQUIRED' });
@@ -799,16 +1053,16 @@ app.post('/api/checkout/mock-success', async (req, res) => {
     }
 });
 
-app.get('/api/admin/add-credits', async (req, res) => {
+app.post('/api/admin/add-credits', async (req, res) => {
     const u = req.userFromCookie;
     if (!u || u.role !== 'admin') {
         return res.status(403).json({ error: 'FORBIDDEN' });
     }
-    const email = String(req.query.email || '').trim().toLowerCase();
-    const amount = Number(req.query.amount || 2000);
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const amount = Number(req.body.amount || 2000);
 
     if (!email) {
-        return res.status(400).json({ error: 'Email query parameter is required' });
+        return res.status(400).json({ error: 'Email parameter is required' });
     }
 
     try {
@@ -1224,6 +1478,17 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
 
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+app.use((err, req, res, next) => {
+    if (err) {
+        console.error('Express global error handler:', err);
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ success: false, error: 'FILE_TOO_LARGE', message: 'File is too large. Max limit is 10MB.' });
+        }
+        return res.status(err.status || 500).json({ success: false, error: err.code || 'SERVER_ERROR', message: err.message });
+    }
+    next();
 });
 
 app.use((req, res, next) => {

@@ -87,13 +87,13 @@ function Hero({
   }, []);
 
   // 6 transformation GIFs metadata (English titles matching the user requested styles)
-  const transformations = [
-    { id: 1, title: 'Romantic Curls', path: '/transformation_1.gif', sliderPos: 8, hot: true },
-    { id: 2, title: 'Golden Platinum Blonde', path: '/transformation_3.gif', sliderPos: 12 },
-    { id: 3, title: 'Classic Parisian Bob', path: '/transformation_5.gif', sliderPos: 15 },
-    { id: 4, title: 'Textured Beach Waves', path: '/transformation_6.gif', sliderPos: 20 },
-    { id: 5, title: 'Sleek Pixie Cut', path: '/transformation_4.gif', sliderPos: 25 },
-    { id: 6, title: 'Sun-Kissed Highlights', path: '/transformation_2.gif', sliderPos: 12 },
+  const showcaseTransformations = [
+    { id: 1, title: 'Romantic Curls', path: '/transformation_1.mp4', sliderPos: 8, hot: true },
+    { id: 2, title: 'Golden Platinum Blonde', path: '/transformation_3.mp4', sliderPos: 12 },
+    { id: 3, title: 'Classic Parisian Bob', path: '/transformation_5.mp4', sliderPos: 15 },
+    { id: 4, title: 'Textured Beach Waves', path: '/transformation_6.mp4', sliderPos: 20 },
+    { id: 5, title: 'Sleek Pixie Cut', path: '/transformation_4.mp4', sliderPos: 25 },
+    { id: 6, title: 'Sun-Kissed Highlights', path: '/transformation_2.mp4', sliderPos: 12 },
   ];
 
   return (
@@ -233,12 +233,24 @@ function Hero({
           </div>
 
           <div className="transformations-grid">
-            {transformations.map(tData => (
+            {showcaseTransformations.map(tData => (
               <div key={tData.id} className="transformation-card-outer">
                 <div className="transformation-card glass-panel">
                   <div className="transformation-image-wrapper">
                     {tData.hot && <span className="transformation-hot-badge">{t('audit.hero.hot')}</span>}
-                    <img src={tData.path} alt={tData.title} className="transformation-gif" loading="lazy" decoding="async" />
+                    {tData.path.endsWith('.mp4') || tData.path.endsWith('.webm') ? (
+                      <video 
+                        src={tData.path} 
+                        className="transformation-gif" 
+                        autoPlay 
+                        loop 
+                        muted 
+                        playsInline 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <img src={tData.path} alt={tData.title} className="transformation-gif" loading="lazy" decoding="async" />
+                    )}
                   </div>
                 </div>
                 <div className="transformation-card-title-bottom">
@@ -389,6 +401,7 @@ function Hero({
                 >
                   <button
                     onClick={() => toggleFaq(index)}
+                    aria-expanded={isOpened}
                     style={{
                       width: '100%',
                       padding: '1.25rem 1.5rem',

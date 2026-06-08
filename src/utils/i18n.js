@@ -73,7 +73,7 @@ export function t(key, replacements = {}) {
   // Replace placeholders like {count} or {max} or {needed}
   let strValue = String(value);
   Object.keys(replacements).forEach((k) => {
-    strValue = strValue.replace(new RegExp(`{${k}}`, 'g'), replacements[k]);
+    strValue = strValue.replace(new RegExp(`\\{${k}\\}`, 'g'), replacements[k]);
   });
   
   return strValue;

@@ -9,6 +9,7 @@ import PaymentModal from './components/PaymentModal';
 import { ToastProvider } from './components/Toast';
 import CookieBanner from './components/CookieBanner';
 import { getLanguage, setLanguage } from './utils/i18n';
+import { initTelegramApp, isTMA } from './utils/telegram';
 
 // Helper to handle dynamic import chunk load failures gracefully by reloading the page
 const lazyWithRetry = (componentImport) => lazy(async () => {
@@ -45,7 +46,15 @@ const FaceAnalysis = lazyWithRetry(() => import('./components/FaceAnalysis'));
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
   const { user: clerkUser } = useUser();
+  const telegramUser = getTelegramUser();
   const { signOut, openSignIn } = useClerk();
+
+  useEffect(() => {
+    initTelegramApp();
+    if (isTMA()) {
+      document.body.classList.add('telegram-app');
+    }
+  }, []);
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
@@ -61,8 +70,16 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(window.location.pathname));
   const [styleContext, setStyleContext] = useState(null);
-  const [user, setUser] = useState(null);
+  const [backendUser, setBackendUser] = useState(null);
   const [guestTokens, setGuestTokens] = useState(10);
+  
+  const user = isTMA() && telegramUser ? {
+    id: `tg_${telegramUser.id}`,
+    firstName: telegramUser.first_name,
+    email: `tg_${telegramUser.id}@telegram.org`,
+    isGuest: false,
+    tokens: 50 // Mocking tokens for now
+  } : backendUser;
   const [history, setHistory] = useState([]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -87,7 +104,19 @@ export default function App() {
     setActiveTab(tab);
     const path = tab === 'playground' ? '/' : `/${tab}`;
     window.history.pushState(null, '', path);
-    
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const tab = getTabFromPath(window.location.pathname);
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Sync tab changes and browser navigation (popstate) with document title
+  useEffect(() => {
     const titles = {
       playground: 'GlamAI — AI Hairstyle Changer & Virtual Hair Styler Online',
       makeup: 'GlamAI — AI Makeup Salon & Virtual Try-On Online',
@@ -100,19 +129,11 @@ export default function App() {
       privacy: 'GlamAI — Privacy Policy',
       terms: 'GlamAI — Terms of Service',
       history: 'GlamAI — My Style History',
+      favorites: 'GlamAI — Favorite Styles',
       scanner: 'GlamAI — AI Face Scanner & Beauty Analysis'
     };
-    document.title = titles[tab] || 'GlamAI — AI Hairstyle Changer';
-  }, []);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const tab = getTabFromPath(window.location.pathname);
-      setActiveTab(tab);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+    document.title = titles[activeTab] || 'GlamAI — AI Hairstyle Changer';
+  }, [activeTab]);
 
   const playgroundRef = useRef(null);
 
@@ -252,17 +273,17 @@ export default function App() {
   }, []);
 
   // 3. User Authentication
-  const handleAuthSuccess = useCallback((backendUser) => {
+  const handleAuthSuccess = useCallback((userResponse) => {
     const activeUser = {
-      id: backendUser.id,
-      email: backendUser.email,
-      tokens: backendUser.credits,
-      referralCode: backendUser.referralCode,
-      subscriptionTier: backendUser.subscriptionTier || 'free',
-      subscriptionStatus: backendUser.subscriptionStatus || 'inactive',
-      role: backendUser.role || 'user'
+      id: userResponse.id,
+      email: userResponse.email,
+      tokens: userResponse.credits,
+      referralCode: userResponse.referralCode,
+      subscriptionTier: userResponse.subscriptionTier || 'free',
+      subscriptionStatus: userResponse.subscriptionStatus || 'inactive',
+      role: userResponse.role || 'user'
     };
-    setUser(activeUser);
+    setBackendUser(activeUser);
     setGuestTokens(10); // reset guest tokens on login
     loadHistory(activeUser.email);
   }, [loadHistory]);
@@ -274,7 +295,7 @@ export default function App() {
     } catch (err) {
       console.error('Logout error:', err);
     }
-    setUser(null);
+    setBackendUser(null);
     setHistory([]);
     setActiveTab('playground');
   }, [signOut]);

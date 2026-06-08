@@ -1,3 +1,5 @@
+import WebApp from '@twa-dev/sdk';
+
 /**
  * Clerk token helper — retrieves the current Clerk session token
  * and attaches it as Authorization: Bearer header to every API call.
@@ -22,16 +24,23 @@ export async function getAuthHeaders() {
 }
 
 /**
- * Authenticated fetch — wraps fetch() with Clerk Bearer token.
+ * Authenticated fetch — wraps fetch() with Clerk Bearer token or Telegram Init Data.
  */
 export async function authFetch(url, options = {}) {
-  const authHeaders = await getAuthHeaders();
+  const headers = options.headers ? new Headers(options.headers) : new Headers();
+  
+  if (WebApp.initData !== '') {
+    headers.set('X-Telegram-Init-Data', WebApp.initData);
+  } else {
+    const authHeaders = await getAuthHeaders();
+    if (authHeaders.Authorization) {
+      headers.set('Authorization', authHeaders.Authorization);
+    }
+  }
+
   const baseUrl = import.meta.env.VITE_API_URL || '';
   return fetch(baseUrl + url, {
     ...options,
-    headers: {
-      ...authHeaders,
-      ...(options.headers || {}),
-    },
+    headers,
   });
 }

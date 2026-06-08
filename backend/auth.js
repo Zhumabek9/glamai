@@ -5,7 +5,12 @@ const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 const db = require('./db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-in-production-secret';
+const crypto = require('crypto');
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
+if ((!JWT_SECRET_ENV || JWT_SECRET_ENV === 'change-this-in-production-secret') && process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET environment variable is required and must be secure in production.');
+}
+const JWT_SECRET = (JWT_SECRET_ENV && JWT_SECRET_ENV !== 'change-this-in-production-secret') ? JWT_SECRET_ENV : crypto.randomBytes(32).toString('hex');
 const COOKIE_NAME = 'hairstyle_auth';
 const FREE_CREDITS_SIGNUP = parseInt(process.env.FREE_CREDITS_SIGNUP ?? '20', 10);
 

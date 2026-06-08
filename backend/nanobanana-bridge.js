@@ -477,6 +477,15 @@ function parseBeardDescription(beardStyle) {
     if (colorDesc && !beardLower.includes('clean shave') && !beardLower.includes('clean_shave') && !beardLower.includes('clean-shave')) {
         finalDesc += ` in a ${colorDesc}`;
     }
+
+    // Parse density slider
+    if (beardLower.includes('density:')) {
+        const densityMatch = beardStyle.match(/density:\s*([^,]+)/i);
+        if (densityMatch && !beardLower.includes('clean shave') && !beardLower.includes('clean_shave') && !beardLower.includes('clean-shave')) {
+            finalDesc += `, beard density is ${densityMatch[1].trim()}`;
+        }
+    }
+
     return finalDesc;
 }
 
@@ -631,7 +640,27 @@ Modify only with professional beauty retouching: ${retouchPrompt}.
 CRITICAL INSTRUCTION: Do NOT apply any color filters, tints, or atmospheric overlays to the photo. The original image lighting and overall color temperature MUST remain 100% identical.`;
 
     } else {
-        const mappedHaircut = HAIRCUT_MAP[options.styleId] || HAIRCUT_MAP[options.style] || options.style || 'keep the exact same hairstyle, only change the hair color';
+        let mappedHaircut = HAIRCUT_MAP[options.styleId] || HAIRCUT_MAP[options.style] || options.style || 'keep the exact same hairstyle, only change the hair color';
+        
+        // Parse and append dynamic slider modifiers for Grok prompts
+        if (options.style && typeof options.style === 'string') {
+            if (options.style.includes(', length:')) {
+                const lengthMatch = options.style.match(/length:\s*([^,]+)/);
+                const volumeMatch = options.style.match(/volume:\s*([^,]+)/);
+                if (lengthMatch) {
+                    mappedHaircut += `, hair length is ${lengthMatch[1].trim()}`;
+                }
+                if (volumeMatch) {
+                    mappedHaircut += `, hair volume is ${volumeMatch[1].trim()}`;
+                }
+            } else if (options.style.includes(', density:')) {
+                const densityMatch = options.style.match(/density:\s*([^,]+)/);
+                if (densityMatch) {
+                    mappedHaircut += `, beard density is ${densityMatch[1].trim()}`;
+                }
+            }
+        }
+        
         const mappedColor = COLOR_MAP[options.color] || options.color || 'No change';
 
         const hasNoHaircutChange = !mappedHaircut || mappedHaircut.toLowerCase().includes('keep the exact same hairstyle') || mappedHaircut.toLowerCase().includes('no change');

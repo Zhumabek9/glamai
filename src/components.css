@@ -759,7 +759,7 @@
   bottom: 0;
   background: rgba(252, 246, 250, 0.4);
   backdrop-filter: blur(8px);
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1525,19 +1525,31 @@
     font-size: 0.58rem;
   }
 
-  /* ---- Style cards: 3-col grid, vertical scroll, auto row height ---- */
+  /* ---- Style cards: horizontal scroll for mobile ---- */
   .style-cards-grid {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-auto-rows: auto !important;
-    max-height: 540px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    gap: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    padding-right: 0.2rem !important;
-    align-content: start !important;
-    scrollbar-width: thin !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    max-height: none !important;
+    overflow-y: hidden !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 0.75rem !important;
+    padding-bottom: 1rem !important;
+    padding-right: 1rem !important;
+    margin-bottom: 0.5rem !important;
+    scrollbar-width: none !important; /* Hide scrollbar for cleaner look */
+  }
+  
+  .style-cards-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .style-cards-grid .style-card-container {
+    flex: 0 0 45% !important;
+    min-width: 140px !important;
+    max-width: 160px !important;
+    scroll-snap-align: start !important;
   }
 
   /* Each card: column layout, image + label below */
@@ -3211,7 +3223,7 @@
   top: 0;
   left: 0;
   /* width is the full container width, clip is handled by parent */
-  width: 100vw;
+  width: 100%;
   max-width: 600px;
   height: 100%;
   object-fit: cover;
@@ -4912,7 +4924,7 @@
 @media (max-width: 480px) {
   /* Style cards — smaller on mobile */
   .style-cards-grid {
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.4rem !important;
   }
 
@@ -4983,4 +4995,27 @@
 @keyframes langDropdownFade {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Telegram Mini App overrides */
+body.telegram-app .navbar {
+  display: none !important;
+}
+body.telegram-app .footer {
+  display: none !important;
+}
+body.telegram-app .playground-section {
+  padding-top: 0 !important;
 }
