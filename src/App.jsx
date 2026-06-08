@@ -10,20 +10,37 @@ import { ToastProvider } from './components/Toast';
 import CookieBanner from './components/CookieBanner';
 import { getLanguage, setLanguage } from './utils/i18n';
 
-// Lazy loaded components for code splitting & better LCP
-const Playground = lazy(() => import('./components/Playground'));
-const Makeup = lazy(() => import('./components/Makeup'));
-const Nails = lazy(() => import('./components/Nails'));
-const TrendingFeed = lazy(() => import('./components/TrendingFeed'));
-const Dashboard = lazy(() => import('./components/Dashboard'));
-const Settings = lazy(() => import('./components/Settings'));
-const Pricing = lazy(() => import('./components/Pricing'));
-const History = lazy(() => import('./components/History'));
-const Blog = lazy(() => import('./components/Blog'));
-const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./components/TermsOfService'));
-const Favorites = lazy(() => import('./components/Favorites'));
-const FaceAnalysis = lazy(() => import('./components/FaceAnalysis'));
+// Helper to handle dynamic import chunk load failures gracefully by reloading the page
+const lazyWithRetry = (componentImport) => lazy(async () => {
+  try {
+    return await componentImport();
+  } catch (error) {
+    console.error("Failed to load component chunk, reloading page:", error);
+    const lastReload = sessionStorage.getItem('chunk_load_failed_last_reload');
+    const now = Date.now();
+    if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+      sessionStorage.setItem('chunk_load_failed_last_reload', now.toString());
+      window.location.reload();
+      return new Promise(() => {}); // Prevent rendering of broken state before reload
+    }
+    throw error;
+  }
+});
+
+// Lazy loaded components for code splitting & better LCP wrapped in retry logic
+const Playground = lazyWithRetry(() => import('./components/Playground'));
+const Makeup = lazyWithRetry(() => import('./components/Makeup'));
+const Nails = lazyWithRetry(() => import('./components/Nails'));
+const TrendingFeed = lazyWithRetry(() => import('./components/TrendingFeed'));
+const Dashboard = lazyWithRetry(() => import('./components/Dashboard'));
+const Settings = lazyWithRetry(() => import('./components/Settings'));
+const Pricing = lazyWithRetry(() => import('./components/Pricing'));
+const History = lazyWithRetry(() => import('./components/History'));
+const Blog = lazyWithRetry(() => import('./components/Blog'));
+const PrivacyPolicy = lazyWithRetry(() => import('./components/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./components/TermsOfService'));
+const Favorites = lazyWithRetry(() => import('./components/Favorites'));
+const FaceAnalysis = lazyWithRetry(() => import('./components/FaceAnalysis'));
 
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
