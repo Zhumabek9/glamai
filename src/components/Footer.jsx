@@ -7,7 +7,6 @@ export default function Footer({ setActiveTab }) {
 
   const footerLinks = [
     {
-      title: t('footer.headingProduct', 'Product'),
       links: [
         { label: t('nav.tryItFree'), tab: 'playground' },
         { label: t('footer.pricing'), tab: 'pricing' },
@@ -16,7 +15,6 @@ export default function Footer({ setActiveTab }) {
       ]
     },
     {
-      title: t('footer.headingLegal', 'Legal'),
       links: [
         { label: t('footer.privacy'), tab: 'privacy' },
         { label: t('footer.terms'), tab: 'terms' },
@@ -149,19 +147,8 @@ export default function Footer({ setActiveTab }) {
           </div>
 
           {/* Link columns */}
-          {footerLinks.map(col => (
-            <div key={col.title}>
-              <h4 style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                marginBottom: '1.25rem',
-              }}>
-                {col.title}
-              </h4>
+          {footerLinks.map((col, idx) => (
+            <div key={`footer-col-${idx}`}>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 {col.links.map(link => (
                   <li key={link.label}>

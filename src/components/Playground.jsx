@@ -259,7 +259,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   // Custom states for new UX requirements
   const [activePreset, setActivePreset] = useState(null);
-  const [showQuickStart, setShowQuickStart] = useState(false);
+
   const [etaRemaining, setEtaRemaining] = useState(30);
   const [feedback, setFeedback] = useState(null);
   const [dislikeReason, setDislikeReason] = useState(null);
@@ -371,7 +371,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   const handleQuickStartSelect = (styleId) => {
     setSelectedStyles([styleId]);
-    setShowQuickStart(false);
+
   };
 
   const handleFeedback = (type) => {
@@ -435,8 +435,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setResultImages([]);
       setActiveResultIndex(0);
       setShowUpsellBox(false);
-      // Auto-trigger Quick Start modal
-      setShowQuickStart(true);
+
     };
     reader.readAsDataURL(file);
   };
@@ -1457,52 +1456,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         </div>
       )}
 
-      {/* Quick Start Modal */}
-      {showQuickStart && (
-        <div className="modal-backdrop" onClick={() => setShowQuickStart(false)}>
-          <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
-            <button type="button" className="modal-close-btn" onClick={() => setShowQuickStart(false)} aria-label={t('audit.playground.close')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 850, background: 'var(--gradient-pink-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                ⚡ Quick Start
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                Select one of the top styles to render instantly!
-              </p>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              {(selectedGender === 'female' ? TOP_STYLES.female : TOP_STYLES.male).map(id => HAIRSTYLES.find(h => h.id === id)).filter(Boolean).map(h => (
-                <button
-                  type="button"
-                  key={h.id}
-                  className="style-card"
-                  onClick={() => handleQuickStartSelect(h.id)}
-                  style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', textAlign: 'center' }}
-                >
-                  <div className="style-card-image-wrapper" style={{ height: '90px' }}>
-                    <img src={h.image} className="style-card-image" alt={h.name} style={{ height: '100%', objectFit: 'cover' }} />
-                  </div>
-                  <div className="style-card-footer" style={{ fontSize: '0.7rem', padding: '0.4rem 0.2rem' }}>
-                    {h.name}
-                  </div>
-                </button>
-              ))}
-            </div>
-            
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ width: '100%', padding: '0.7rem' }}
-              onClick={() => setShowQuickStart(false)}
-            >
-              Customize manually
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {/* Mobile Fixed CTA */}
       {image && !isGenerating && showFixedCta && (
