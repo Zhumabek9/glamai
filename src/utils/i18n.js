@@ -49,7 +49,16 @@ export function setLanguage(lang) {
   }
 }
 
-export function t(key, replacements = {}) {
+export function t(key, replacementsOrFallback = {}, replacements = {}) {
+  // Support both:
+  //   t('key', { count: 5 })           → replacements object
+  //   t('key', 'Fallback string')       → old 2-arg form (fallback ignored, kept for compat)
+  //   t('key', 'Fallback', { count: 5}) → full 3-arg form
+  const actualReplacements =
+    typeof replacementsOrFallback === 'object' && replacementsOrFallback !== null
+      ? replacementsOrFallback
+      : replacements;
+
   // Support both nested structure and old flat structure (during transition if any)
   const langGroup = translations[currentLang] || {};
   let value = langGroup[key];
@@ -66,14 +75,20 @@ export function t(key, replacements = {}) {
   }
 
   if (value === undefined) {
-    // Final fallback
-    return key;
+    // Use provided string fallback if available, otherwise return the key
+    if (typeof replacementsOrFallback === 'string') {
+      value = replacementsOrFallback;
+    } else {
+      return key;
+    }
   }
   
-  // Replace placeholders like {count} or {max} or {needed}
+  // Replace placeholders like {count} or {max} — escape regex special chars in key names
   let strValue = String(value);
-  Object.keys(replacements).forEach((k) => {
-    strValue = strValue.replace(new RegExp(`{${k}}`, 'g'), replacements[k]);
+  Object.keys(actualReplacements).forEach((k) => {
+    // Escape any regex special characters in the placeholder key name
+    const escapedKey = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    strValue = strValue.replace(new RegExp(`\\{${escapedKey}\\}`, 'g'), actualReplacements[k]);
   });
   
   return strValue;
