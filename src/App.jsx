@@ -40,7 +40,6 @@ const Blog = lazyWithRetry(() => import('./components/Blog'));
 const PrivacyPolicy = lazyWithRetry(() => import('./components/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./components/TermsOfService'));
 const Favorites = lazyWithRetry(() => import('./components/Favorites'));
-const FaceAnalysis = lazyWithRetry(() => import('./components/FaceAnalysis'));
 
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
@@ -52,7 +51,7 @@ export default function App() {
     const cleanPath = path.replace(/^\//, '');
     if (!cleanPath) return 'playground';
     const validTabs = [
-      'playground', 'makeup', 'nails', 'scanner',
+      'playground', 'makeup', 'nails',
       'trending', 'dashboard', 'settings', 
       'pricing', 'blog', 'privacy', 'terms', 'history', 'favorites'
     ];
@@ -60,6 +59,42 @@ export default function App() {
   };
 
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(window.location.pathname));
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('glamai_theme') || 'light';
+    } catch (_) {
+      return 'light';
+    }
+  });
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('glamai_theme', theme);
+    } catch (_) {}
+  }, [theme]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(progress);
+      }
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const [styleContext, setStyleContext] = useState(null);
   const [user, setUser] = useState(null);
   const [guestTokens, setGuestTokens] = useState(10);
@@ -70,15 +105,20 @@ export default function App() {
   const [allowMockPayment, setAllowMockPayment] = useState(true);
 
   const handleOpenAuth = useCallback(() => {
-    if (openSignIn) {
-      openSignIn({
-        appearance: {
-          variables: {
-            colorPrimary: '#ff2e93',
+    try {
+      if (openSignIn) {
+        openSignIn({
+          appearance: {
+            variables: {
+              colorPrimary: '#ff2e93',
+            }
           }
-        }
-      });
-    } else {
+        });
+      } else {
+        setIsAuthOpen(true);
+      }
+    } catch (err) {
+      console.warn("Clerk openSignIn error, falling back to custom AuthModal:", err);
       setIsAuthOpen(true);
     }
   }, [openSignIn]);
@@ -87,7 +127,19 @@ export default function App() {
     setActiveTab(tab);
     const path = tab === 'playground' ? '/' : `/${tab}`;
     window.history.pushState(null, '', path);
-    
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const tab = getTabFromPath(window.location.pathname);
+      setActiveTab(tab);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Sync tab changes and browser navigation (popstate) with document title
+  useEffect(() => {
     const titles = {
       playground: 'GlamAI — AI Hairstyle Changer & Virtual Hair Styler Online',
       makeup: 'GlamAI — AI Makeup Salon & Virtual Try-On Online',
@@ -100,19 +152,10 @@ export default function App() {
       privacy: 'GlamAI — Privacy Policy',
       terms: 'GlamAI — Terms of Service',
       history: 'GlamAI — My Style History',
-      scanner: 'GlamAI — AI Face Scanner & Beauty Analysis'
+      favorites: 'GlamAI — Favorite Styles'
     };
-    document.title = titles[tab] || 'GlamAI — AI Hairstyle Changer';
-  }, []);
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const tab = getTabFromPath(window.location.pathname);
-      setActiveTab(tab);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+    document.title = titles[activeTab] || 'GlamAI — AI Hairstyle Changer';
+  }, [activeTab]);
 
   const playgroundRef = useRef(null);
 
@@ -390,6 +433,8 @@ export default function App() {
           guestTokens={guestTokens}
           onLogout={handleLogout}
           onOpenAuth={handleOpenAuth}
+          theme={theme}
+          setTheme={setTheme}
         />
 
         <main style={{ flex: 1 }}>
@@ -423,15 +468,6 @@ export default function App() {
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
                 styleContext={styleContext}
-                setStyleContext={setStyleContext}
-              />
-            )}
-
-            {activeTab === 'scanner' && (
-              <FaceAnalysis
-                user={effectiveUser}
-                onOpenAuth={handleOpenAuth}
-                setActiveTab={navigateToTab}
                 setStyleContext={setStyleContext}
               />
             )}
@@ -501,7 +537,7 @@ export default function App() {
               <Favorites setActiveTab={navigateToTab} />
             )}
 
-            {!['playground', 'makeup', 'scanner', 'nails', 'trending', 'dashboard', 'settings', 'pricing', 'history', 'blog', 'privacy', 'terms', 'favorites'].includes(activeTab) && (
+            {!['playground', 'makeup', 'nails', 'trending', 'dashboard', 'settings', 'pricing', 'history', 'blog', 'privacy', 'terms', 'favorites'].includes(activeTab) && (
               <div style={{ padding: '8rem 2rem 10rem', textAlign: 'center', background: 'var(--bg-primary)' }}>
                 <div style={{ maxWidth: '500px', margin: '0 auto', padding: '3rem 2rem' }} className="glass-panel animate-fade-in">
                   <h1 style={{ fontSize: '6rem', fontWeight: 800, background: 'var(--gradient-pink-purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 1rem' }}>404</h1>
@@ -539,6 +575,34 @@ export default function App() {
           />
         )}
         <CookieBanner />
+
+        {showScrollTop && (
+          <button 
+            className="scroll-to-top" 
+            onClick={scrollToTop}
+            aria-label="Back to Top"
+          >
+            <svg className="progress-ring" width="50" height="50">
+              <circle
+                className="progress-ring__circle"
+                stroke="var(--color-pink-primary)"
+                strokeWidth="3"
+                fill="transparent"
+                r="22"
+                cx="25"
+                cy="25"
+                style={{
+                  strokeDasharray: '138',
+                  strokeDashoffset: 138 - (138 * scrollProgress) / 100,
+                  transform: 'rotate(-90deg)',
+                  transformOrigin: '50% 50%',
+                  transition: 'stroke-dashoffset 0.1s ease'
+                }}
+              />
+            </svg>
+            <span className="arrow-icon">↑</span>
+          </button>
+        )}
       </div>
     </ToastProvider>
   );
