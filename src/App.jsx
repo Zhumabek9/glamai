@@ -44,7 +44,7 @@ const Favorites = lazyWithRetry(() => import('./components/Favorites'));
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
   const { user: clerkUser } = useUser();
-  const { signOut, openSignIn } = useClerk();
+  const { signOut } = useClerk();
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
@@ -105,23 +105,8 @@ export default function App() {
   const [allowMockPayment, setAllowMockPayment] = useState(true);
 
   const handleOpenAuth = useCallback(() => {
-    try {
-      if (openSignIn) {
-        openSignIn({
-          appearance: {
-            variables: {
-              colorPrimary: '#ff2e93',
-            }
-          }
-        });
-      } else {
-        setIsAuthOpen(true);
-      }
-    } catch (err) {
-      console.warn("Clerk openSignIn error, falling back to custom AuthModal:", err);
-      setIsAuthOpen(true);
-    }
-  }, [openSignIn]);
+    setIsAuthOpen(true);
+  }, []);
 
   const navigateToTab = useCallback((tab) => {
     setActiveTab(tab);
