@@ -44,7 +44,7 @@ const Favorites = lazyWithRetry(() => import('./components/Favorites'));
 export default function App() {
   const { isLoaded, userId, getToken } = useAuth();
   const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openSignIn } = useClerk();
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
@@ -104,9 +104,29 @@ export default function App() {
   const [stripeEnabled, setStripeEnabled] = useState(false);
   const [allowMockPayment, setAllowMockPayment] = useState(true);
 
-  const handleOpenAuth = useCallback(() => {
-    setIsAuthOpen(true);
-  }, []);
+  const handleOpenAuth = useCallback(async () => {
+    try {
+      if (userId) {
+        // If Clerk session exists but local user is not synced, sign out first
+        // to reset Clerk state and allow sign-in modal to open.
+        await signOut().catch(() => {});
+      }
+      if (openSignIn) {
+        openSignIn({
+          appearance: {
+            variables: {
+              colorPrimary: '#ff2e93',
+            }
+          }
+        });
+      } else {
+        setIsAuthOpen(true);
+      }
+    } catch (err) {
+      console.warn("Clerk openSignIn error, falling back to custom AuthModal:", err);
+      setIsAuthOpen(true);
+    }
+  }, [userId, signOut, openSignIn]);
 
   const navigateToTab = useCallback((tab) => {
     setActiveTab(tab);
@@ -224,16 +244,19 @@ export default function App() {
           setUser(activeUser);
           loadHistory(activeUser.email);
         } else {
+          console.warn('Backend Clerk sync failed, signing out from Clerk to prevent desync.');
           setUser(null);
+          await signOut().catch(() => {});
         }
       } catch (err) {
         console.error('Clerk sync error:', err);
         setUser(null);
+        await signOut().catch(() => {});
       }
     };
 
     syncClerkUser();
-  }, [isLoaded, userId, clerkUser]);
+  }, [isLoaded, userId, clerkUser, signOut]);
 
   // 2. Load History for specific user
   const loadHistory = useCallback(async (email) => {
