@@ -19,6 +19,7 @@ const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
 const jwksRsa = require('jwks-rsa');
+console.log('DEBUG jwksRsa path:', require.resolve('jwks-rsa'));
 console.log('DEBUG jwksRsa type:', typeof jwksRsa, 'keys:', Object.keys(jwksRsa || {}), 'props:', Object.getOwnPropertyNames(jwksRsa || {}));
 if (jwksRsa) {
     console.log('DEBUG jwksRsa.default type:', typeof jwksRsa.default, 'keys:', jwksRsa.default ? Object.keys(jwksRsa.default) : 'null');
