@@ -19,6 +19,7 @@ const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
 const jwksRsa = require('jwks-rsa');
+console.log('DEBUG jwksRsa:', typeof jwksRsa, jwksRsa ? Object.keys(jwksRsa) : 'null', jwksRsa ? jwksRsa.toString() : 'null');
 const jwt = require('jsonwebtoken');
 
 function getClerkFrontendDomain() {
