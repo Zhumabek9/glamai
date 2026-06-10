@@ -18,7 +18,8 @@ const auth = require('./auth');
 const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
-const jwksRsa = require('jwks-rsa');
+const https = require('https');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 function getClerkFrontendDomain() {
@@ -35,87 +36,107 @@ function getClerkFrontendDomain() {
     }
 }
 
-let jwksClientInstance = null;
+// In-memory cache for JWKS keys
+const jwksCache = new Map();
 
-function getJwksClient(jwksUri) {
-    if (!jwksClientInstance) {
-        const creator = typeof jwksRsa === 'function' ? jwksRsa : (jwksRsa.default || jwksRsa);
-        jwksClientInstance = creator({
-            jwksUri: jwksUri,
-            cache: true,
-            rateLimit: true,
-            jwksRequestsPerMinute: 10
-        });
-    }
-    return jwksClientInstance;
+function fetchJwks(jwksUri) {
+    return new Promise((resolve, reject) => {
+        https.get(jwksUri, (res) => {
+            if (res.statusCode !== 200) {
+                return reject(new Error(`Failed to fetch JWKS: ${res.statusCode}`));
+            }
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(data));
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }).on('error', reject);
+    });
 }
 
-function verifyClerkToken(token) {
-    return new Promise((resolve, reject) => {
-        if (!token) return reject(new Error('Token is empty'));
-        
-        const parts = token.split('.');
-        if (parts.length !== 3) {
-            return reject(new Error('Invalid token structure'));
-        }
-        
-        let payload;
-        try {
-            payload = JSON.parse(
-                Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-            );
-        } catch (e) {
-            return reject(new Error('Invalid token payload encoding'));
-        }
+async function verifyClerkToken(token) {
+    if (!token) throw new Error('Token is empty');
+    
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+        throw new Error('Invalid token structure');
+    }
+    
+    let header, payload;
+    try {
+        header = JSON.parse(Buffer.from(parts[0], 'base64').toString('utf8'));
+        payload = JSON.parse(
+            Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+        );
+    } catch (e) {
+        throw new Error('Invalid token payload encoding');
+    }
 
-        const isProd = process.env.NODE_ENV === 'production';
-        const pk = process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY;
-        const isDummyKey = pk && pk.includes('dummykey');
-        
-        if (!isProd && isDummyKey) {
-            console.warn('WARNING: Local development with dummy Clerk key. Bypassing cryptographic verification.');
-            if (payload.exp && Date.now() / 1000 > payload.exp) {
-                return reject(new Error('Token expired'));
-            }
-            return resolve(payload);
+    const isProd = process.env.NODE_ENV === 'production';
+    const pk = process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY;
+    const isDummyKey = pk && pk.includes('dummykey');
+    
+    if (!isProd && isDummyKey) {
+        console.warn('WARNING: Local development with dummy Clerk key. Bypassing cryptographic verification.');
+        if (payload.exp && Date.now() / 1000 > payload.exp) {
+            throw new Error('Token expired');
         }
+        return payload;
+    }
 
-        if (process.env.CLERK_JWT_KEY) {
-            const formattedKey = process.env.CLERK_JWT_KEY.replace(/\\n/g, '\n');
+    if (process.env.CLERK_JWT_KEY) {
+        const formattedKey = process.env.CLERK_JWT_KEY.replace(/\\n/g, '\n');
+        return new Promise((resolve, reject) => {
             jwt.verify(token, formattedKey, { algorithms: ['RS256'] }, (err, decoded) => {
                 if (err) return reject(err);
                 resolve(decoded);
             });
-            return;
+        });
+    }
+
+    const expectedDomain = getClerkFrontendDomain();
+    if (!expectedDomain) {
+        throw new Error('Clerk configuration missing: CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY not set.');
+    }
+
+    if (!payload.iss) {
+        throw new Error('Missing issuer (iss) claim in token');
+    }
+
+    try {
+        const issuerUrl = new URL(payload.iss);
+        if (issuerUrl.hostname !== expectedDomain) {
+            throw new Error(`Invalid token issuer: expected ${expectedDomain}, got ${issuerUrl.hostname}`);
         }
+    } catch (e) {
+        throw new Error('Invalid issuer URL format in token');
+    }
 
-        const expectedDomain = getClerkFrontendDomain();
-        if (!expectedDomain) {
-            return reject(new Error('Clerk configuration missing: CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY not set.'));
-        }
+    const jwksUri = `${payload.iss}/.well-known/jwks.json`;
+    
+    // Get keys from cache or fetch
+    let cached = jwksCache.get(jwksUri);
+    if (!cached || Date.now() - cached.fetchedAt > 10 * 60 * 1000) { // 10 minutes cache
+        const data = await fetchJwks(jwksUri);
+        cached = { keys: data.keys, fetchedAt: Date.now() };
+        jwksCache.set(jwksUri, cached);
+    }
 
-        if (!payload.iss) {
-            return reject(new Error('Missing issuer (iss) claim in token'));
-        }
+    const key = cached.keys.find(k => k.kid === header.kid);
+    if (!key) {
+        throw new Error(`JWK not found for kid: ${header.kid}`);
+    }
 
-        try {
-            const issuerUrl = new URL(payload.iss);
-            if (issuerUrl.hostname !== expectedDomain) {
-                return reject(new Error(`Invalid token issuer: expected ${expectedDomain}, got ${issuerUrl.hostname}`));
-            }
-        } catch (e) {
-            return reject(new Error('Invalid issuer URL format in token'));
-        }
+    // Convert JWK to PEM natively using Node.js crypto
+    const publicKey = crypto.createPublicKey({ format: 'jwk', key });
+    const pem = publicKey.export({ type: 'spki', format: 'pem' });
 
-        const jwksUri = `${payload.iss}/.well-known/jwks.json`;
-        const client = getJwksClient(jwksUri);
-
-        jwt.verify(token, (header, callback) => {
-            client.getSigningKey(header.kid, (err, key) => {
-                if (err) return callback(err);
-                callback(null, key.getPublicKey());
-            });
-        }, { algorithms: ['RS256'] }, (err, decoded) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, pem, { algorithms: ['RS256'] }, (err, decoded) => {
             if (err) return reject(err);
             resolve(decoded);
         });
