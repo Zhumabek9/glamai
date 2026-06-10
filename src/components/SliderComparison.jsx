@@ -80,7 +80,7 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
         {/* After image (background, full width — right side) */}
         <img
           src={afterSrc}
-          alt="After"
+          alt={t('audit.retouch.after')}
           className="slider-img slider-img-before"
           draggable={false}
         />
@@ -92,7 +92,7 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
         >
           <img
             src={beforeSrc}
-            alt="Before"
+            alt={t('audit.retouch.before')}
             className="slider-img slider-img-after"
             style={{ width: containerWidth ? `${containerWidth}px` : '100%', maxWidth: 'none' }}
             draggable={false}

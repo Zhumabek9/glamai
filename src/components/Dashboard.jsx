@@ -155,13 +155,12 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</span>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '1.5rem 0' }}>
-              {isPremium ? (
+              <div className="token-pill" style={{ padding: '0.35rem 1rem', background: 'rgba(255,46,147,0.06)' }}>
+                <Coins size={14} />
+                <span>{user.tokens} {t('pricing.credits')}</span>
+              </div>
+              {isPremium && (
                 <span className="vip-badge-mini" style={{ padding: '0.35rem 1rem', borderRadius: '100px', fontSize: '0.8rem' }}>{t('audit.dashboard.vipPremium')}</span>
-              ) : (
-                <div className="token-pill" style={{ padding: '0.35rem 1rem', background: 'rgba(255,46,147,0.06)' }}>
-                  <Coins size={14} />
-                  <span>{user.tokens} {t('pricing.credits')}</span>
-                </div>
               )}
             </div>
 

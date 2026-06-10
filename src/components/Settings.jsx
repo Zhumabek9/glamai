@@ -13,10 +13,8 @@ export default function Settings({ user, onLogout, setActiveTab }) {
   const [updating, setUpdating] = useState(false);
   const [referralData, setReferralData] = useState({ referralCode: '', referralsCount: 0, referrals: [] });
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    fetchReferrals();
-  }, []);
+  const [profileData, setProfileData] = useState(null);
+  const [canceling, setCanceling] = useState(false);
 
   const fetchReferrals = async () => {
     try {
@@ -27,6 +25,23 @@ export default function Settings({ user, onLogout, setActiveTab }) {
       }
     } catch (err) {}
   };
+
+  const fetchProfile = async () => {
+    try {
+      const res = await authFetch('/api/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated) {
+          setProfileData(data.user);
+        }
+      }
+    } catch (err) {}
+  };
+
+  useEffect(() => {
+    fetchReferrals();
+    fetchProfile();
+  }, []);
 
   const handleCopyLink = () => {
     const inviteLink = `${window.location.origin}/?ref=${referralData.referralCode}`;
@@ -101,6 +116,28 @@ export default function Settings({ user, onLogout, setActiveTab }) {
   };
 
   const isPremium = user && user.subscriptionTier === 'premium';
+  // Use profileData if available to get the most up-to-date status and end date
+  const isCanceled = profileData ? profileData.subscriptionStatus === 'canceled' : user?.subscriptionStatus === 'canceled';
+  const subEnd = profileData?.subscriptionEnd ? new Date(profileData.subscriptionEnd).toLocaleDateString() : null;
+
+  const handleCancelSubscription = async () => {
+    if (window.confirm("Your subscription will remain valid until the end of your current billing period but will not renew. Are you sure you want to cancel?")) {
+      setCanceling(true);
+      try {
+        const res = await authFetch('/api/user/cancel-subscription', { method: 'POST' });
+        if (res.ok) {
+          toast.success("Subscription canceled successfully.");
+          await fetchProfile(); // Refresh profile to get updated status
+        } else {
+          toast.error("Failed to cancel subscription.");
+        }
+      } catch (err) {
+        toast.error("An error occurred while canceling.");
+      } finally {
+        setCanceling(false);
+      }
+    }
+  };
 
   return (
     <div style={{ background: 'var(--bg-primary)', padding: '4rem 0 6rem' }}>
@@ -119,20 +156,43 @@ export default function Settings({ user, onLogout, setActiveTab }) {
               <span>{t('audit.settings.subscriptionBilling')}</span>
             </h3>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)', padding: '1rem', borderRadius: '12px', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('audit.settings.currentPlan')}</p>
-                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
-                  {isPremium ? 'VIP Premium' : 'Free Tier'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
+                    {isPremium ? 'VIP Premium' : 'Free Tier'}
+                  </span>
+                  {isPremium && (
+                    <span className="vip-badge-mini" style={{ padding: '0.2rem 0.6rem', fontSize: '0.7rem', opacity: isCanceled ? 0.6 : 1 }}>
+                      {isCanceled ? 'Canceled' : t('audit.settings.active')}
+                    </span>
+                  )}
+                </div>
+                {isPremium && subEnd && (
+                  <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    Ends on: <strong>{subEnd}</strong>
+                  </p>
+                )}
               </div>
-              {!isPremium ? (
-                <button className="btn btn-primary" onClick={() => setActiveTab('pricing')}>
-                  Upgrade to VIP
-                </button>
-              ) : (
-                <span className="vip-badge-mini" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>{t('audit.settings.active')}</span>
-              )}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {!isPremium ? (
+                  <button className="btn btn-primary" onClick={() => setActiveTab('pricing')}>
+                    Upgrade to VIP
+                  </button>
+                ) : (
+                  !isCanceled && (
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={handleCancelSubscription}
+                      disabled={canceling}
+                      style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', borderColor: 'rgba(255, 77, 77, 0.2)', color: '#ff4d4d' }}
+                    >
+                      {canceling ? 'Canceling...' : 'Cancel Subscription'}
+                    </button>
+                  )
+                )}
+              </div>
             </div>
           </div>
 

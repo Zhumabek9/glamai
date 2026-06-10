@@ -47,7 +47,7 @@ export default class ErrorBoundary extends React.Component {
               WebkitTextFillColor: 'transparent',
               marginBottom: '1rem'
             }}>
-              Something went wrong
+              {t('error.somethingWentWrong')}
             </h1>
             <p style={{
               color: 'var(--text-secondary, #5d4d6d)',
@@ -55,7 +55,7 @@ export default class ErrorBoundary extends React.Component {
               lineHeight: 1.6,
               marginBottom: '2rem'
             }}>
-              We apologize for the inconvenience. An unexpected application error occurred.
+              {t('error.apologize')}
             </p>
             <div style={{
               background: 'rgba(0, 0, 0, 0.03)',
@@ -87,7 +87,7 @@ export default class ErrorBoundary extends React.Component {
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              Reload Page
+              {t('error.reloadPage')}
             </button>
           </div>
         </div>

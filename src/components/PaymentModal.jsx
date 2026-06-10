@@ -58,22 +58,22 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
 
     // Quick validations
     if (cardNumber.replace(/\s/g, '').length < 16) {
-      setError('Please enter a valid 16-digit card number.');
+      setError(t('payment.error.cardNumber'));
       return;
     }
 
     if (expiry.length < 5) {
-      setError('Please enter a valid expiration date (MM/YY).');
+      setError(t('payment.error.expiry'));
       return;
     }
 
     if (cvc.length < 3) {
-      setError('Please enter a valid CVC security code.');
+      setError(t('payment.error.cvc'));
       return;
     }
 
     if (!cardHolder.trim()) {
-      setError('Please enter the cardholder name.');
+      setError(t('payment.error.cardholder'));
       return;
     }
 
@@ -93,7 +93,7 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
     .then(async (res) => {
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to simulate payment on server.');
+        throw new Error(errData.error || t('payment.error.server'));
       }
       return res.json();
     })
@@ -109,7 +109,7 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
     })
     .catch((err) => {
       setIsProcessing(false);
-      setError(err.message || 'Payment simulation failed. Please try again.');
+      setError(err.message || t('payment.error.generic'));
     });
   };
 
@@ -134,17 +134,17 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{t('audit.paymentmodal.secureCheckout')}</h2>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                You are purchasing the <strong>{plan.name}</strong> ({plan.tokens} Tokens) for <strong>{getDisplayPrice()}</strong>{plan.billingPeriod === 'yearly' ? ' (billed annually)' : ''}.
+                {t('payment.purchaseDesc', { planName: plan.name, tokens: plan.tokens, price: getDisplayPrice(), period: plan.billingPeriod === 'yearly' ? t('payment.billedAnnually') : '' })}
               </p>
             </div>
 
             {!allowMockPayment ? (
               <div style={{ padding: '2rem 1.5rem', textAlign: 'center', background: 'rgba(255, 59, 48, 0.05)', border: '1px solid rgba(255, 59, 48, 0.15)', borderRadius: '16px', marginBottom: '1rem' }}>
                 <p style={{ color: '#ff453a', fontWeight: 700, margin: '0 0 0.5rem', fontSize: '1rem' }}>
-                  Stripe Checkout Unavailable
+                  {t('payment.stripeUnavailable')}
                 </p>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-                  Live payments are currently disabled because Stripe is not configured. Please contact the administrator to set the Stripe credentials in the environment setup.
+                  {t('payment.stripeUnavailableDesc')}
                 </p>
               </div>
             ) : (
@@ -178,7 +178,7 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
                   <div className="card-details-row">
                     <div>
                       <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('audit.paymentmodal.cardholder')}</div>
-                      <div className="card-holder-name">{cardHolder || 'Your Name'}</div>
+                      <div className="card-holder-name">{cardHolder || t('payment.placeholderName')}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.65rem', opacity: 0.6, textTransform: 'uppercase' }}>{t('audit.paymentmodal.expires')}</div>
@@ -276,7 +276,7 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
                         <span>{t('audit.paymentmodal.processingPayment')}</span>
                       </>
                     ) : (
-                      <span>Pay {getDisplayPrice()}</span>
+                      <span>{t('payment.pay', { price: getDisplayPrice() })}</span>
                     )}
                   </button>
                 </form>
@@ -291,11 +291,10 @@ export default function PaymentModal({ plan, allowMockPayment = true, onClose, o
             </div>
             <h2>{t('audit.paymentmodal.paymentSuccessful')}</h2>
             <p>
-              Your payment has been approved. <br />
-              <strong>+{plan.tokens} Tokens</strong> have been credited to your GlamAI account.
+              {t('payment.successDesc', { tokens: plan.tokens })}
             </p>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Redirecting you to the playground...
+              {t('payment.redirecting')}
             </div>
           </div>
         )}

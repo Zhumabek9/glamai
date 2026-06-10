@@ -141,7 +141,12 @@ function Hero({
             <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
             <div className="trust-strip-item">
               <Lock size={18} />
-              <span>{t('audit.hero.privacyGuaranteed')}</span>
+              <span>100% Safe & Private</span>
+            </div>
+            <div style={{ width: '1px', height: '22px', background: 'rgba(255,46,147,0.15)' }} className="trust-divider" />
+            <div className="trust-strip-item">
+              <ShieldCheck size={18} color="#10b981" />
+              <span style={{ color: '#10b981', fontWeight: 600 }}>Photos Auto-Deleted</span>
             </div>
           </div>
 
@@ -389,6 +394,7 @@ function Hero({
                 >
                   <button
                     onClick={() => toggleFaq(index)}
+                    aria-expanded={isOpened}
                     style={{
                       width: '100%',
                       padding: '1.25rem 1.5rem',

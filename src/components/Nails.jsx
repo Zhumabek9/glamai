@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react';
+import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart, Download, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { useFavorites } from './Favorites';
@@ -22,14 +22,18 @@ const NAIL_PRESETS = [
 
 const FINGER_COLORS = [
   { id: 'default', name: 'Default', hex: 'linear-gradient(45deg, #ff2e93, #a855f7)' },
-  { id: 'candy-pink', name: 'Candy Pink', hex: '#ff69b4' },
+  { id: 'candy-pink', name: 'Candy Pink', hex: '#ff69b4', hot: true },
   { id: 'obsidian-black', name: 'Obsidian Black', hex: '#111111' },
   { id: 'pure-white', name: 'Pure White', hex: '#ffffff' },
-  { id: 'silver-shimmer', name: 'Silver Shimmer', hex: '#d3d3d3' },
-  { id: 'gold-leaf', name: 'Gold Leaf', hex: '#ffd700' },
+  { id: 'silver-shimmer', name: 'Silver Shimmer', hex: '#d3d3d3', hot: true },
+  { id: 'gold-leaf', name: 'Gold Leaf', hex: '#ffd700', hot: true },
   { id: 'royal-blue', name: 'Royal Blue', hex: '#4169e1' },
   { id: 'lavender', name: 'Lavender', hex: '#e6e6fa' },
-  { id: 'emerald-green', name: 'Emerald', hex: '#50c878' }
+  { id: 'emerald-green', name: 'Emerald', hex: '#50c878' },
+  { id: 'cherry-red', name: 'Cherry Red', hex: '#c21e56', hot: true },
+  { id: 'neon-green', name: 'Neon Green', hex: '#39ff14' },
+  { id: 'baby-blue', name: 'Baby Blue', hex: '#89cff0' },
+  { id: 'mocha-brown', name: 'Mocha Brown', hex: '#493d33' }
 ];
 
 const QUICK_PRESETS = [
@@ -69,12 +73,13 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [selectedPreset, setSelectedPreset] = useState('french');
+  const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'french', globalColorId: 'default' }]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const [selectedShape, setSelectedShape] = useState('almond');
   const [selectedTexture, setSelectedTexture] = useState('glossy-gel');
+  const [selectedGlobalColor, setSelectedGlobalColor] = useState('default');
   const [activeFinger, setActiveFinger] = useState('all'); // 'all', 'thumb', 'index', 'middle', 'ring', 'pinky'
   const [fingerCustomizations, setFingerCustomizations] = useState({
     thumb: { preset: 'french', color: 'default' },
@@ -87,7 +92,10 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('');
   const [etaRemaining, setEtaRemaining] = useState(30);
-  const [resultImage, setResultImage] = useState(null);
+  const [resultImages, setResultImages] = useState([]);
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxTitle, setLightboxTitle] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -122,7 +130,8 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
     const reader = new FileReader();
     reader.onload = (event) => {
       setImage(event.target.result);
-      setResultImage(null);
+      setResultImages([]);
+      setActiveResultIndex(0);
       setFeedback(null);
       setFeedbackSubmitted(false);
       scrollToPreview();
@@ -142,7 +151,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
   const handleApplyQuickPreset = (qp) => {
     setActiveQuickPreset(qp.id);
-    setSelectedPreset(qp.preset);
+    setSelectedCombinations([{ id: Date.now(), presetId: qp.preset, globalColorId: 'default' }]);
     setSelectedShape(qp.shape);
     setSelectedTexture(qp.texture);
     toast.success(`"${qp.name}" preset applied!`);
@@ -154,31 +163,35 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const handleGenerate = async () => {
     const isGuest = !user || user.isGuest;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
+    const calculatedCost = selectedCombinations.length * 10;
 
     setFeedback(null);
     setFeedbackSubmitted(false);
 
-    // Guest with no tokens left — ask to sign up
-    if (isGuest && availableTokens < 10) {
+    if (isGuest && availableTokens < calculatedCost) {
       toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
-    // Logged-in user with no tokens — redirect to pricing
-    const isUnlimited = false; // VIP subscriptions now spend credits instead of having infinite generations
-    if (!isGuest && !isUnlimited && availableTokens < 10) {
-      toast.error('You need at least 10 tokens to generate nails!');
+    const isUnlimited = false;
+    if (!isGuest && !isUnlimited && availableTokens < calculatedCost) {
+      toast.error(`You need at least ${calculatedCost} token${calculatedCost > 1 ? 's' : ''} to generate these nails!`);
+      setActiveTab('pricing');
+      return;
+    }
+
+    if (isGuest && selectedCombinations.length > 1) {
+      toast.error('Free generation allows only 1 design. Sign up to generate multiple!');
       setActiveTab('pricing');
       return;
     }
 
     setIsGenerating(true);
-    setProgress(10);
+    setProgress(0);
     setLoadingText('Uploading hand photo...');
-    setEtaRemaining(30);
+    setEtaRemaining(30 * selectedCombinations.length);
 
-    // Smooth scroll to preview on mobile screen widths
     setTimeout(() => {
       if (typeof window !== "undefined" && window.innerWidth < 1024 && previewPanelRef.current) {
         previewPanelRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -197,123 +210,181 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       setEtaRemaining(prev => prev <= 1 ? 1 : prev - 1);
     }, 1000);
 
-    let currentStep = 0;
-    
-    // Progress steps animation timer
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const nextVal = prev + 10;
-        if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
-          setLoadingText(steps[currentStep].txt);
-          currentStep++;
-        }
-        if (nextVal >= 90) return 90;
-        return nextVal;
-      });
-    }, 400);
-
     try {
-      const presetObj = NAIL_PRESETS.find(n => n.id === selectedPreset);
-      const shapeObj = NAIL_SHAPES.find(s => s.id === selectedShape);
-      const textureObj = NAIL_TEXTURES.find(tex => tex.id === selectedTexture);
+      const baseTime = Date.now();
+      const initialResults = selectedCombinations.map((combo, idx) => {
+        const presetObj = combo.presetId ? NAIL_PRESETS.find(n => n.id === combo.presetId) : null;
+        const colorObj = combo.globalColorId ? FINGER_COLORS.find(c => c.id === combo.globalColorId) : null;
+        const sName = presetObj ? presetObj.name : 'Custom Nails';
+        const cName = colorObj && colorObj.id !== 'default' ? colorObj.name : 'Default Color';
+        return {
+          id: `gen-${baseTime}-${idx}`,
+          styleId: combo.presetId || 'custom',
+          styleName: sName,
+          status: idx === 0 ? 'generating' : 'pending',
+          result: null,
+          original: image,
+          colorName: cName,
+          combo: combo
+        };
+      });
 
-      let nailsDesc = '';
-      if (activeFinger === 'all') {
-        nailsDesc = `${presetObj ? presetObj.name : 'Classic'} design.`;
-      } else {
-        nailsDesc = 'Custom multi-finger design: ';
-        const fingerKeys = ['thumb', 'index', 'middle', 'ring', 'pinky'];
-        const parts = [];
-        fingerKeys.forEach(f => {
-          const config = fingerCustomizations[f];
-          const fPreset = NAIL_PRESETS.find(n => n.id === config.preset);
-          const fColor = FINGER_COLORS.find(c => c.id === config.color);
-          const presetName = fPreset ? fPreset.name : 'Classic';
-          const colorName = fColor && fColor.id !== 'default' ? fColor.name : 'matching shade';
-          parts.push(`${f} finger has ${presetName} design in ${colorName}`);
-        });
-        nailsDesc += parts.join(', ') + '.';
-      }
-      if (shapeObj) nailsDesc += ` Shape: ${shapeObj.name}.`;
-      if (textureObj) nailsDesc += ` Texture: ${textureObj.name}.`;
+      setResultImages(initialResults);
+      setActiveResultIndex(0);
 
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('taskType', 'nails');
-      formData.append('nails', nailsDesc);
-      formData.append('gender', 'female');
+      for (let i = 0; i < selectedCombinations.length; i++) {
+        const combo = selectedCombinations[i];
+        const presetObj = combo.presetId ? NAIL_PRESETS.find(n => n.id === combo.presetId) : null;
+        const colorObj = combo.globalColorId ? FINGER_COLORS.find(c => c.id === combo.globalColorId) : null;
+        const shapeObj = NAIL_SHAPES.find(s => s.id === selectedShape);
+        const textureObj = NAIL_TEXTURES.find(tex => tex.id === selectedTexture);
 
-      // 3. Post request to backend prediction API
-      const res = await authFetch('/api/generate', { method: 'POST', body: formData });
-      clearInterval(interval);
+        setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'generating' } : item));
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Nail render failed');
-      }
+        setProgress(0);
+        setLoadingText('Uploading hand photo...');
+        let currentStep = 0;
+        const styleInterval = setInterval(() => {
+          setProgress(prev => {
+            const nextVal = prev + 5;
+            if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
+              setLoadingText(steps[currentStep].txt);
+              currentStep++;
+            }
+            if (nextVal >= 95) return 95;
+            return nextVal;
+          });
+        }, 150);
 
-      const data = await res.json();
-      
-      if (data.success) {
-        // Result ID is managed by server or created locally inside event handler, not render body.
-        setResultImage(data.imageUrl);
-        setProgress(100);
-        toast.success('AI Nails applied successfully! 💅');
-        
-        // Deduct credits locally (skip for unlimited subscription plans)
-        if (!isUnlimited) {
-          onDeductToken(10);
+        try {
+          let nailsDesc = '';
+          if (!combo.fingerCustomizations) {
+            const colorDesc = colorObj && colorObj.id !== 'default' ? ` in ${colorObj.name}` : '';
+            nailsDesc = `${presetObj ? presetObj.name : 'Classic'} design${colorDesc}.`;
+          } else {
+            nailsDesc = 'Custom multi-finger design: ';
+            const parts = [];
+            ['thumb', 'index', 'middle', 'ring', 'pinky'].forEach(f => {
+              const config = combo.fingerCustomizations[f];
+              const fPreset = NAIL_PRESETS.find(n => n.id === config.preset);
+              const fColor = FINGER_COLORS.find(c => c.id === config.color);
+              const presetName = fPreset ? fPreset.name : 'Classic';
+              const colorName = fColor && fColor.id !== 'default' ? fColor.name : 'matching shade';
+              parts.push(`${f} finger has ${presetName} design in ${colorName}`);
+            });
+            nailsDesc += parts.join(', ') + '.';
+          }
+          if (shapeObj) nailsDesc += ` Shape: ${shapeObj.name}.`;
+          if (textureObj) nailsDesc += ` Texture: ${textureObj.name}.`;
+
+          const formData = new FormData();
+          formData.append('image', imageFile);
+          formData.append('taskType', 'nails');
+          formData.append('nails', nailsDesc);
+          formData.append('gender', 'female');
+
+          const res = await authFetch('/api/generate', { method: 'POST', body: formData });
+          clearInterval(styleInterval);
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Nail render failed');
+          }
+
+          const data = await res.json();
+          
+          if (data.success) {
+            setResultImages(prev => prev.map((item, idx) => idx === i ? {
+              ...item,
+              status: 'success',
+              result: data.imageUrl
+            } : item));
+            
+            if (!isUnlimited) {
+              onDeductToken(10);
+            }
+
+            onAddHistory({
+              original: image,
+              result: data.imageUrl,
+              style: presetObj ? presetObj.name : 'Nails',
+              color: 'Nail Art',
+              date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            });
+
+            const newMatch = {
+              id: `match_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+              timestamp: Date.now(),
+              date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
+              code: combo.presetId || 'custom',
+              name: presetObj ? presetObj.name : 'Custom Nails',
+              matchRate: `${Math.floor(88 + Math.random() * 11)}%`,
+              img: data.imageUrl
+            };
+            const storageKey = user ? `levante_matches_${user.id}` : "levante_matches";
+            const existingMatches = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            const filteredMatches = existingMatches.filter(m => m.code !== newMatch.code);
+            localStorage.setItem(storageKey, JSON.stringify([newMatch, ...filteredMatches].slice(0, 10)));
+          } else {
+            throw new Error(data.error || 'Nail render failed');
+          }
+        } catch (err) {
+          clearInterval(styleInterval);
+          setResultImages(prev => prev.map((item, idx) => idx === i ? {
+            ...item,
+            status: 'error',
+            error: err.message || `Failed to generate style`
+          } : item));
+          toast.error(err.message || 'AI Nails render failed.');
         }
 
-        onAddHistory({
-          original: image,
-          result: data.imageUrl,
-          style: presetObj ? presetObj.name : 'Nails',
-          color: 'Nail Art',
-          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-        });
-
-        // 4. Save new match to local storage history list
-        const newMatch = {
-          id: `match_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
-          timestamp: Date.now(),
-          date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
-          code: selectedPreset,
-          name: presetObj ? presetObj.name : 'Custom Nails',
-          matchRate: `${Math.floor(88 + Math.random() * 11)}%`,
-          img: data.imageUrl
-        };
-        const storageKey = user ? `levante_matches_${user.id}` : "levante_matches";
-        const existingMatches = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        const filteredMatches = existingMatches.filter(m => m.code !== newMatch.code);
-        localStorage.setItem(storageKey, JSON.stringify([newMatch, ...filteredMatches].slice(0, 10)));
-
-        // Success confetti animation
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ["#6D28D9", "#EC4899", "#ffffff"]
-        });
-      } else {
-        throw new Error(data.error || 'Nail render failed');
+        if (i < selectedCombinations.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
+
+      setProgress(100);
+      setLoadingText('Generation complete!');
+      toast.success('AI Nails applied successfully! 💅');
+      
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ["#6D28D9", "#EC4899", "#ffffff"]
+      });
 
       scrollToPreview();
 
     } catch (err) {
-      clearInterval(interval);
-      toast.error(err.message || 'AI Nails render failed.');
+      toast.error(err.message || 'AI Nails batch processing failed.');
     } finally {
       setIsGenerating(false);
       clearInterval(etaInterval);
     }
   };
 
+  const handleDownloadAll = async () => {
+    const successImages = resultImages.filter(r => r.status === 'success');
+    for (let i = 0; i < successImages.length; i++) {
+      const img = successImages[i];
+      const link = document.createElement('a');
+      link.href = img.result;
+      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (i < successImages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  };
+
   const handleReset = () => {
     setImage(null);
     setImageFile(null);
-    setResultImage(null);
+    setResultImages([]);
+    setActiveResultIndex(0);
     setFeedback(null);
     setFeedbackSubmitted(false);
     setCurrentResultId(null);
@@ -427,32 +498,71 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
           {/* Preset Cards & Finger customizer panel */}
           {activeFinger === 'all' ? (
-            <div className="selector-group">
-              <span className="selector-title">{t('audit.nails.selectNailDesign')}</span>
-              <div className="style-cards-grid">
-                {NAIL_PRESETS.map(p => {
-                  const isSelected = selectedPreset === p.id;
-                  return (
+            <>
+              <div className="selector-group">
+                <span className="selector-title">{t('audit.nails.selectNailDesign')}</span>
+                <div className="style-cards-grid">
+                  {NAIL_PRESETS.map(p => {
+                    const isSelected = selectedCombinations.some(c => !c.fingerCustomizations && c.presetId === p.id && c.globalColorId === selectedGlobalColor);
+                    return (
+                      <button
+                        type="button"
+                        key={p.id}
+                        className={`style-card ${isSelected ? 'selected' : ''}`}
+                        aria-pressed={isSelected}
+                        aria-label={`Select: ${p.name}`}
+                        onClick={() => { 
+                          setActiveQuickPreset(null);
+                          setSelectedCombinations(prev => {
+                            if (isSelected) {
+                              const next = prev.filter(c => !(c.presetId === p.id && c.globalColorId === selectedGlobalColor && !c.fingerCustomizations));
+                              return next.length ? next : [{ id: Date.now(), presetId: 'french', globalColorId: 'default' }];
+                            } else {
+                              if (prev.length >= 10) {
+                                toast.error("You can add up to 10 designs to the batch!");
+                                return prev;
+                              }
+                              return [...prev, { id: Date.now(), presetId: p.id, globalColorId: selectedGlobalColor }];
+                            }
+                          });
+                        }}
+                        style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                      >
+                        {isSelected && <div className="selected-badge"><Check size={12} /></div>}
+                        <div className="style-card-image-wrapper">
+                          <img src={p.image} alt={p.name} className="style-card-img" loading="lazy" decoding="async" />
+                          <div className="style-card-overlay"></div>
+                        </div>
+                        <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{p.name}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="selector-group" style={{ marginTop: '1.5rem' }}>
+                <span className="selector-title">{t('audit.nails.selectGlobalColor') || 'Select Color'}</span>
+                <div className="color-grid-4col">
+                  {FINGER_COLORS.map(c => (
                     <button
                       type="button"
-                      key={p.id}
-                      className={`style-card ${isSelected ? 'selected' : ''}`}
-                      aria-pressed={isSelected}
-                      aria-label={`Select: ${p.name}`}
-                      onClick={() => { setSelectedPreset(p.id); setActiveQuickPreset(null); }}
-                      style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                      key={c.id}
+                      title={c.name}
+                      className={`color-grid-item ${selectedGlobalColor === c.id ? 'selected' : ''}`}
+                      aria-pressed={selectedGlobalColor === c.id}
+                      aria-label={`Select color: ${c.name}`}
+                      onClick={() => setSelectedGlobalColor(c.id)}
                     >
-                      {isSelected && <div className="selected-badge"><Check size={12} /></div>}
-                      <div className="style-card-image-wrapper">
-                        <img src={p.image} alt={p.name} className="style-card-img" loading="lazy" decoding="async" />
-                        <div className="style-card-overlay"></div>
-                      </div>
-                      <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{p.name}</div>
+                      {c.hot && <span className="color-grid-hot">{t('audit.hero.hot') || 'HOT'}</span>}
+                      <span
+                        className="color-grid-dot"
+                        style={{ background: c.hex }}
+                      />
+                      <span className="color-grid-name">{c.name}</span>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="selector-group">
               <span className="selector-title">{t('audit.nails.selectActiveFinger') || 'Select Finger to Design'}</span>
@@ -569,7 +679,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
                     {t('audit.nails.stepColor')}
                   </span>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <div className="color-grid-4col">
                     {FINGER_COLORS.map(c => {
                       const isSelected = (fingerCustomizations[activeFinger]?.color || 'default') === c.id;
                       return (
@@ -577,27 +687,47 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                           type="button"
                           key={c.id}
                           title={c.name}
+                          className={`color-grid-item ${isSelected ? 'selected' : ''}`}
+                          aria-pressed={isSelected}
+                          aria-label={`Select color: ${c.name}`}
                           onClick={() => {
                             setFingerCustomizations(prev => ({
                               ...prev,
                               [activeFinger]: { ...prev[activeFinger], color: c.id }
                             }));
                           }}
-                          style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            background: c.hex,
-                            border: isSelected ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)',
-                            cursor: 'pointer',
-                            transform: isSelected ? 'scale(1.15)' : 'none',
-                            boxShadow: isSelected ? '0 0 8px var(--color-pink-primary)' : 'none',
-                            transition: 'all 0.2s'
-                          }}
-                        />
+                        >
+                          {c.hot && <span className="color-grid-hot">{t('audit.hero.hot') || 'HOT'}</span>}
+                          <span
+                            className="color-grid-dot"
+                            style={{ background: c.hex }}
+                          />
+                          <span className="color-grid-name">{c.name}</span>
+                        </button>
                       );
                     })}
                   </div>
+                </div>
+                
+                {/* Add to Batch for Multi-Finger */}
+                <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ padding: '0.6rem 1rem', width: '100%', fontSize: '0.85rem' }}
+                    onClick={() => {
+                      setSelectedCombinations(prev => {
+                        if (prev.length >= 10) {
+                          toast.error("You can add up to 10 designs to the batch!");
+                          return prev;
+                        }
+                        toast.success("Added custom multi-finger design to batch!");
+                        return [...prev, { id: Date.now(), fingerCustomizations: JSON.parse(JSON.stringify(fingerCustomizations)) }];
+                      });
+                    }}
+                  >
+                    + Add Custom Design to Batch
+                  </button>
                 </div>
               </div>
             </div>
@@ -634,7 +764,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                 {isGuest ? `${t('audit.makeup.freeCreditsLeft')}: ${guestTokens ?? 0}` : `${t('audit.makeup.creditsLeft')}: ${user?.tokens ?? 0}`}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
-                {t('audit.nails.thisRenderTokens')}
+                This render: -{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -646,7 +776,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <span className="preview-title-uppercase">{t('audit.nails.yourNewAiGeneratedNails')}</span>
           </div>
 
-          {isGenerating && (
+          {isGenerating && resultImages.length <= 1 && (
             <div className="loading-overlay">
               <div className="spinner-outer">
                 <div className="spinner-inner"></div>
@@ -670,54 +800,144 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                   hideActions={true}
                 />
               </div>
-            ) : resultImage ? (
+            ) : (
+
+            /* Active State: Preview & Result */
+            resultImages.length > 0 ? (
               <div style={{ width: '100%' }}>
-                <SliderComparison
-                  beforeSrc={image}
-                  afterSrc={resultImage}
-                  title={selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nails'}
-                  onShare={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name || 'Nail Art' : 'Nail Art' })}
-                  onDownload={() => {}}
-                  hideActions={false}
-                />
+                <div className="generation-grid">
+                  {resultImages.map((res, index) => {
+                    const isItemGenerating = res.status === 'generating';
+                    const isItemSuccess = res.status === 'success';
+                    const isItemPending = res.status === 'pending';
+                    const isItemError = res.status === 'error';
 
-                {!feedbackSubmitted && (
-                  <div className="feedback-panel">
-                    <span className="feedback-title">{t('audit.makeup.didYouLikeTheResult')}</span>
-                    <div className="feedback-buttons">
-                      <button onClick={() => { setFeedback('like'); setFeedbackSubmitted(true); toast.success(t('audit.makeup.thanksRating')); }} className="feedback-btn positive">{t('audit.makeup.yes')}</button>
-                      <button onClick={() => { setFeedback('dislike'); setFeedbackSubmitted(true); toast.success(t('audit.makeup.thankYouForYourFeedback')); }} className="feedback-btn negative">{t('audit.makeup.no')}</button>
-                    </div>
-                  </div>
-                )}
-                {feedbackSubmitted && <div className="feedback-panel"><span className="feedback-thanks">{t('audit.makeup.thankYouForYourFeedback')}</span></div>}
+                    return (
+                      <div key={res.id} className="generation-card">
+                        <div className="generation-card-badge">
+                          {res.styleName}
+                        </div>
 
-                <div className="preview-controls-row">
-                  <button
-                    className="btn btn-secondary"
-                    style={{ color: (currentResultId && isFavorite(currentResultId)) ? '#ff2e93' : undefined }}
-                    onClick={() => {
-                      if (!currentResultId) return;
-                      if (isFavorite(currentResultId)) {
-                        removeFavorite(currentResultId);
-                        toast.success(t('audit.makeup.removedFromFavourites'));
-                      } else {
-                        addFavorite({ 
-                          id: currentResultId, 
-                          result: resultImage, 
-                          style: selectedPreset ? NAIL_PRESETS.find(p => p.id === selectedPreset)?.name : 'Nail Art', 
-                          category: '💅 Nails', 
-                          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
-                        });
-                        toast.success(t('audit.makeup.savedToFavourites'));
-                      }
-                    }}
-                  >
-                    <Heart size={15} /><span>{t('audit.makeup.saveFavourite')}</span>
-                  </button>
-                  <button className="btn btn-secondary" onClick={handleReset}>
-                    <RefreshCw size={15} /><span>{t('audit.makeup.tryAnotherStyle')}</span>
-                  </button>
+                        <div className={`generation-card-status-badge ${res.status}`}>
+                          {res.status === 'generating' ? t('audit.playground.rendering') || 'Rendering' : (res.status === 'pending' ? t('audit.playground.waiting') || 'Waiting' : res.status)}
+                        </div>
+
+                        <div className="generation-card-image-wrapper">
+                          {isItemSuccess ? (
+                            <img
+                              src={res.result}
+                              alt={res.styleName}
+                              className="generation-card-image"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setLightboxImage(res.result);
+                                setLightboxTitle(`${res.styleName} (${res.colorName})`);
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={image}
+                              alt="Original"
+                              className="generation-card-image"
+                              style={{
+                                filter: isItemPending ? 'grayscale(0.5) blur(1px)' : 'none',
+                                opacity: isItemPending ? 0.6 : 1
+                              }}
+                            />
+                          )}
+
+                          {isItemGenerating && (
+                            <div className="generation-card-overlay">
+                              <div className="generation-card-spinner"></div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-pink-primary)' }}>{t('audit.playground.rendering') || 'Rendering'}</span>
+                              <div className="progress-track" style={{ height: '4px', width: '80%', marginTop: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: 'var(--color-pink-primary)' }}></div>
+                              </div>
+                              <span className="generation-card-progress">{progress}%</span>
+                            </div>
+                          )}
+
+                          {isItemPending && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                              <RefreshCw size={24} className="animate-spin-slow" style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>{t('audit.playground.waiting') || 'Waiting'}</span>
+                            </div>
+                          )}
+
+                          {isItemError && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(30,10,10,0.8)' }}>
+                              <span style={{ color: '#ff4d4d', fontSize: '0.75rem', fontWeight: 600 }}>Failed</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.6rem', marginTop: '4px', maxWidth: '90%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {res.error || 'AI Server Error'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="generation-card-footer">
+                          <div className="generation-card-info">
+                            <span className="generation-card-title">{res.styleName}</span>
+                            <span className="generation-card-subtitle">{res.colorName}</span>
+                          </div>
+
+                          {isItemSuccess && (
+                            <div className="generation-card-actions">
+                              <a
+                                href={res.result}
+                                download={`glamai_${res.styleName}_${res.colorName}.png`}
+                                className="generation-card-btn"
+                                title="Download"
+                              >
+                                <Download size={14} />
+                              </a>
+                              <button
+                                className="generation-card-btn"
+                                title={isFavorite(res.id) ? "Remove from favorites" : "Save to favorites"}
+                                onClick={() => {
+                                  if (isFavorite(res.id)) {
+                                    removeFavorite(res.id);
+                                    toast.success("Removed from favorites");
+                                  } else {
+                                    addFavorite({ id: res.id, result: res.result, style: res.styleName, color: res.colorName, category: '💅 Nails', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) });
+                                    toast.success("Saved to favorites");
+                                  }
+                                }}
+                                style={{ color: isFavorite(res.id) ? '#ff2e93' : 'inherit' }}
+                              >
+                                <Heart size={14} fill={isFavorite(res.id) ? '#ff2e93' : 'none'} />
+                              </button>
+                              <button
+                                className="generation-card-btn"
+                                title="Share to Stories"
+                                onClick={() => setShowStoriesModal({ url: res.result, styleName: res.styleName })}
+                              >
+                                <Share2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="preview-controls" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  {resultImages.some(r => r.status === 'success') && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleDownloadAll}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      <Download size={16} />
+                      <span>Download All</span>
+                    </button>
+                  )}
+                  {!isGenerating && (
+                    <button className="btn btn-secondary" onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <RefreshCw size={16} />
+                      <span>Try Another Batch</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -726,7 +946,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                   <img src={image} alt="Nails Preview" style={{ width: '100%', display: 'block', borderRadius: '12px' }} />
                 </div>
               </div>
-            )}
+            ))}
           </div>
 
           {/* Upload dropzone */}
@@ -801,7 +1021,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                 <Sparkles size={18} />
                 <span>{t('audit.nails.applyAiNails')}</span>
                 <span className="generate-btn-cost">
-                  (-10 Tokens)
+                  (-{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''})
                 </span>
               </button>
               
@@ -916,9 +1136,60 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
             <span>{t('audit.nails.applyAiNails')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
-              (-10 Tokens)
+              (-{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''})
             </span>
           </button>
+        </div>
+      )}
+      
+      {/* Lightbox for full size result */}
+      {lightboxImage && (
+        <div 
+          className="lightbox-overlay" 
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            padding: '2rem'
+          }}
+        >
+          <div 
+            style={{ 
+              position: 'relative', 
+              maxWidth: '90%', 
+              maxHeight: '80%', 
+              borderRadius: '12px', 
+              overflow: 'hidden', 
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <img 
+              src={lightboxImage} 
+              alt={lightboxTitle} 
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }}
+            />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '1.5rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', color: 'white', fontWeight: 600, fontSize: '1.1rem' }}>
+              {lightboxTitle}
+            </div>
+            <button 
+              className="lightbox-close-btn"
+              onClick={() => setLightboxImage(null)}
+              style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 

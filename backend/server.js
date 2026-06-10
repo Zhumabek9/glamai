@@ -1051,6 +1051,26 @@ app.get('/api/referral', async (req, res) => {
     }
 });
 
+app.post('/api/user/cancel-subscription', async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+
+    try {
+        const userRowRes = await db.query('SELECT subscription_id FROM users WHERE id = $1', [u.id]);
+        const subId = userRowRes.rows[0]?.subscription_id;
+
+        if (subId && stripe) {
+            await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+        }
+
+        await db.query("UPDATE users SET subscription_status = 'canceling' WHERE id = $1", [u.id]);
+        res.json({ success: true, message: 'Subscription canceled successfully. It will not renew.' });
+    } catch (e) {
+        console.error("Failed to cancel subscription:", e);
+        res.status(500).json({ error: 'CANCEL_FAILED', message: e.message });
+    }
+});
+
 app.post('/api/user/profile', async (req, res) => {
     const u = req.userFromCookie;
     if (!u) return res.status(401).json({ error: 'LOGIN_REQUIRED' });

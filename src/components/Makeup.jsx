@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react';
+import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart, Download, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { useFavorites } from './Favorites';
@@ -85,7 +85,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [selectedPreset, setSelectedPreset] = useState('bronze');
+  const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'bronze', lipstickId: 'none' }]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -97,14 +97,17 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('');
   const [etaRemaining, setEtaRemaining] = useState(30);
-  const [resultImage, setResultImage] = useState(null);
+  const [resultImages, setResultImages] = useState([]);
+  const [activeResultIndex, setActiveResultIndex] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxTitle, setLightboxTitle] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [showFixedCta, setShowFixedCta] = useState(true);
   const [sliderWidth, setSliderWidth] = useState(0);
-  const [currentResultId, setCurrentResultId] = useState(null);
+  
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -122,7 +125,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
     });
     observer.observe(sliderRef.current);
     return () => observer.disconnect();
-  }, [resultImage]);
+  }, [resultImages, activeResultIndex]);
 
   // Handle incoming style context from face scanner or blog
   useEffect(() => {
@@ -135,7 +138,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         styleName.includes(p.name.toLowerCase())
       );
       if (matched) {
-        setSelectedPreset(matched.id);
+        setSelectedCombinations([{ id: Date.now(), presetId: matched.id, lipstickId: 'none' }]);
         toast.success(`Makeup preset pre-selected: ${matched.name}`);
       } else {
         toast.info(`Makeup selected: ${styleContext.style}`);
@@ -173,7 +176,8 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
     const reader = new FileReader();
     reader.onload = (event) => {
       setImage(event.target.result);
-      setResultImage(null);
+      setResultImages([]);
+    setActiveResultIndex(0);
       setFeedback(null);
       setFeedbackSubmitted(false);
       scrollToPreview();
@@ -194,7 +198,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
   const handleApplyQuickPreset = (qp) => {
     setActiveQuickPreset(qp.id);
-    setSelectedPreset(qp.preset);
+    setSelectedCombinations(prev => {
+      if (prev.find(c => c.presetId === qp.preset)) return prev;
+      return [...prev, { id: Date.now(), presetId: qp.preset, lipstickId: selectedLipstick }];
+    });
     toast.success(`"${qp.name}" preset applied!`);
     scrollToPreview();
   };
@@ -220,31 +227,29 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const handleGenerate = async () => {
     const isGuest = !user || user.isGuest;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
+    const calculatedCost = selectedCombinations.length * 10;
 
     setFeedback(null);
     setFeedbackSubmitted(false);
 
-    // Guest with no tokens left — ask to sign up
-    if (isGuest && availableTokens < 10) {
+    if (isGuest && availableTokens < calculatedCost) {
       toast.error('You have used your free generation! Sign up to get more tokens.');
       onOpenAuth();
       return;
     }
 
-    // Logged-in user with no tokens — redirect to pricing
-    const isUnlimited = false; // VIP subscriptions now spend credits instead of having infinite generations
-    if (!isGuest && !isUnlimited && availableTokens < 10) {
-      toast.error('You need at least 10 tokens to generate makeup!');
+    const isUnlimited = false;
+    if (!isGuest && !isUnlimited && availableTokens < calculatedCost) {
+      toast.error(`You need at least ${calculatedCost} tokens to generate makeup!`);
       setActiveTab('pricing');
       return;
     }
 
     setIsGenerating(true);
-    setProgress(10);
+    setProgress(0);
     setLoadingText('Uploading selfie to AI engine...');
-    setEtaRemaining(30);
+    setEtaRemaining(30 * selectedCombinations.length);
 
-    // Smooth scroll to preview on mobile screen widths
     setTimeout(() => {
       if (typeof window !== "undefined" && window.innerWidth < 1024 && previewPanelRef.current) {
         previewPanelRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -263,106 +268,148 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       setEtaRemaining(prev => prev <= 1 ? 1 : prev - 1);
     }, 1000);
 
-    let currentStep = 0;
-    
-    // Progress steps animation timer
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        const nextVal = prev + 10;
-        if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
-          setLoadingText(steps[currentStep].txt);
-          currentStep++;
-        }
-        if (nextVal >= 90) return 90;
-        return nextVal;
-      });
-    }, 400);
-
     try {
-      const presetObj = MAKEUP_PRESETS.find(p => p.id === selectedPreset);
-      const lipstickObj = LIPSTICKS.find(l => l.id === selectedLipstick);
-      const eyelinerObj = EYELINERS.find(e => e.id === selectedEyeliner);
-      const eyeshadowObj = EYESHADOWS.find(es => es.id === selectedEyeshadow);
-      const blushObj = BLUSHES.find(b => b.id === selectedBlush);
+      const baseTime = Date.now();
+      const initialResults = selectedCombinations.map((combo, idx) => {
+        const presetObj = MAKEUP_PRESETS.find(p => p.id === combo.presetId);
+        const lipstickObj = LIPSTICKS.find(l => l.id === combo.lipstickId);
+        return {
+          id: `gen-${baseTime}-${idx}`,
+          comboId: combo.id,
+          styleName: presetObj ? presetObj.name : 'Custom Makeup',
+          colorName: lipstickObj ? lipstickObj.name : 'None',
+          status: idx === 0 ? 'generating' : 'pending',
+          result: null,
+          original: image,
+          combo
+        };
+      });
 
-      let makeupDesc = `${presetObj ? presetObj.name : 'Natural'} style.`;
-      if (lipstickObj && lipstickObj.id !== 'none') makeupDesc += ` Lipstick: ${lipstickObj.name}.`;
-      if (eyelinerObj && eyelinerObj.id !== 'none') makeupDesc += ` Eyeliner: ${eyelinerObj.name}.`;
-      if (eyeshadowObj && eyeshadowObj.id !== 'none') makeupDesc += ` Eyeshadow: ${eyeshadowObj.name}.`;
-      if (blushObj && blushObj.id !== 'none') makeupDesc += ` Blush: ${blushObj.name}.`;
+      setResultImages(initialResults);
+      setActiveResultIndex(0);
 
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('taskType', 'makeup');
-      formData.append('makeup', makeupDesc);
-      formData.append('gender', 'female');
+      for (let i = 0; i < selectedCombinations.length; i++) {
+        const combo = selectedCombinations[i];
+        const presetObj = MAKEUP_PRESETS.find(p => p.id === combo.presetId);
+        const lipstickObj = LIPSTICKS.find(l => l.id === combo.lipstickId);
+        const eyelinerObj = EYELINERS.find(e => e.id === selectedEyeliner);
+        const eyeshadowObj = EYESHADOWS.find(es => es.id === selectedEyeshadow);
+        const blushObj = BLUSHES.find(b => b.id === selectedBlush);
 
-      // 3. Post request to backend prediction API
-      const res = await authFetch('/api/generate', { method: 'POST', body: formData });
+        setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'generating' } : item));
 
-      clearInterval(interval);
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to render makeup');
-      }
-
-      const data = await res.json();
-      
-      if (data.success) {
-        // Result ID is managed by server or created locally inside event handler, not render body.
-        setResultImage(data.imageUrl);
-        setProgress(100);
-        setSliderPosition(50);
-        toast.success('AI Makeup rendered successfully!');
+        setProgress(0);
+        setLoadingText('Uploading selfie to AI engine...');
+        let currentStep = 0;
         
-        // Deduct credits locally (skip for unlimited subscription plans)
-        if (!isUnlimited) {
-          onDeductToken(10);
+        const styleInterval = setInterval(() => {
+          setProgress(prev => {
+            const nextVal = prev + 10;
+            if (currentStep < steps.length && nextVal >= steps[currentStep].prg) {
+              setLoadingText(steps[currentStep].txt);
+              currentStep++;
+            }
+            if (nextVal >= 90) return 90;
+            return nextVal;
+          });
+        }, 400);
+
+        try {
+          let makeupDesc = `${presetObj ? presetObj.name : 'Natural'} style.`;
+          if (lipstickObj && lipstickObj.id !== 'none') makeupDesc += ` Lipstick: ${lipstickObj.name}.`;
+          if (eyelinerObj && eyelinerObj.id !== 'none') makeupDesc += ` Eyeliner: ${eyelinerObj.name}.`;
+          if (eyeshadowObj && eyeshadowObj.id !== 'none') makeupDesc += ` Eyeshadow: ${eyeshadowObj.name}.`;
+          if (blushObj && blushObj.id !== 'none') makeupDesc += ` Blush: ${blushObj.name}.`;
+
+          const formData = new FormData();
+          formData.append('image', imageFile);
+          formData.append('taskType', 'makeup');
+          formData.append('makeup', makeupDesc);
+          formData.append('gender', 'female');
+
+          const res = await authFetch('/api/generate', { method: 'POST', body: formData });
+          clearInterval(styleInterval);
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to render makeup');
+          }
+
+          const data = await res.json();
+          
+          if (data.success) {
+            setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'success', result: data.imageUrl } : item));
+            
+            if (!isUnlimited) onDeductToken(10);
+
+            onAddHistory({
+              original: image,
+              result: data.imageUrl,
+              style: presetObj ? presetObj.name : 'Makeup',
+              color: lipstickObj ? lipstickObj.name : 'Lipstick',
+              date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            });
+
+            const newMatch = {
+              id: `match_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
+              timestamp: Date.now(),
+              date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
+              code: combo.presetId,
+              name: presetObj ? presetObj.name : 'Custom Makeup',
+              matchRate: `${Math.floor(88 + Math.random() * 11)}%`,
+              img: data.imageUrl
+            };
+            const storageKey = user ? `levante_matches_${user.id}` : "levante_matches";
+            const existingMatches = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            const filteredMatches = existingMatches.filter(m => m.code !== newMatch.code);
+            localStorage.setItem(storageKey, JSON.stringify([newMatch, ...filteredMatches].slice(0, 10)));
+          } else {
+            throw new Error(data.error || 'Failed to render makeup');
+          }
+        } catch (err) {
+          clearInterval(styleInterval);
+          setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'error', error: err.message } : item));
+          toast.error(err.message || 'AI Makeup generation failed.');
         }
 
-        onAddHistory({
-          original: image,
-          result: data.imageUrl,
-          style: presetObj ? presetObj.name : 'Makeup',
-          color: lipstickObj ? lipstickObj.name : 'Lipstick',
-          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-        });
-
-        // 4. Save new match to local storage history list
-        const newMatch = {
-          id: `match_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`,
-          timestamp: Date.now(),
-          date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
-          code: selectedPreset,
-          name: presetObj ? presetObj.name : 'Custom Makeup',
-          matchRate: `${Math.floor(88 + Math.random() * 11)}%`,
-          img: data.imageUrl
-        };
-        const storageKey = user ? `levante_matches_${user.id}` : "levante_matches";
-        const existingMatches = JSON.parse(localStorage.getItem(storageKey) || "[]");
-        const filteredMatches = existingMatches.filter(m => m.code !== newMatch.code);
-        localStorage.setItem(storageKey, JSON.stringify([newMatch, ...filteredMatches].slice(0, 10)));
-
-        // Success confetti animation
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ["#6D28D9", "#EC4899", "#ffffff"]
-        });
-      } else {
-        throw new Error(data.error || 'Failed to render makeup');
+        if (i < selectedCombinations.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
+
+      setProgress(100);
+      setSliderPosition(50);
+      toast.success('AI Makeup batch rendered successfully!');
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ["#6D28D9", "#EC4899", "#ffffff"]
+      });
 
       scrollToPreview();
 
     } catch (err) {
-      clearInterval(interval);
       toast.error(err.message || 'AI Makeup generation failed.');
     } finally {
       setIsGenerating(false);
       clearInterval(etaInterval);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const successImages = resultImages.filter(r => r.status === 'success');
+    for (let i = 0; i < successImages.length; i++) {
+      const img = successImages[i];
+      const link = document.createElement('a');
+      link.href = img.result;
+      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      if (i < successImages.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
   };
 
@@ -377,10 +424,11 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const handleReset = () => {
     setImage(null);
     setImageFile(null);
-    setResultImage(null);
+    setResultImages([]);
+    setActiveResultIndex(0);
     setFeedback(null);
     setFeedbackSubmitted(false);
-    setCurrentResultId(null);
+    
   };
 
   return (
@@ -433,7 +481,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 title={t('audit.makeup.randomPreset')}
                 onClick={() => {
                   const random = MAKEUP_PRESETS[Math.floor(Math.random() * MAKEUP_PRESETS.length)];
-                  setSelectedPreset(random.id);
+                  setSelectedCombinations(prev => [...prev, { id: Date.now(), presetId: random.id, lipstickId: selectedLipstick }]);
                   setActiveQuickPreset(null);
                   toast.success(`🎲 ${t('audit.makeup.random')}: ${random.name}`);
                   scrollToPreview();
@@ -465,7 +513,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             <span className="selector-title">{t('audit.makeup.selectMakeupLook')}</span>
             <div className="style-cards-grid">
               {MAKEUP_PRESETS.map(p => {
-                const isSelected = selectedPreset === p.id;
+                const isSelected = selectedCombinations.some(c => c.presetId === p.id);
                 return (
                   <button
                     type="button"
@@ -473,10 +521,27 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                     className={`style-card ${isSelected ? 'selected' : ''}`}
                     aria-pressed={isSelected}
                     aria-label={`Select: ${p.name}`}
-                    onClick={() => { setSelectedPreset(p.id); setActiveQuickPreset(null); }}
+                    onClick={() => {
+                      setSelectedCombinations(prev => {
+                        if (prev.some(c => c.presetId === p.id)) {
+                          return prev.filter(c => c.presetId !== p.id);
+                        } else {
+                          if (prev.length >= 10) {
+                            toast.error("You can select up to 10 makeups at once!");
+                            return prev;
+                          }
+                          return [...prev, { id: Date.now(), presetId: p.id, lipstickId: selectedLipstick }];
+                        }
+                      });
+                      setActiveQuickPreset(null);
+                    }}
                     style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
                   >
-                    {isSelected && <div className="selected-badge"><Check size={12} /></div>}
+                    {isSelected && (
+                      <div className="selected-badge">
+                        {(selectedCombinations.findIndex(c => c.presetId === p.id) + 1) || <Check size={12} />}
+                      </div>
+                    )}
                     <div className="style-card-image-wrapper">
                       <img src={p.image} alt={p.name} className="style-card-img" loading="lazy" decoding="async" />
                       <div className="style-card-overlay"></div>
@@ -575,13 +640,150 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                   hideActions={true}
                 />
               </div>
-            ) : resultImage ? (
+            ) : resultImages.length > 1 ? (
+              <div style={{ width: '100%' }}>
+                <div className="generation-grid">
+                  {resultImages.map((res, index) => {
+                    const isItemGenerating = res.status === 'generating';
+                    const isItemSuccess = res.status === 'success';
+                    const isItemPending = res.status === 'pending';
+                    const isItemError = res.status === 'error';
+
+                    return (
+                      <div key={res.id} className="generation-card">
+                        <div className="generation-card-badge">
+                          {res.styleName}
+                        </div>
+
+                        <div className={`generation-card-status-badge ${res.status}`}>
+                          {res.status === 'generating' ? 'Rendering' : (res.status === 'pending' ? 'Waiting' : res.status)}
+                        </div>
+
+                        <div className="generation-card-image-wrapper">
+                          {isItemSuccess ? (
+                            <img
+                              src={res.result}
+                              alt={res.styleName}
+                              className="generation-card-image"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setLightboxImage(res.result);
+                                setLightboxTitle(`${res.styleName} (${res.colorName})`);
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={image}
+                              alt="Original"
+                              className="generation-card-image"
+                              style={{
+                                filter: isItemPending ? 'grayscale(0.5) blur(1px)' : 'none',
+                                opacity: isItemPending ? 0.6 : 1
+                              }}
+                            />
+                          )}
+
+                          {isItemGenerating && (
+                            <div className="generation-card-overlay">
+                              <div className="generation-card-spinner"></div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-pink-primary)' }}>Rendering</span>
+                              <div className="progress-track" style={{ height: '4px', width: '80%', marginTop: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div className="progress-bar" style={{ width: `${progress}%`, height: '100%', background: 'var(--color-pink-primary)' }}></div>
+                              </div>
+                              <span className="generation-card-progress">{progress}%</span>
+                            </div>
+                          )}
+
+                          {isItemPending && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                              <RefreshCw size={24} className="animate-spin-slow" style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Waiting</span>
+                            </div>
+                          )}
+
+                          {isItemError && (
+                            <div className="generation-card-overlay" style={{ background: 'rgba(30,10,10,0.8)' }}>
+                              <span style={{ color: '#ff4d4d', fontSize: '0.75rem', fontWeight: 600 }}>Failed</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.6rem', marginTop: '4px', maxWidth: '90%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {res.error || 'AI Server Error'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="generation-card-footer">
+                          <div className="generation-card-info">
+                            <span className="generation-card-title">{res.styleName}</span>
+                            <span className="generation-card-subtitle">{res.colorName}</span>
+                          </div>
+
+                          {isItemSuccess && (
+                            <div className="generation-card-actions">
+                              <a
+                                href={res.result}
+                                download={`glamai_${res.styleName}_${res.colorName}.png`}
+                                className="generation-card-btn"
+                                title="Download HD Render"
+                              >
+                                <Download size={14} />
+                              </a>
+                              <button
+                                className="generation-card-btn"
+                                title={isFavorite(res.id) ? 'Remove from Favourites' : 'Save to Favourites'}
+                                onClick={() => {
+                                  if (isFavorite(res.id)) {
+                                    removeFavorite(res.id);
+                                    toast.success('Removed from Favourites');
+                                  } else {
+                                    addFavorite({ id: res.id, result: res.result, style: res.styleName, color: res.colorName, category: '💄 Makeup', date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) });
+                                    toast.success('Saved to Favourites');
+                                  }
+                                }}
+                                style={{ color: isFavorite(res.id) ? '#ff2e93' : 'inherit' }}
+                              >
+                                <Heart size={14} fill={isFavorite(res.id) ? '#ff2e93' : 'none'} />
+                              </button>
+                              <button
+                                className="generation-card-btn"
+                                title="Share to Stories"
+                                onClick={() => setShowStoriesModal({ url: res.result, styleName: res.styleName })}
+                              >
+                                <Share2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="preview-controls" style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  {resultImages.some(r => r.status === 'success') && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleDownloadAll}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      <Download size={16} />
+                      <span>Download All</span>
+                    </button>
+                  )}
+                  {!isGenerating && (
+                    <button className="btn btn-secondary" onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <RefreshCw size={16} />
+                      <span>Try Another Batch</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : resultImages.length === 1 && resultImages[0].status === 'success' ? (
               <div style={{ width: '100%' }}>
                 <SliderComparison
                   beforeSrc={image}
-                  afterSrc={resultImage}
-                  title={selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup'}
-                  onShare={() => setShowStoriesModal({ url: resultImage, styleName: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name || 'Makeup Look' : 'Makeup Look' })}
+                  afterSrc={resultImages[0].result}
+                  title={resultImages[0].styleName}
+                  onShare={() => setShowStoriesModal({ url: resultImages[0].result, styleName: resultImages[0].styleName })}
                   onDownload={() => {}}
                   hideActions={false}
                 />
@@ -602,17 +804,17 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <div className="preview-controls-row">
                   <button
                     className="btn btn-secondary"
-                    style={{ color: (currentResultId && isFavorite(currentResultId)) ? '#ff2e93' : undefined }}
+                    style={{ color: (resultImages[0].id && isFavorite(resultImages[0].id)) ? '#ff2e93' : undefined }}
                     onClick={() => {
-                      if (!currentResultId) return;
-                      if (isFavorite(currentResultId)) { 
-                        removeFavorite(currentResultId); 
+                      if (!resultImages[0].id) return;
+                      if (isFavorite(resultImages[0].id)) { 
+                        removeFavorite(resultImages[0].id); 
                         toast.success(t('audit.makeup.removedFromFavourites')); 
                       } else { 
                         addFavorite({ 
-                          id: currentResultId, 
-                          result: resultImage, 
-                          style: selectedPreset ? MAKEUP_PRESETS.find(p => p.id === selectedPreset)?.name : 'Makeup', 
+                          id: resultImages[0].id, 
+                          result: resultImages[0].result, 
+                          style: resultImages[0].styleName, color: resultImages[0].colorName, 
                           category: '💄 Makeup', 
                           date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
                         }); 
@@ -712,7 +914,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <Sparkles size={18} />
                 <span>{t('audit.makeup.applyAiMakeup')}</span>
                 <span className="generate-btn-cost">
-                  (-10 Tokens)
+                  (-{selectedCombinations.length * 10} Tokens)
                 </span>
               </button>
               
@@ -812,7 +1014,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                   type="button"
                   className="btn btn-primary"
                   onClick={() => {
-                    setSelectedPreset(look.id);
+                    setSelectedCombinations(prev => {
+      if (prev.find(c => c.presetId === look.id)) return prev;
+      return [...prev, { id: Date.now(), presetId: look.id, lipstickId: selectedLipstick }];
+    });
                     setActiveQuickPreset(null);
                     toast.success(`${t('audit.makeup.presetLoaded') || 'Preset loaded'}: ${look.name}`);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -900,7 +1105,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
             <span>{t('audit.makeup.applyAiMakeup')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
-              (-10 Tokens)
+              (-{selectedCombinations.length * 10} Tokens)
             </span>
           </button>
         </div>

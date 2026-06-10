@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useEffect, useState, useRef } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Scissors, Check, HelpCircle, TrendingUp, Camera, Share2, Award, Briefcase, Heart, Flame, Leaf } from 'lucide-react';
+import { Upload, Sparkles, Download, RefreshCw, Scissors, Check, TrendingUp, Camera, Share2, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { trackEvent } from '../utils/analytics';
@@ -134,7 +134,18 @@ const HAIRSTYLES = [
   {"id": "liberty-spikes", "name": "Liberty Spikes", "category": "Vintage & Statement", "image": "/styles/male_liberty-spikes.webp", "gender": "male"},
   {"id": "spiky", "name": "Spiky", "category": "Vintage & Statement", "image": "/styles/male_spiky.webp", "gender": "male"},
   {"id": "bald", "name": "Bald", "category": "Short & Classic", "image": "/styles/male_bald.webp", "gender": "male"},
-
+  {"id": "beard-stubble", "name": "Stubble Beard", "category": "Beards", "image": "/styles/beard_stubble.png", "gender": "male"},
+  {"id": "beard-full", "name": "Full Beard", "category": "Beards", "image": "/styles/beard_full.png", "gender": "male"},
+  {"id": "beard-goatee", "name": "Goatee", "category": "Beards", "image": "/styles/beard_goatee.png", "gender": "male"},
+  {"id": "beard-mustache", "name": "Classic Mustache", "category": "Beards", "image": "/styles/beard_mustache.png", "gender": "male"},
+  {"id": "beard-viking", "name": "Viking Beard", "category": "Beards", "image": "/styles/beard_viking.png", "gender": "male"},
+  {"id": "beard-clean", "name": "Clean Shaven", "category": "Beards", "image": "/styles/beard_clean.png", "gender": "male"},
+  {"id": "beard-beardstache", "name": "Beardstache", "category": "Beards", "image": "/styles/beard_beardstache.png", "gender": "male"},
+  {"id": "beard-corporate", "name": "Corporate Beard", "category": "Beards", "image": "/styles/beard_corporate.png", "gender": "male"},
+  {"id": "beard-imperial", "name": "Imperial Mustache", "category": "Beards", "image": "/styles/beard_imperial.png", "gender": "male"},
+  {"id": "beard-anchor", "name": "Anchor Beard", "category": "Beards", "image": "/styles/beard_anchor.png", "gender": "male"},
+  {"id": "beard-vandyke", "name": "Van Dyke", "category": "Beards", "image": "/styles/beard_vandyke.png", "gender": "male"},
+  {"id": "beard-balbo", "name": "Balbo", "category": "Beards", "image": "/styles/beard_balbo.png", "gender": "male"}
 ];
 
 const FEMALE_CATEGORIES = [
@@ -160,6 +171,7 @@ const MALE_CATEGORIES = [
   'Long',
   'Curly & Textured',
   'Vintage & Statement',
+  'Beards',
 ];
 
 const COLORS = [
@@ -239,14 +251,14 @@ const PROGRESS_STEPS = [
   '✨ Refining details & upscaling...'
 ];
 
-export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
+export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext }) {
   const toast = useToast();
-  const isGuest = !user;
+  const isGuest = !user || user.isGuest;
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [selectedGender, setSelectedGender] = useState('female');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedStyles, setSelectedStyles] = useState(['no_change']);
+  const [selectedStyles, setSelectedStyles] = useState([{ id: Date.now(), styleId: 'no_change', colorId: 'ai-recommended' }]);
   const [selectedColor, setSelectedColor] = useState('ai-recommended');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -256,6 +268,87 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [lightboxImage, setLightboxImage] = useState(null);
   const [lightboxTitle, setLightboxTitle] = useState('');
   const [showUpsellBox, setShowUpsellBox] = useState(false);
+
+  // Custom states for new slider UX requirements
+  const [hairLength, setHairLength] = useState(50);
+  const [hairVolume, setHairVolume] = useState(50);
+  const [beardDensity, setBeardDensity] = useState(50);
+
+  const getHairLengthText = (val) => {
+    if (val <= 25) return t('audit.playground.lengthShort') || 'Short';
+    if (val <= 50) return t('audit.playground.lengthMedium') || 'Medium';
+    if (val <= 75) return t('audit.playground.lengthLong') || 'Long';
+    return t('audit.playground.lengthExtraLong') || 'Extra Long';
+  };
+
+  const getHairLengthTextEn = (val) => {
+    if (val <= 25) return 'short';
+    if (val <= 50) return 'medium';
+    if (val <= 75) return 'long';
+    return 'extra long';
+  };
+
+  const getHairVolumeText = (val) => {
+    if (val <= 25) return t('audit.playground.volumeLow') || 'Low';
+    if (val <= 50) return t('audit.playground.volumeModerate') || 'Moderate';
+    if (val <= 75) return t('audit.playground.volumeHigh') || 'High';
+    return t('audit.playground.volumeExtraHigh') || 'Extra High';
+  };
+
+  const getHairVolumeTextEn = (val) => {
+    if (val <= 25) return 'low';
+    if (val <= 50) return 'moderate';
+    if (val <= 75) return 'high';
+    return 'extra high';
+  };
+
+  const getBeardDensityText = (val) => {
+    if (val <= 25) return t('audit.playground.densityLight') || 'Light';
+    if (val <= 50) return t('audit.playground.densityMedium') || 'Medium';
+    if (val <= 75) return t('audit.playground.densityThick') || 'Thick';
+    return t('audit.playground.densityHeavy') || 'Heavy';
+  };
+
+  const getBeardDensityTextEn = (val) => {
+    if (val <= 25) return 'light';
+    if (val <= 50) return 'medium';
+    if (val <= 75) return 'thick';
+    return 'heavy';
+  };
+
+  // Listen for styleContext passed from Face Scanner
+  useEffect(() => {
+    if (styleContext) {
+      if (styleContext.taskType === 'hairstyle') {
+        const matched = HAIRSTYLES.find(h => h.name.toLowerCase() === styleContext.style.toLowerCase() || h.id.toLowerCase() === styleContext.style.toLowerCase());
+        if (matched) {
+          setSelectedGender(matched.gender || 'female');
+          setSelectedStyles([{ id: Date.now(), styleId: matched.id, colorId: selectedColor }]);
+          setSelectedCategory('All');
+          toast.info(`${t('audit.playground.styleSelected') || 'Style selected'}: ${t('style.' + matched.name)}`);
+        } else {
+          setSelectedStyles([{ id: Date.now(), styleId: styleContext.style, colorId: selectedColor }]);
+          toast.info(`${t('audit.playground.styleSelected') || 'Style selected'}: ${t('style.' + styleContext.style)}`);
+        }
+        if (setStyleContext) setStyleContext(null);
+      } else if (styleContext.taskType === 'beard') {
+        setSelectedGender('male');
+        const searchName = styleContext.style.toLowerCase();
+        const matched = HAIRSTYLES.find(h => h.category === 'Beards' && (h.name.toLowerCase() === searchName || h.id.toLowerCase() === searchName || h.id === `beard-${searchName.replace(/\s+/g, '-')}`));
+        if (matched) {
+          setSelectedStyles([{ id: Date.now(), styleId: matched.id, colorId: selectedColor }]);
+          setSelectedCategory('Beards');
+          toast.info(`${t('audit.playground.beardSelected') || 'Beard style selected'}: ${t('style.' + matched.name)}`);
+        } else {
+          const formattedId = `beard-${searchName.replace(/\s+/g, '-')}`;
+          setSelectedStyles([{ id: Date.now(), styleId: formattedId, colorId: selectedColor }]);
+          setSelectedCategory('Beards');
+          toast.info(`${t('audit.playground.beardSelected') || 'Beard style selected'}: ${t('style.' + styleContext.style)}`);
+        }
+        if (setStyleContext) setStyleContext(null);
+      }
+    }
+  }, [styleContext, setStyleContext, toast]);
 
   // Custom states for new UX requirements
   const [activePreset, setActivePreset] = useState(null);
@@ -278,7 +371,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   useEffect(() => {
     if (prefs) {
       if (prefs.lastColor) setSelectedColor(prefs.lastColor);
-      if (prefs.lastStyles && prefs.lastStyles.length > 0) setSelectedStyles(prefs.lastStyles);
+      if (prefs.lastStyles && prefs.lastStyles.length > 0) setSelectedStyles([{ id: Date.now(), styleId: prefs.lastStyles[0], colorId: prefs.lastColor || 'ai-recommended' }]);
     }
   }, [prefs]);
 
@@ -310,7 +403,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const tokenCost = selectedStyles.length * 10;
 
   const openPricingWithRecommendation = () => {
-    const selectedCount = selectedStyles.filter((s) => s !== 'no_change').length;
+    const selectedCount = selectedStyles.filter((s) => s.styleId !== 'no_change').length;
     const isHeavyUse = selectedCount >= 3;
     const suggestedPlanId = isHeavyUse ? 'monthly-vip' : 'pro-onetime';
     trackEvent('recommended_plan_click', {
@@ -328,7 +421,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     trackEvent('paywall_view', {
       source: 'playground_result',
       isGuest,
-      selectedStyles: selectedStyles.filter((s) => s !== 'no_change').length,
+      selectedStyles: selectedStyles.filter((s) => s.styleId !== 'no_change').length,
       tokenCost,
       creditsLeft: isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0),
     });
@@ -337,22 +430,25 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const handleSelectStyle = (styleId) => {
     setActivePreset(null); // Reset preset on manual style selection
     if (styleId === 'no_change') {
-      setSelectedStyles(['no_change']);
+      setSelectedStyles([{ id: Date.now(), styleId: 'no_change', colorId: selectedColor }]);
       return;
     }
 
     setSelectedStyles(prev => {
-      const filtered = prev.filter(id => id !== 'no_change');
+      const filtered = prev.filter(s => s.styleId !== 'no_change');
       
-      if (filtered.includes(styleId)) {
-        const next = filtered.filter(id => id !== styleId);
-        return next.length === 0 ? ['no_change'] : next;
+      const existingIndex = filtered.findIndex(s => s.styleId === styleId && s.colorId === selectedColor);
+      
+      if (existingIndex !== -1) {
+        const next = [...filtered];
+        next.splice(existingIndex, 1);
+        return next.length === 0 ? [{ id: Date.now(), styleId: 'no_change', colorId: selectedColor }] : next;
       } else {
         if (filtered.length >= 10) {
           toast.error("You can select up to 10 hairstyles at once!");
           return prev;
         }
-        return [...filtered, styleId];
+        return [...filtered, { id: Date.now(), styleId, colorId: selectedColor }];
       }
     });
   };
@@ -361,16 +457,16 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     setActivePreset(preset.id);
     const genderPreset = preset[selectedGender];
     if (genderPreset) {
-      setSelectedStyles([genderPreset.style]);
+      setSelectedStyles([{ id: Date.now(), styleId: genderPreset.style, colorId: genderPreset.color }]);
       setSelectedColor(genderPreset.color);
       
       // Select preset feedback
-      toast.success(`Preset "${preset.name}" applied!`);
+      toast.success(`Preset "${t('playground.preset.' + preset.id)}" applied!`);
     }
   };
 
   const handleQuickStartSelect = (styleId) => {
-    setSelectedStyles([styleId]);
+    setSelectedStyles([{ id: Date.now(), styleId, colorId: selectedColor }]);
 
   };
 
@@ -379,7 +475,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     if (type === 'like') {
       try {
         const feedbackLog = JSON.parse(localStorage.getItem('glamai_feedback') || '[]');
-        feedbackLog.push({ style: selectedStyles[0], color: selectedColor, type: 'like', timestamp: Date.now() });
+        feedbackLog.push({ style: selectedStyles[0]?.styleId, color: selectedStyles[0]?.colorId, type: 'like', timestamp: Date.now() });
         localStorage.setItem('glamai_feedback', JSON.stringify(feedbackLog));
       } catch {}
       setFeedbackSubmitted(true);
@@ -391,7 +487,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     setDislikeReason(reason);
     try {
       const feedbackLog = JSON.parse(localStorage.getItem('glamai_feedback') || '[]');
-      feedbackLog.push({ style: selectedStyles[0], color: selectedColor, type: 'dislike', reason, timestamp: Date.now() });
+      feedbackLog.push({ style: selectedStyles[0]?.styleId, color: selectedStyles[0]?.colorId, type: 'dislike', reason, timestamp: Date.now() });
       localStorage.setItem('glamai_feedback', JSON.stringify(feedbackLog));
     } catch {}
     setFeedbackSubmitted(true);
@@ -508,7 +604,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
     }
 
     // Guest: only 1 style allowed per free generation
-    if (isGuest && activeStyles.filter(s => s !== 'no_change').length > 1) {
+    if (isGuest && activeStyles.filter(s => s.styleId !== 'no_change').length > 1) {
       toast.error('Free generation allows only 1 style. Sign up to generate multiple!');
       openPricingWithRecommendation();
       return;
@@ -541,16 +637,20 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       const colorObj = COLORS.find(c => c.id === selectedColor);
 
       // Initialize progressive result list with 'pending' and first one as 'generating'
-      const initialResults = activeStyles.map((styleId, idx) => {
+      const baseTime = Date.now();
+      const initialResults = activeStyles.map((s, idx) => {
+        const styleId = s.styleId;
+        const colorId = s.colorId;
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
+        const colorObj = COLORS.find(c => c.id === colorId);
         return {
-          id: `gen-${Date.now()}-${idx}`,
+          id: `gen-${baseTime}-${idx}`,
           styleId,
-          styleName: styleObj ? styleObj.name : 'Custom Style',
+          styleName: styleObj ? t('style.' + styleObj.name) : t('Custom Style'),
           status: idx === 0 ? 'generating' : 'pending',
           result: null,
           original: image,
-          colorName: colorObj ? colorObj.name : 'Custom Color'
+          colorName: colorObj ? t('color.' + colorObj.name) : t('Custom Color')
         };
       });
 
@@ -558,9 +658,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       setActiveResultIndex(0);
 
       for (let i = 0; i < activeStyles.length; i++) {
-        const styleId = activeStyles[i];
+        const styleId = activeStyles[i].styleId;
+        const colorId = activeStyles[i].colorId;
         const styleObj = HAIRSTYLES.find(h => h.id === styleId);
-        const styleName = styleObj ? styleObj.name : 'Custom Style';
+        const styleName = styleObj ? t('style.' + styleObj.name) : t('Custom Style');
+        const colorObj = COLORS.find(c => c.id === colorId);
 
         // Update the current item's status to generating
         setResultImages(prev => prev.map((item, idx) => idx === i ? { ...item, status: 'generating' } : item));
@@ -586,7 +688,20 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         try {
           const formData = new FormData();
           formData.append('image', imageFile);
-          formData.append('style', styleName);
+          
+          const isBeard = styleId.startsWith('beard-');
+          const taskType = isBeard ? 'beard' : 'hairstyle';
+          
+          let modulatedStyleName = styleName;
+          if (isBeard) {
+            modulatedStyleName = `${styleName}, density: ${getBeardDensityTextEn(beardDensity)}`;
+            formData.append('beard', modulatedStyleName);
+          } else if (styleId !== 'no_change') {
+            modulatedStyleName = `${styleName}, length: ${getHairLengthTextEn(hairLength)}, volume: ${getHairVolumeTextEn(hairVolume)}`;
+          }
+
+          formData.append('taskType', taskType);
+          formData.append('style', modulatedStyleName);
           formData.append('styleId', styleId);
           formData.append('color', colorObj ? colorObj.name : 'Custom Color');
           formData.append('gender', selectedGender);
@@ -762,10 +877,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   onClick={() => {
                     setSelectedGender(g.id);
                     setSelectedCategory('All');
-                    setSelectedStyles(['no_change']);
+                    setSelectedStyles([{ id: Date.now(), styleId: 'no_change', colorId: selectedColor }]);
                   }}
                 >
-                  {g.name}
+                  {t('tool.' + g.id)}
                 </button>
               ))}
             </div>
@@ -783,10 +898,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   if (eligible.length === 0) return;
                   const random = eligible[Math.floor(Math.random() * eligible.length)];
                   const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-                  setSelectedStyles([random.id]);
+                  setSelectedStyles([{ id: Date.now(), styleId: random.id, colorId: randomColor.id }]);
                   setSelectedColor(randomColor.id);
                   setActivePreset(null);
-                  toast.success(`🎲 ${random.name} + ${randomColor.name}`);
+                  toast.success(`🎲 ${t('style.' + random.name)} + ${t('color.' + randomColor.name)}`);
                 }}
                 style={{ background: 'rgba(255,46,147,0.1)', border: '1px solid rgba(255,46,147,0.25)', borderRadius: '8px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s', whiteSpace: 'nowrap' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,46,147,0.2)'}
@@ -806,7 +921,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     onClick={() => handleApplyPreset(preset)}
                   >
                     <span>{preset.icon}</span>
-                    <span>{preset.name}</span>
+                    <span>{t('playground.preset.' + preset.id)}</span>
                   </button>
                 );
               })}
@@ -835,7 +950,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           {/* Hairstyle options */}
           <div className="selector-group">
             <span className="selector-title">{t('audit.playground.hairstyleTemplate')} ({filteredHairstyles.length})</span>
-            {image && selectedStyles.every(s => s === 'no_change') && (
+            {image && selectedStyles.every(s => s.styleId === 'no_change') && (
               <div className="onboarding-hint">
                 <TrendingUp size={15} />
                 <span>{t('audit.playground.selectAStyleTemplateBelowToBeg')}</span>
@@ -843,20 +958,20 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             )}
             <div className="style-cards-grid">
               {filteredHairstyles.map(h => {
-                const isSelected = selectedStyles.includes(h.id);
+                const isSelected = selectedStyles.some(s => s.styleId === h.id);
                 return (
                   <button
                     type="button"
                     key={h.id}
                     className={`style-card ${h.isSpecial ? 'no-change-card' : ''} ${isSelected ? 'selected' : ''}`}
                     aria-pressed={isSelected}
-                    aria-label={`Select style: ${h.name}`}
+                    aria-label={`${t('audit.playground.selectStyle') || 'Select style'}: ${t('style.' + h.name)}`}
                     onClick={() => handleSelectStyle(h.id)}
                     style={{ border: 'none', background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer', width: '100%' }}
                   >
                     {isSelected && (
                       <div className="selected-badge">
-                        {h.id === 'no_change' ? <Check size={12} /> : (selectedStyles.indexOf(h.id) + 1)}
+                        {h.id === 'no_change' ? <Check size={12} /> : (selectedStyles.findIndex(s => s.styleId === h.id) + 1)}
                       </div>
                     )}
                     {!h.isSpecial && POPULAR_STYLE_IDS.includes(h.id) && !isSelected && (
@@ -875,11 +990,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                           <span className="no-change-dot" style={{ background: '#161e31' }}></span>
                         </div>
                       ) : (
-                        <img src={h.image} className="style-card-image" alt={h.name} loading="lazy" decoding="async" />
+                        <img src={h.image} className="style-card-image" alt={t('style.' + h.name)} loading="lazy" decoding="async" />
                       )}
                     </div>
                     <div className="style-card-footer">
-                      {h.name}
+                      {t('style.' + h.name)}
                     </div>
                   </button>
 
@@ -887,6 +1002,114 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
               })}
             </div>
           </div>
+
+          {/* Style Customizer Sliders */}
+          {selectedStyles.length > 0 && !selectedStyles.some(s => s.styleId === 'no_change') && (
+            <div className="selector-group sliders-group animate-fade-in" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+              <span className="selector-title">{t('audit.playground.customizeIntensity') || 'Customize Style Intensity'}</span>
+              <div className="sliders-container" style={{
+                padding: '1.25rem',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                {selectedStyles.some(s => s.styleId.startsWith('beard-')) ? (
+                  <div className="slider-item">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>🧔</span>
+                        <span>{t('audit.playground.beardDensity') || 'Beard Density'}</span>
+                      </span>
+                      <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                        {beardDensity}% ({getBeardDensityText(beardDensity)})
+                      </span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={beardDensity} 
+                      onChange={(e) => setBeardDensity(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        accentColor: 'var(--color-pink-primary)',
+                        height: '6px',
+                        borderRadius: '3px',
+                        background: 'rgba(255,255,255,0.1)',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        WebkitAppearance: 'none'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="slider-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📏</span>
+                          <span>{t('audit.playground.hairLength') || 'Hair Length'}</span>
+                        </span>
+                        <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                          {hairLength}% ({getHairLengthText(hairLength)})
+                        </span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={hairLength} 
+                        onChange={(e) => setHairLength(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          accentColor: 'var(--color-pink-primary)',
+                          height: '6px',
+                          borderRadius: '3px',
+                          background: 'rgba(255,255,255,0.1)',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          WebkitAppearance: 'none'
+                        }}
+                      />
+                    </div>
+                    <div className="slider-item">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>💨</span>
+                          <span>{t('audit.playground.hairVolume') || 'Hair Volume'}</span>
+                        </span>
+                        <span style={{ color: 'var(--color-pink-primary)', fontWeight: 700, background: 'rgba(255,46,147,0.1)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem' }}>
+                          {hairVolume}% ({getHairVolumeText(hairVolume)})
+                        </span>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
+                        value={hairVolume} 
+                        onChange={(e) => setHairVolume(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          accentColor: 'var(--color-pink-primary)',
+                          height: '6px',
+                          borderRadius: '3px',
+                          background: 'rgba(255,255,255,0.1)',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          WebkitAppearance: 'none'
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Color Shade selection */}
           <div className="selector-group">
@@ -896,10 +1119,10 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 <button
                   type="button"
                   key={c.id}
-                  title={c.name}
+                  title={t('color.' + c.name)}
                   className={`color-grid-item ${selectedColor === c.id ? 'selected' : ''}`}
                   aria-pressed={selectedColor === c.id}
-                  aria-label={`Select color shade: ${c.name}`}
+                  aria-label={`${t('audit.playground.selectColor') || 'Select color'}: ${t('color.' + c.name)}`}
                   onClick={() => setSelectedColor(c.id)}
                 >
                   {c.hot && <span className="color-grid-hot">{t('audit.hero.hot')}</span>}
@@ -907,7 +1130,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                     className="color-grid-dot"
                     style={{ background: c.hex }}
                   />
-                  <span className="color-grid-name">{c.name}</span>
+                  <span className="color-grid-name">{t('color.' + c.name)}</span>
                 </button>
               ))}
             </div>
@@ -1291,9 +1514,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                   <span>{t('audit.makeup.uploadFile')}</span>
                 </button>
               </div>
-              
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
             </div>
           ) : (
 
@@ -1310,9 +1530,6 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
                   <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
-                
-                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
               </div>
             )
           )}
@@ -1346,12 +1563,11 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             </div>
           )}
 
-          {/* Privacy Trust Badge */}
-          <div className="privacy-trust-badge" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-            <span>{t('audit.makeup.yourPhotoIsFullySecureAutodele')}</span>
           </div>
+          
+          <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
         </div>
-      </div>
       {lightboxImage && (
         <div 
           className="lightbox-overlay" 

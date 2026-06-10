@@ -113,6 +113,7 @@ const PLANS = {
 
 export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   const [billingPeriod, setBillingPeriod] = useState('subscription');
+  const [subPeriod, setSubPeriod] = useState('monthly'); // 'monthly' or 'yearly'
   const [openFaq, setOpenFaq] = useState(null);
   const monthlyPlan = PLANS.subscription.find((p) => p.id === 'monthly-vip');
   const [recommendedPlanId, setRecommendedPlanId] = useState(null);
@@ -163,17 +164,19 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
   };
 
   const handleBuyClick = (plan) => {
+    const yearlyPlan = PLANS.subscription.find((p) => p.id === 'yearly-vip');
+    const finalPlan = plan.id === 'yearly-vip' ? yearlyPlan : plan;
     trackEvent('upgrade_start', {
       source: 'pricing_cta',
-      planId: plan.id,
-      billingPeriod: plan.billingPeriod,
-      recommended: recommendedPlanId === plan.id,
-      isGuest: !user,
+      planId: finalPlan.id,
+      billingPeriod: finalPlan.billingPeriod,
+      recommended: recommendedPlanId === finalPlan.id,
+      isGuest: !user || user.isGuest,
     });
     if (!user) {
       onOpenAuth();
     } else {
-      onSelectPlan(plan);
+      onSelectPlan(finalPlan);
     }
   };
 
@@ -196,7 +199,21 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
     return Math.round(saved);
   };
 
-  const activePlans = PLANS[billingPeriod];
+  const weeklyPlan = PLANS.subscription.find(p => p.id === 'weekly-vip');
+  const yearlyPlan = PLANS.subscription.find(p => p.id === 'yearly-vip');
+
+  const activePlans = billingPeriod === 'one-time'
+    ? PLANS['one-time']
+    : [
+        weeklyPlan,
+        subPeriod === 'monthly' ? monthlyPlan : {
+          ...yearlyPlan,
+          name: "VIP Premium",
+          price: "$12.50",
+          billingPeriod: "month",
+          badge: "Save 40% (Billed Annually)"
+        }
+      ].filter(Boolean);
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   useEffect(() => {
@@ -209,11 +226,11 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
     const fromSession = window.localStorage.getItem('glamai_recommended_plan');
     if (fromSession) {
       setRecommendedPlanId(fromSession);
-      return;
+    } else {
+      const credits = user?.tokens ?? 0;
+      if (credits <= 30) setRecommendedPlanId('standard-pack');
+      else setRecommendedPlanId('monthly-vip');
     }
-    const credits = user?.tokens ?? 0;
-    if (credits <= 30) setRecommendedPlanId('standard-pack');
-    else setRecommendedPlanId('monthly-vip');
   }, [user]);
 
 
@@ -275,6 +292,60 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
           </div>
         </div>
 
+        {/* Monthly/Yearly subscription toggle */}
+        {billingPeriod === 'subscription' && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.25rem', marginBottom: '3.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: subPeriod === 'monthly' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+              {t('audit.pricing.monthlyBilling') || 'Monthly Billing'}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSubPeriod(prev => prev === 'monthly' ? 'yearly' : 'monthly')}
+              style={{
+                width: '56px',
+                height: '30px',
+                borderRadius: '30px',
+                background: 'rgba(255, 46, 147, 0.15)',
+                border: '1px solid rgba(255, 46, 147, 0.3)',
+                position: 'relative',
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <div style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '50%',
+                background: 'var(--gradient-pink-purple)',
+                position: 'absolute',
+                top: '3px',
+                left: subPeriod === 'yearly' ? '29px' : '3px',
+                transition: 'all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+                boxShadow: '0 2px 6px rgba(255,46,147,0.4)'
+              }} />
+            </button>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: subPeriod === 'yearly' ? 'var(--text-primary)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              {t('audit.pricing.yearlyBilling') || 'Yearly Billing'}
+              <span style={{ 
+                background: 'rgba(255,46,147,0.10)', 
+                color: 'var(--color-pink-primary)', 
+                border: '1px solid rgba(255,46,147,0.3)', 
+                fontSize: '0.65rem', 
+                padding: '2px 8px', 
+                borderRadius: '20px', 
+                fontWeight: 800, 
+                textTransform: 'uppercase',
+                boxShadow: '0 0 10px rgba(255,46,147,0.1)'
+              }}>
+                Save 40% 🔥
+              </span>
+            </span>
+          </div>
+        )}
+
         {/* Never expires notice for one-time */}
         {billingPeriod === 'one-time' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: '#10b981', fontSize: '0.9rem', fontWeight: 700, marginBottom: '2.5rem' }}>
@@ -300,24 +371,30 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
             maxWidth: '1080px',
             margin: '0 auto 6rem',
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: activePlans.length === 2 ? 'repeat(2, minmax(280px, 360px))' : 'repeat(3, 1fr)',
+            justifyContent: 'center',
             gap: '2rem',
           }}
         >
           {activePlans.map((plan) => {
-            const isRecommended = recommendedPlanId === plan.id;
+            const isRecommended = recommendedPlanId === plan.id || 
+              (recommendedPlanId === 'monthly-vip' && plan.id === 'yearly-vip') ||
+              (recommendedPlanId === 'yearly-vip' && plan.id === 'monthly-vip');
+            const isFeatured = plan.highlighted || isRecommended;
             const badgeText = getBadgeTranslation(plan);
             return (
             <div 
               key={plan.id}
-              className={`pricing-card glass-panel ${plan.highlighted ? 'featured' : ''}`}
+              className={`pricing-card glass-panel ${isFeatured ? 'featured' : ''}`}
               style={{
                 padding: isMobile ? '2.5rem 1.5rem 2rem' : '3.5rem 2.25rem 3rem',
                 borderRadius: '24px',
                 position: 'relative',
-                border: isRecommended ? '2px solid #10b981' : (plan.highlighted ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.12)'),
-                boxShadow: isRecommended ? '0 16px 40px rgba(16,185,129,0.16)' : (plan.highlighted ? '0 16px 40px rgba(255, 46, 147, 0.12)' : 'var(--glass-shadow)'),
-                background: plan.highlighted ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.04) 0%, rgba(255, 255, 255, 0.98) 100%)' : 'rgba(255, 255, 255, 0.8)',
+                border: isRecommended ? '2.5px solid var(--color-pink-primary)' : (isFeatured ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.12)'),
+                boxShadow: isRecommended ? '0 16px 48px rgba(255, 46, 147, 0.22), 0 0 0 1px rgba(255, 46, 147, 0.08)' : (isFeatured ? '0 16px 40px rgba(255, 46, 147, 0.12)' : 'var(--glass-shadow)'),
+                background: isFeatured ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.04) 0%, rgba(255, 255, 255, 0.98) 100%)' : 'rgba(255, 255, 255, 0.8)',
+                transform: isRecommended && !isMobile ? 'scale(1.03)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 ...(isMobile ? {
                   flex: '0 0 85vw',
                   maxWidth: '320px',
@@ -331,7 +408,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 </div>
               )}
               {badgeText && (
-                <div className="featured-badge" style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: plan.highlighted ? 'var(--gradient-pink-purple)' : 'rgba(255, 46, 147, 0.12)', color: plan.highlighted ? '#fff' : 'var(--color-pink-primary)', boxShadow: plan.highlighted ? '0 4px 10px var(--color-pink-glow)' : 'none', padding: '0.4rem 1.25rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div className="featured-badge" style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: isFeatured ? 'var(--gradient-pink-purple)' : 'rgba(255, 46, 147, 0.12)', color: isFeatured ? '#fff' : 'var(--color-pink-primary)', boxShadow: isFeatured ? '0 4px 10px var(--color-pink-glow)' : 'none', padding: '0.4rem 1.25rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {badgeText}
                 </div>
               )}
@@ -406,6 +483,48 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
               </p>
             </div>
           )})}
+        </div>
+
+        {/* Payment and Security Trust Badges */}
+        <div style={{ 
+          margin: '-3rem auto 5rem', 
+          maxWidth: '1080px',
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          gap: '1rem',
+          padding: '2rem 1.25rem',
+          borderRadius: '20px',
+          background: 'rgba(255, 255, 255, 0.4)',
+          border: '1px solid rgba(255, 46, 147, 0.08)',
+          boxShadow: 'var(--glass-shadow)',
+          backdropFilter: 'blur(10px)',
+          textAlign: 'center'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', fontSize: '0.88rem', fontWeight: 700 }}>
+            <ShieldCheck size={18} color="#10b981" />
+            <span>{t('audit.pricing.sslSecureCheckout') || '256-Bit SSL Encrypted & Secure Checkout'}</span>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', marginBottom: '0.5rem', fontWeight: 500 }}>
+            ✨ Your photos are 100% private and deleted immediately after processing. We never share your data.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+              <img src="/stripe.svg" alt="Stripe" style={{ height: '18px', maxWidth: '100%', objectFit: 'contain' }} />
+            </div>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+              <img src="/visa.svg" alt="Visa" style={{ height: '12px', maxWidth: '100%', objectFit: 'contain' }} />
+            </div>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+              <img src="/mastercard.svg" alt="Mastercard" style={{ height: '20px', maxWidth: '100%', objectFit: 'contain' }} />
+            </div>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+              <img src="/googlepay.svg" alt="Google Pay" style={{ height: '16px', maxWidth: '100%', objectFit: 'contain' }} />
+            </div>
+            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+              <img src="/applepay.svg" alt="Apple Pay" style={{ height: '16px', maxWidth: '100%', objectFit: 'contain' }} />
+            </div>
+          </div>
         </div>
 
         {/* Feature Comparison Table */}
@@ -487,6 +606,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 >
                   <button
                     onClick={() => toggleFaq(index)}
+                    aria-expanded={isOpened}
                     style={{
                       width: '100%',
                       padding: '1.25rem 1.5rem',

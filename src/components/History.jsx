@@ -58,12 +58,12 @@ export default function History({ history, onClearItem, onStartClick }) {
           >
             <HistoryIcon size={24} />
           </div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{t('audit.history.yourStyleGalleryIsEmpty')}</h3>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Your Style Gallery is Empty</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '350px', marginBottom: '1.5rem' }}>
-            Once you start generating styles in the customizer, your creations will appear here.
+            Ready for a gorgeous makeover? Try on stunning hairstyles and vibrant colors. Your flawless results will be saved right here!
           </p>
           <button className="btn btn-primary" onClick={onStartClick}>
-            <span>{t('audit.history.openCustomizerStudio')}</span>
+            <span>Create My First Look ✨</span>
           </button>
         </div>
       ) : (
