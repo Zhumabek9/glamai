@@ -18,9 +18,7 @@ const auth = require('./auth');
 const db = require('./db');
 const { callNanoBanana } = require('./nanobanana-bridge');
 
-const dynamicRequire = require;
-const jwksRsa = dynamicRequire('jwks-rsa');
-console.log('DEBUG dynamic jwksRsa type:', typeof jwksRsa, 'keys:', Object.keys(jwksRsa || {}), 'props:', Object.getOwnPropertyNames(jwksRsa || {}));
+const jwksRsa = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 
 function getClerkFrontendDomain() {
