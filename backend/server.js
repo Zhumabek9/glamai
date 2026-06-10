@@ -1272,7 +1272,7 @@ app.post('/api/generate', upload.single('image'), async (req, res) => {
         return res.status(400).json({ success: false, error: 'No image uploaded' });
     }
 
-    const isPremium = userRow && userRow.subscription_tier === 'premium' && userRow.subscription_status === 'active';
+    const isPremium = false; // VIP subscriptions now spend credits instead of having infinite generations
     let paidWith = null;
 
     if (!userRow) {

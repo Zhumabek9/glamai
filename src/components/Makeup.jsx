@@ -1,6 +1,6 @@
 import t from '../utils/i18n';
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Sparkles, Coins, Download, RefreshCw, Check, Camera, Share2, Lock, Star, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Palette, Smile, Flame, Heart, Wind } from 'lucide-react';
+import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
 import { useFavorites } from './Favorites';
@@ -30,6 +30,14 @@ const QUICK_PRESETS = [
   { id: 'date', name: 'Date Night', icon: '💅', preset: 'soft-glam' },
   { id: 'bold', name: 'Bold & Bright', icon: '💋', preset: 'siren-eyes' },
   { id: 'natural', name: 'Natural Glow', icon: '🌸', preset: 'bronze' },
+];
+
+const COMMUNITY_FEED = [
+  { id: 'bronze', name: 'Sunkissed Bronze', before: '/trending_makeup_before.png', after: '/styles/makeup_natural.png', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
+  { id: 'siren-eyes', name: 'Siren Eyes', before: '/trending_makeup_before.png', after: '/styles/makeup_siren_eyes.png', desc: 'Elongated winged liner, smoked out edges, and dramatic lifted eyes.' },
+  { id: 'latte-makeup', name: 'Latte Contour', before: '/trending_makeup_before.png', after: '/styles/makeup_latte.png', desc: 'Warm caramel tones, soft brown smoky eyes, and nude glossy lips.' },
+  { id: 'clean-girl', name: 'Clean Girl Look', before: '/trending_makeup_before.png', after: '/styles/makeup_clean_girl.webp', desc: 'Minimalist editorial look, fresh hyper-hydrated skin, and natural definition.' },
+  { id: 'soft-glam', name: 'Soft Glamour', before: '/trending_makeup_before.png', after: '/styles/makeup_soft_glam.webp', desc: 'Warm brown smoky eyes, neutral lips, and radiant finish.' }
 ];
 
 const LIPSTICKS = [
@@ -223,8 +231,8 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       return;
     }
 
-    // Logged-in user with no tokens — redirect to pricing (unless account is unlimited)
-    const isUnlimited = user?.subscriptionTier === 'premium' && user?.subscriptionStatus === 'active';
+    // Logged-in user with no tokens — redirect to pricing
+    const isUnlimited = false; // VIP subscriptions now spend credits instead of having infinite generations
     if (!isGuest && !isUnlimited && availableTokens < 10) {
       toast.error('You need at least 10 tokens to generate makeup!');
       setActiveTab('pricing');
@@ -302,8 +310,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       const data = await res.json();
       
       if (data.success) {
-        const newId = 'makeup-' + Date.now();
-        setCurrentResultId(newId);
+        // Result ID is managed by server or created locally inside event handler, not render body.
         setResultImage(data.imageUrl);
         setProgress(100);
         setSliderPosition(50);
@@ -315,7 +322,6 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         }
 
         onAddHistory({
-          id: `history-makeup-${Date.now()}`,
           original: image,
           result: data.imageUrl,
           style: presetObj ? presetObj.name : 'Makeup',
@@ -364,7 +370,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
     setFeedback(type);
     if (type === 'like') {
       setFeedbackSubmitted(true);
-      toast.success('Thank you for your rating! ❤️');
+      toast.success(t('audit.makeup.thanksRating'));
     }
   };
 
@@ -387,7 +393,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           <span className="gradient-text">{t('audit.makeup.aiMakeupStudio')}</span>
         </h1>
         <p className="landing-subtitle">
-          Try luxury lipsticks, eyeliners, and makeup presets tailored to your unique skin tone — no smudge, no commitment.
+          {t('audit.makeup.landingSubtitle')}
         </p>
         <div className="landing-stats">
           <div className="stat-badge"><Sparkles size={14} color="var(--color-pink-primary)" /><span>{t('audit.makeup.biometricToneMatching')}</span></div>
@@ -412,7 +418,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
               <span>{t('audit.makeup.aiMakeupWorkspace')}</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Choose a quick preset or customize every detail.
+              {t('audit.makeup.workspaceDesc')}
             </p>
           </div>
 
@@ -429,14 +435,14 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                   const random = MAKEUP_PRESETS[Math.floor(Math.random() * MAKEUP_PRESETS.length)];
                   setSelectedPreset(random.id);
                   setActiveQuickPreset(null);
-                  toast.success(`🎲 Random: ${random.name}`);
+                  toast.success(`🎲 ${t('audit.makeup.random')}: ${random.name}`);
                   scrollToPreview();
                 }}
                 style={{ background: 'rgba(255,46,147,0.1)', border: '1px solid rgba(255,46,147,0.25)', borderRadius: '8px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,46,147,0.2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,46,147,0.1)'}
               >
-                🎲 Random
+                🎲 {t('audit.makeup.randomBtn')}
               </button>
             </div>
             <div className="smart-presets-row">
@@ -529,10 +535,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {isGuest ? `Free credits left: ${guestTokens ?? 0}` : `Credits left: ${user?.tokens ?? 0}`}
+                {isGuest ? `${t('audit.makeup.freeCreditsLeft')}: ${guestTokens ?? 0}` : `${t('audit.makeup.creditsLeft')}: ${user?.tokens ?? 0}`}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
-                This render: 10 Tokens
+                {t('audit.makeup.thisRenderTokens')}
               </span>
             </div>
           </div>
@@ -553,7 +559,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <div className="progress-bar" style={{ width: `${progress}%` }}></div>
               </div>
               <span className="loading-text">{loadingText}</span>
-              <span className="loading-subtext">{progress}% • ~{etaRemaining}s remaining</span>
+              <span className="loading-subtext">{progress}% • ~{etaRemaining}s {t('audit.makeup.remaining')}</span>
             </div>
           )}
 
@@ -601,7 +607,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                       if (!currentResultId) return;
                       if (isFavorite(currentResultId)) { 
                         removeFavorite(currentResultId); 
-                        toast.success('Removed from favourites'); 
+                        toast.success(t('audit.makeup.removedFromFavourites')); 
                       } else { 
                         addFavorite({ 
                           id: currentResultId, 
@@ -610,7 +616,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                           category: '💄 Makeup', 
                           date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) 
                         }); 
-                        toast.success('Saved to favourites ❤️'); 
+                        toast.success(t('audit.makeup.savedToFavourites')); 
                       }
                     }}
                   >
@@ -672,8 +678,6 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 </button>
               </div>
               
-              <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-              <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
             </div>
           ) : (
 
@@ -690,12 +694,12 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                 <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={handleReset}>
                   <span>{t('audit.makeup.deletePhoto')}</span>
                 </button>
-                
-                <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
-                <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
               </div>
             )
           )}
+
+          <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
 
           {/* Generate Button (positioned under upload dropzone) */}
           {image && (
@@ -742,10 +746,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         </div>
         <div className="transformations-grid">
           {[
-            { id: 1, title: 'Korean Peach Gloss', path: '/styles/makeup_korean.png', hot: true },
-            { id: 2, title: 'Smoky Glam Vibe', path: '/styles/makeup_glam.png' },
-            { id: 3, title: 'Champagne Bridal', path: '/styles/makeup_bridal.png' },
-            { id: 4, title: 'Dewy Natural Glow', path: '/styles/makeup_natural.png' },
+            { id: 1, title: t('audit.makeup.peachGloss'), path: '/styles/makeup_korean.png', hot: true },
+            { id: 2, title: t('audit.makeup.smokyGlam'), path: '/styles/makeup_glam.png' },
+            { id: 3, title: t('audit.makeup.champagneBridal'), path: '/styles/makeup_bridal.png' },
+            { id: 4, title: t('audit.makeup.dewyGlow'), path: '/styles/makeup_natural.png' },
           ].map(tData => (
             <div key={tData.id} className="transformation-card-outer">
               <div className="transformation-card glass-panel" style={{ padding: '0.5rem' }}>
@@ -760,7 +764,79 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
         </div>
       </div>
 
-
+      {/* Community Preset Feed */}
+      <div className="landing-section community-preset-feed" style={{ marginTop: '3rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '3rem' }}>
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">{t('audit.makeup.communityFeed') || 'Lookbook'}</span>
+            <h2>{t('audit.makeup.communityPresetsTitle') || 'Trending Lookbook & Presets'}</h2>
+            <p>{t('audit.makeup.communityPresetsDesc') || 'Explore community-favorite makeovers. Click "Try Preset" to apply the style instantly.'}</p>
+          </div>
+          
+          <div className="community-presets-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
+            marginTop: '2rem'
+          }}>
+            {COMMUNITY_FEED.map(look => (
+              <div key={look.id} className="preset-feed-card glass-panel" style={{
+                padding: '1rem',
+                borderRadius: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.8rem',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                transition: 'all 0.3s ease',
+                overflow: 'hidden'
+              }}>
+                {/* Before / After side by side */}
+                <div className="side-by-side-wrapper" style={{ display: 'flex', gap: '0.5rem', height: '180px', borderRadius: '12px', overflow: 'hidden' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <img src={look.before} alt={t('audit.retouch.before')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>{t('audit.retouch.before')}</span>
+                  </div>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <img src={look.after} alt={t('audit.retouch.after')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'var(--color-pink-primary)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>{t('audit.retouch.after')}</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0 0.25rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>{look.name}</h4>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, minHeight: '38px', lineHeight: '1.4' }}>{look.desc}</p>
+                </div>
+                
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setSelectedPreset(look.id);
+                    setActiveQuickPreset(null);
+                    toast.success(`${t('audit.makeup.presetLoaded') || 'Preset loaded'}: ${look.name}`);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.65rem 1rem', 
+                    fontSize: '0.8rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justify: 'center', 
+                    gap: '0.5rem',
+                    marginTop: 'auto',
+                    boxShadow: '0 4px 12px rgba(255,46,147,0.15)'
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>{t('audit.makeup.tryPreset') || 'Try Preset'}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* FAQ */}
       <div className="landing-section faq-section" style={{ background: 'transparent' }}>
@@ -771,14 +847,14 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
             {[
-              { q: 'Will the AI alter my facial bone structure?', a: 'No. Our AI only overlays cosmetics — eye shadow, liners, and lipstick. Your underlying facial anatomy stays completely original.' },
-              { q: 'Can I test lipstick if my mouth is closed?', a: 'Yes! The biometric detector maps lip margins in closed, neutral, and smiling expressions for accurate lipstick application.' },
-              { q: 'Can it render matte and glossy finishes separately?', a: 'Yes — presets like Natural use dewy glass skin finishes, while the Matte preset creates a velvet skin look.' }
+              { q: t('audit.makeup.faq.q1'), a: t('audit.makeup.faq.a1') },
+              { q: t('audit.makeup.faq.q2'), a: t('audit.makeup.faq.a2') },
+              { q: t('audit.makeup.faq.q3'), a: t('audit.makeup.faq.a3') }
             ].map((item, idx) => {
               const isOpened = openFaq === idx;
               return (
                 <div key={idx} style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden' }}>
-                  <button onClick={() => toggleFaq(idx)} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  <button onClick={() => toggleFaq(idx)} aria-expanded={isOpened} style={{ width: '100%', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                     <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1, paddingRight: '1rem', minWidth: '0' }}>
                       <HelpCircle size={16} color="var(--color-pink-primary)" style={{ flexShrink: 0, marginTop: '3px' }} />
                       <span style={{ flex: 1, minWidth: '0' }}>{item.q}</span>
@@ -801,10 +877,10 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       <div className="landing-section bottom-cta-section" style={{ textAlign: 'center' }}>
         <div className="container" style={{ maxWidth: '680px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, background: 'var(--gradient-text)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '1rem' }}>
-            Find Your Perfect Makeup Look
+            {t('audit.makeup.ctaTitle')}
           </h2>
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: '1.6' }}>
-            Instantly preview your flawless makeover. No physical testing, no expensive buyer's remorse.
+            {t('audit.makeup.ctaSubtitle')}
           </p>
           <button className="btn btn-primary" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ padding: '1rem 2rem', fontSize: '1rem', boxShadow: '0 10px 20px var(--color-pink-glow)' }}>
             <span>{t('audit.makeup.createYourLookNow')}</span>

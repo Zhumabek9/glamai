@@ -44,8 +44,8 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
   };
 
   const handleGenerate = async () => {
-    const isPremium = user && user.subscriptionTier === 'premium';
-    const tokenCost = isPremium ? 0 : 10;
+    const isPremium = false; // VIP subscriptions now spend credits instead of having infinite generations
+    const tokenCost = 10;
     const isGuest = !user || user.isGuest;
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
 
