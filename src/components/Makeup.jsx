@@ -103,7 +103,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'bronze', lipstickId: 'none' }]);
+  const [selectedCombinations, setSelectedCombinations] = useState([]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -971,7 +971,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             <div className="generate-action-box">
               <button 
                 className="btn btn-primary generate-btn-large" 
-                disabled={isGenerating}
+                disabled={isGenerating || selectedCombinations.length === 0}
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
@@ -1158,7 +1158,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       </div>
 
       {/* Mobile Fixed CTA */}
-      {image && !isGenerating && showFixedCta && (
+      {image && !isGenerating && showFixedCta && selectedCombinations.length > 0 && (
         <div className="mobile-generate-cta">
           <button 
             type="button"

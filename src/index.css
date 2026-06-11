@@ -607,6 +607,61 @@ button, .btn {
   color: var(--text-primary);
 }
 
+/* ── Dark Mode: Mobile Drawer / Sidebar ── */
+[data-theme='dark'] .mobile-drawer {
+  background: rgba(10, 6, 18, 0.97) !important;
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 46, 147, 0.15) !important;
+}
+
+[data-theme='dark'] .mobile-nav-item {
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .mobile-nav-item:hover,
+[data-theme='dark'] .mobile-nav-item.active {
+  color: var(--color-pink-primary) !important;
+  background: rgba(255, 46, 147, 0.1) !important;
+}
+
+[data-theme='dark'] .mobile-drawer-footer {
+  border-top-color: rgba(255, 46, 147, 0.15) !important;
+}
+
+[data-theme='dark'] .mobile-lang-btn {
+  color: var(--text-secondary) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme='dark'] .mobile-lang-btn.active {
+  color: var(--color-pink-primary) !important;
+  background: rgba(255, 46, 147, 0.12) !important;
+  border-color: var(--color-pink-primary) !important;
+}
+
+[data-theme='dark'] .mobile-lang-row {
+  border-top-color: rgba(255, 46, 147, 0.12) !important;
+}
+
+/* ── Dark Mode: Quick Preset Chips ── */
+[data-theme='dark'] .preset-chip {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 46, 147, 0.2) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .preset-chip:hover {
+  background: rgba(255, 46, 147, 0.12) !important;
+  border-color: var(--color-pink-primary) !important;
+  color: var(--color-pink-primary) !important;
+}
+
+[data-theme='dark'] .preset-chip.active {
+  background: rgba(255, 46, 147, 0.18) !important;
+  border-color: var(--color-pink-primary) !important;
+  color: var(--color-pink-primary) !important;
+}
+
 
 
 

@@ -87,7 +87,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'french', globalColorId: 'default' }]);
+  const [selectedCombinations, setSelectedCombinations] = useState([]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -121,6 +121,10 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const previewPanelRef = useRef(null);
 
   const isGuest = !user || user.isGuest;
+
+  const activeCost = selectedCombinations.length > 0 
+    ? selectedCombinations.length * 10 
+    : (activeFinger !== 'all' ? 10 : 0);
 
   // Monitor scroll positioning to hide/show the mobile floating button appropriately
   useEffect(() => {
@@ -176,8 +180,20 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
   const handleGenerate = async () => {
     const isGuest = !user || user.isGuest;
+    
+    // Automatically add custom multi-finger layout to batch if selectedCombinations is empty
+    let combosToGenerate = [...selectedCombinations];
+    if (combosToGenerate.length === 0 && activeFinger !== 'all') {
+      combosToGenerate = [{ id: Date.now(), fingerCustomizations: JSON.parse(JSON.stringify(fingerCustomizations)) }];
+    }
+    
+    if (combosToGenerate.length === 0) {
+      toast.error('Please select a nail design first!');
+      return;
+    }
+
     const availableTokens = isGuest ? (guestTokens ?? 0) : (user?.tokens ?? 0);
-    const calculatedCost = selectedCombinations.length * 10;
+    const calculatedCost = combosToGenerate.length * 10;
 
     setFeedback(null);
     setFeedbackSubmitted(false);
@@ -195,7 +211,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       return;
     }
 
-    if (isGuest && selectedCombinations.length > 1) {
+    if (isGuest && combosToGenerate.length > 1) {
       toast.error('Free generation allows only 1 design. Sign up to generate multiple!');
       setActiveTab('pricing');
       return;
@@ -204,7 +220,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
     setIsGenerating(true);
     setProgress(0);
     setLoadingText('Uploading hand photo...');
-    setEtaRemaining(30 * selectedCombinations.length);
+    setEtaRemaining(30 * combosToGenerate.length);
 
     setTimeout(() => {
       if (typeof window !== "undefined" && window.innerWidth < 1024 && previewPanelRef.current) {
@@ -226,7 +242,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
     try {
       const baseTime = Date.now();
-      const initialResults = selectedCombinations.map((combo, idx) => {
+      const initialResults = combosToGenerate.map((combo, idx) => {
         const presetObj = combo.presetId ? NAIL_PRESETS.find(n => n.id === combo.presetId) : null;
         const colorObj = combo.globalColorId ? FINGER_COLORS.find(c => c.id === combo.globalColorId) : null;
         const sName = presetObj ? presetObj.name : 'Custom Nails';
@@ -246,8 +262,8 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       setResultImages(initialResults);
       setActiveResultIndex(0);
 
-      for (let i = 0; i < selectedCombinations.length; i++) {
-        const combo = selectedCombinations[i];
+      for (let i = 0; i < combosToGenerate.length; i++) {
+        const combo = combosToGenerate[i];
         const presetObj = combo.presetId ? NAIL_PRESETS.find(n => n.id === combo.presetId) : null;
         const colorObj = combo.globalColorId ? FINGER_COLORS.find(c => c.id === combo.globalColorId) : null;
         const shapeObj = NAIL_SHAPES.find(s => s.id === selectedShape);
@@ -353,7 +369,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           toast.error(err.message || 'AI Nails render failed.');
         }
 
-        if (i < selectedCombinations.length - 1) {
+        if (i < combosToGenerate.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
@@ -783,7 +799,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                 {isGuest ? `${t('audit.makeup.freeCreditsLeft')}: ${guestTokens ?? 0}` : `${t('audit.makeup.creditsLeft')}: ${user?.tokens ?? 0}`}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--color-pink-primary)', fontWeight: 700 }}>
-                This render: -{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''}
+                This render: -{activeCost} Token{activeCost > 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -1041,13 +1057,13 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <div className="generate-action-box">
               <button 
                 className="btn btn-primary generate-btn-large" 
-                disabled={isGenerating}
+                disabled={isGenerating || (selectedCombinations.length === 0 && activeFinger === 'all')}
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
                 <span>{t('audit.nails.applyAiNails')}</span>
                 <span className="generate-btn-cost">
-                  (-{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''})
+                  (-{activeCost} Token{activeCost > 1 ? 's' : ''})
                 </span>
               </button>
               
@@ -1159,7 +1175,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
       </div>
 
       {/* Mobile Fixed CTA */}
-      {image && !isGenerating && showFixedCta && (
+      {image && !isGenerating && showFixedCta && (selectedCombinations.length > 0 || activeFinger !== 'all') && (
         <div className="mobile-generate-cta">
           <button 
             type="button"
@@ -1169,7 +1185,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
             <Sparkles size={18} style={{ marginRight: '0.5rem' }} />
             <span>{t('audit.nails.applyAiNails')}</span>
             <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: '0.25rem' }}>
-              (-{selectedCombinations.length * 10} Token{selectedCombinations.length * 10 > 1 ? 's' : ''})
+              (-{activeCost} Token{activeCost > 1 ? 's' : ''})
             </span>
           </button>
         </div>

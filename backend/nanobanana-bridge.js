@@ -518,29 +518,164 @@ function parseBeardDescription(beardStyle) {
 function parseNailsDescription(nailStyle) {
     if (!nailStyle) return "classic neat manicure with a glossy finish";
     const nailLower = nailStyle.toLowerCase();
-    
-    // 1. Detect Design
+
+    // Helper to get descriptive text for a finger design
+    function getSingleFingerDescription(presetName, colorName) {
+        const presetLower = presetName.toLowerCase();
+        const colorLower = colorName.toLowerCase();
+        const colorVal = (colorLower === 'matching shade' || colorLower === 'default') ? '' : colorName;
+
+        if (presetLower.includes('french tip') || presetLower.includes('french')) {
+            if (presetLower.includes('chrome')) {
+                return `French tip design with ${colorVal || 'metallic silver'} chrome tips`;
+            }
+            return `classic French tip manicure with a nude base and clean ${colorVal || 'white'} crescent tips`;
+        }
+        if (presetLower.includes('chrome')) {
+            return `mirror chrome liquid metal finish with ${colorVal || 'silver'} metallic glaze`;
+        }
+        if (presetLower.includes('marble') || presetLower.includes('acrylic')) {
+            return `${colorVal || 'pink-and-white'} marble design with swirling veins and gold flakes`;
+        }
+        if (presetLower.includes('gold foil') || presetLower.includes('luxury')) {
+            return `gold leaf flakes and tiny gemstone accents over ${colorVal || 'nude'} base`;
+        }
+        if (presetLower.includes('minimal') || presetLower.includes('nude')) {
+            return `minimalist sheer glossy ${colorVal || 'nude'} gel polish`;
+        }
+        if (presetLower.includes('blush') || presetLower.includes('pink')) {
+            return `solid ${colorVal || 'soft candy pink'} gel polish`;
+        }
+        if (presetLower.includes('black') || presetLower.includes('goth')) {
+            return `solid glossy ${colorVal || 'obsidian black'} lacquer`;
+        }
+        if (presetLower.includes('cat-eye') || presetLower.includes('cat eye')) {
+            return `magnetic ${colorVal || 'velvet'} cat-eye polish with a dimensional light stripe`;
+        }
+        if (presetLower.includes('aurora')) {
+            return `iridescent ${colorVal || 'pearl'} aurora glass finish with holographic reflections`;
+        }
+        if (presetLower.includes('aura')) {
+            return `soft gradient aura glow circle design with a ${colorVal || 'pink'} center`;
+        }
+        if (presetLower.includes('tortoiseshell')) {
+            return `translucent tortoiseshell print with amber and ${colorVal || 'brown'} spots`;
+        }
+        if (presetLower.includes('water drop') || presetLower.includes('3d water')) {
+            return `clear 3D water droplets over a glossy ${colorVal || 'nude'} base`;
+        }
+        // Classic or default
+        return `solid ${colorVal || 'glossy'} color nail polish`;
+    }
+
+    // Check if this is a multi-finger custom description
+    if (nailLower.startsWith('custom multi-finger')) {
+        const shapeMatch = nailStyle.match(/Shape:\s*([^.]+)/i);
+        const textureMatch = nailStyle.match(/Texture:\s*([^.]+)/i);
+        const shape = shapeMatch ? shapeMatch[1].trim() : '';
+        const texture = textureMatch ? textureMatch[1].trim() : '';
+
+        const fingers = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+        const fingerDescriptions = [];
+        
+        fingers.forEach(f => {
+            // Match pattern like: "thumb finger has French Tip design in Candy Pink"
+            const regex = new RegExp(`${f}\\s+finger\\s+has\\s+(.+?)\\s+design\\s+in\\s+(.+?)(?:,|$|\\.)`, 'i');
+            const match = nailStyle.match(regex);
+            if (match) {
+                const presetName = match[1].trim();
+                const colorName = match[2].trim();
+                const desc = getSingleFingerDescription(presetName, colorName);
+                fingerDescriptions.push(`the ${f} finger has a ${desc}`);
+            }
+        });
+
+        let finalDesc = "a highly customized manicure where: " + fingerDescriptions.join(', ') + ".";
+        
+        if (shape) {
+            let shapeDesc = "";
+            const shapeLower = shape.toLowerCase();
+            if (shapeLower.includes('almond')) shapeDesc = "elegant tapered almond-shaped nails";
+            else if (shapeLower.includes('coffin')) shapeDesc = "long flat-tipped coffin-shaped square-ended acrylic nails";
+            else if (shapeLower.includes('stiletto')) shapeDesc = "long sharp pointed stiletto-shaped nails";
+            else if (shapeLower.includes('square') && !shapeLower.includes('squoval')) shapeDesc = "neat straight-edged flat square-shaped nails";
+            else if (shapeLower.includes('squoval')) shapeDesc = "soft squoval-shaped nails (square with rounded corners)";
+            else if (shapeLower.includes('round')) shapeDesc = "natural looking short round-shaped nails";
+            else shapeDesc = `${shape} shaped nails`;
+            
+            finalDesc += ` All fingernails are shaped as ${shapeDesc}.`;
+        }
+
+        if (texture) {
+            let textureDesc = "";
+            const textureLower = texture.toLowerCase();
+            if (textureLower.includes('liquid chrome') || textureLower.includes('liquid-chrome')) textureDesc = "ultra-reflective high-shine liquid metallic chrome finish";
+            else if (textureLower.includes('glazed donut') || textureLower.includes('glazed-donut')) textureDesc = "pearly iridescent glazed donut shimmer top coat finish";
+            else if (textureLower.includes('marble foil') || textureLower.includes('marble-foil')) textureDesc = "swirled multi-tonal marble texture with metallic foil accents";
+            else if (textureLower.includes('glossy gel') || textureLower.includes('glossy-gel')) textureDesc = "plump high-gloss gel top coat shine finish";
+            else if (textureLower.includes('velvet matte') || textureLower.includes('velvet-matte')) textureDesc = "velvety soft-touch matte finish with zero shine";
+            else if (textureLower.includes('pearl') || textureLower.includes('pearl powder')) textureDesc = "luminous pearl powder shimmer finish";
+            else textureDesc = `${texture} finish`;
+
+            finalDesc += ` All nails have a ${textureDesc}.`;
+        }
+
+        return finalDesc;
+    }
+
+    // Extract explicit color from "in [Color Name]" pattern
+    let explicitColor = "";
+    const colorMatch = nailStyle.match(/\bin\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|$)/);
+    if (colorMatch && colorMatch[1]) {
+        const colorName = colorMatch[1].trim();
+        // Don't treat common words as colors
+        const skipWords = ['the', 'a', 'an', 'classic', 'default', 'matching'];
+        if (!skipWords.includes(colorName.toLowerCase()) && colorName.toLowerCase() !== 'default color') {
+            explicitColor = colorName;
+        }
+    }
+
+    // 1. Detect Design with color injection
     let designDesc = "";
+    const colorVal = (explicitColor && explicitColor.toLowerCase() !== 'default') ? explicitColor : "";
+
     if (nailLower.includes('french')) {
-        designDesc = "classic French manicure nails with pink bases and clean white tips";
-    } else if (nailLower.includes('chrome') || nailLower.includes('mirror chrome')) {
-        designDesc = "mirror chrome nail art design, futuristic metallic glaze";
-    } else if (nailLower.includes('acrylic') || nailLower.includes('marble acrylic')) {
-        designDesc = "elegant pink marble acrylic nail art design with swirling veins and gold flakes";
+        if (nailLower.includes('chrome')) {
+            designDesc = `French tip nail design with ${colorVal || 'metallic silver'} chrome tip finish`;
+        } else {
+            designDesc = `classic French manicure nails with pink bases and clean ${colorVal || 'white'} tips`;
+        }
+    } else if (nailLower.includes('chrome') && !nailLower.includes('chrome french')) {
+        designDesc = `mirror chrome nail art design, futuristic ${colorVal || 'silver'} metallic glaze`;
+    } else if (nailLower.includes('acrylic') || nailLower.includes('marble acrylic') || nailLower.includes('marble')) {
+        designDesc = `elegant ${colorVal || 'pink'} marble acrylic nail art design with swirling veins and gold flakes`;
     } else if (nailLower.includes('luxury') || nailLower.includes('gold foil')) {
-        designDesc = "luxury nail art design decorated with gold foil leafing and tiny subtle gemstone accents";
-    } else if (nailLower.includes('minimal') || nailLower.includes('minimalist')) {
-        designDesc = "minimalist sheer nude gel nail design, clean polished look";
-    } else if (nailLower.includes('pink') || nailLower.includes('blush pink')) {
-        designDesc = "sweet blush cotton candy pink solid color nail design";
-    } else if (nailLower.includes('black') || nailLower.includes('goth glossy black')) {
-        designDesc = "edgy glossy solid jet black nail design";
+        designDesc = `luxury nail art design decorated with gold foil leafing and tiny subtle gemstone accents over ${colorVal || 'nude'} base color`;
+    } else if (nailLower.includes('minimal') || nailLower.includes('minimalist') || nailLower.includes('nude')) {
+        designDesc = `minimalist sheer ${colorVal || 'nude'} gel nail design, clean polished look`;
+    } else if (nailLower.includes('cat-eye') || nailLower.includes('cat eye')) {
+        designDesc = `magnetic ${colorVal || 'velvet'} cat-eye nail design with a dimensional light stripe effect`;
+    } else if (nailLower.includes('aurora') || nailLower.includes('aurora glass')) {
+        designDesc = `iridescent ${colorVal || 'pearl'} aurora glass nail design with shifting holographic reflections`;
+    } else if (nailLower.includes('aura') || nailLower.includes('aura gradient')) {
+        designDesc = `soft gradient aura glow circle nail design with ${colorVal || 'dreamy color'} blend center`;
+    } else if (nailLower.includes('tortoiseshell')) {
+        designDesc = `translucent tortoiseshell animal print nail design with ${colorVal || 'amber'} and brown spots`;
+    } else if (nailLower.includes('water drop') || nailLower.includes('3d water')) {
+        designDesc = `clear 3D water droplet gel nail design over ${colorVal || 'glossy'} base`;
+    } else if (nailLower.includes('pink') || nailLower.includes('blush pink') || nailLower.includes('soft blush')) {
+        designDesc = `${colorVal || 'sweet blush cotton candy pink'} solid color nail design`;
+    } else if (nailLower.includes('black') || nailLower.includes('goth')) {
+        designDesc = `${colorVal || 'edgy glossy solid jet black'} nail design`;
     } else {
         const match = nailStyle.match(/^([^.,]+)/);
         if (match && match[1]) {
             designDesc = `${match[1].trim()} nail design`;
         } else {
             designDesc = "manicure nail design";
+        }
+        if (colorVal) {
+            designDesc += ` in ${colorVal} color`;
         }
     }
 
@@ -552,8 +687,10 @@ function parseNailsDescription(nailStyle) {
         shapeDesc = "long flat-tipped coffin-shaped square-ended acrylic nails";
     } else if (nailLower.includes('stiletto')) {
         shapeDesc = "long sharp pointed stiletto-shaped nails";
-    } else if (nailLower.includes('square')) {
+    } else if (nailLower.includes('square') && !nailLower.includes('squoval')) {
         shapeDesc = "neat straight-edged flat square-shaped nails";
+    } else if (nailLower.includes('squoval')) {
+        shapeDesc = "soft squoval-shaped nails (square with rounded corners)";
     } else if (nailLower.includes('round')) {
         shapeDesc = "natural looking short round-shaped nails";
     } else {
@@ -575,6 +712,8 @@ function parseNailsDescription(nailStyle) {
         textureDesc = "plump high-gloss gel top coat shine finish";
     } else if (nailLower.includes('velvet matte') || nailLower.includes('velvet-matte')) {
         textureDesc = "velvety soft-touch matte finish with zero shine";
+    } else if (nailLower.includes('pearl') || nailLower.includes('pearl powder')) {
+        textureDesc = "luminous pearl powder shimmer finish";
     } else {
         const match = nailStyle.match(/Texture:\s*([^.]+)/i);
         if (match && match[1] && match[1].trim().toLowerCase() !== 'none') {
@@ -591,6 +730,7 @@ function parseNailsDescription(nailStyle) {
     }
     return finalDesc;
 }
+
 
 async function callNanoBanana(imagePath, options) {
     // Read local file into base64 data URI

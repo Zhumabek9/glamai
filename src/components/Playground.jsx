@@ -261,7 +261,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   const [imageFile, setImageFile] = useState(null);
   const [selectedGender, setSelectedGender] = useState('female');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedStyles, setSelectedStyles] = useState([{ id: Date.now(), styleId: 'no_change', colorId: 'ai-recommended' }]);
+  const [selectedStyles, setSelectedStyles] = useState([]);
   const [selectedColor, setSelectedColor] = useState('ai-recommended');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -1555,7 +1555,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
             <div className="generate-action-box">
               <button 
                 className="btn btn-primary generate-btn-large" 
-                disabled={!image || isGenerating}
+                disabled={!image || isGenerating || selectedStyles.length === 0}
                 onClick={() => { handleGenerate(); }}
               >
                 <Sparkles size={18} />
@@ -1685,7 +1685,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
 
       {/* Mobile Fixed CTA */}
-      {image && !isGenerating && showFixedCta && (
+      {image && !isGenerating && showFixedCta && selectedStyles.length > 0 && (
         <div className="mobile-generate-cta">
           <button 
             type="button"

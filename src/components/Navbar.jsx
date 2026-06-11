@@ -358,9 +358,6 @@ export default function Navbar({ activeTab, setActiveTab, user, guestTokens, onL
                   onClick={() => handleLanguageChange(langCode)}
                   className={`mobile-lang-btn ${currentLang === langCode ? 'active' : ''}`}
                   style={{
-                    background: currentLang === langCode ? 'rgba(255, 46, 147, 0.1)' : 'transparent',
-                    border: '1px solid ' + (currentLang === langCode ? 'var(--color-pink-primary)' : 'rgba(0,0,0,0.05)'),
-                    color: currentLang === langCode ? 'var(--color-pink-primary)' : 'var(--text-secondary)',
                     borderRadius: '8px',
                     padding: '0.35rem 0.65rem',
                     fontSize: '0.78rem',

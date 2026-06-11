@@ -114,6 +114,19 @@
   align-items: center;
 }
 
+.mobile-lang-btn {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.mobile-lang-btn.active {
+  background: rgba(255, 46, 147, 0.1);
+  border-color: var(--color-pink-primary);
+  color: var(--color-pink-primary);
+}
+
 .nav-item {
   color: var(--text-secondary);
   text-decoration: none;
