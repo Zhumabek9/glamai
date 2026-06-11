@@ -3,10 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart, Download, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { compressImage } from '../utils/image';
+import CameraModal from './CameraModal';
 import { useFavorites } from './Favorites';
 import ShareStoriesModal from './ShareStoriesModal';
 import SliderComparison from './SliderComparison';
 import confetti from 'canvas-confetti';
+import { isTelegramApp, handleDownloadClick, downloadAllTelegram, shareResult } from '../utils/telegramHelper';
 
 const NAIL_PRESETS = [
   { id: 'french', name: 'French Tip', image: '/styles/nails_french.png', desc: 'Classic nude pink base with clean, crisp white crescent tips.' },
@@ -17,7 +20,11 @@ const NAIL_PRESETS = [
   { id: 'pink', name: 'Soft Blush', image: '/styles/nails_pink.png', desc: 'Sweet, opaque pastel cotton-candy pink gel polish.' },
   { id: 'black', name: 'Goth Black', image: '/styles/nails_black.png', desc: 'Deep obsidian black lacquer with a mirror-shine gloss coat.' },
   { id: 'cat-eye', name: 'Cat-Eye', image: '/styles/nails_cat_eye.png', desc: 'Magnetic dimensional velvet polish that shifts in the light.' },
-  { id: 'aurora', name: 'Aurora Glass', image: '/styles/nails_aurora.png', desc: 'Iridescent pearl glaze with shifting lilac and teal reflections.' }
+  { id: 'aurora', name: 'Aurora Glass', image: '/styles/nails_aurora.png', desc: 'Iridescent pearl glaze with shifting lilac and teal reflections.' },
+  { id: 'aura-gradient', name: 'Aura Gradient', image: '/styles/nails_aura_gradient.png', desc: 'Soft gradient circle in the center, resembling an aura glow.' },
+  { id: 'tortoiseshell', name: 'Tortoiseshell', image: '/styles/nails_tortoiseshell.png', desc: 'Translucent animal print mimicking a tortoise shell with amber spots.' },
+  { id: 'water-drops', name: '3D Water Drops', image: '/styles/nails_water_drops.png', desc: 'Clear 3D gel drops simulating morning dew.' },
+  { id: 'chrome-french', name: 'Chrome French', image: '/styles/nails_chrome_french.png', desc: 'Classic french tip but with metallic silver or gold chrome.' }
 ];
 
 const FINGER_COLORS = [
@@ -33,7 +40,11 @@ const FINGER_COLORS = [
   { id: 'cherry-red', name: 'Cherry Red', hex: '#c21e56', hot: true },
   { id: 'neon-green', name: 'Neon Green', hex: '#39ff14' },
   { id: 'baby-blue', name: 'Baby Blue', hex: '#89cff0' },
-  { id: 'mocha-brown', name: 'Mocha Brown', hex: '#493d33' }
+  { id: 'mocha-brown', name: 'Mocha Brown', hex: '#493d33' },
+  { id: 'butter-yellow', name: 'Butter Yellow', hex: '#fff59d', hot: true },
+  { id: 'matcha-green', name: 'Matcha Green', hex: '#c5e1a5' },
+  { id: 'cyber-silver', name: 'Cyber Silver', hex: '#c0c0c0', hot: true },
+  { id: 'oxblood', name: 'Oxblood', hex: '#4a0404' }
 ];
 
 const QUICK_PRESETS = [
@@ -48,7 +59,8 @@ const NAIL_SHAPES = [
   { id: 'coffin', name: 'Coffin' },
   { id: 'stiletto', name: 'Stiletto' },
   { id: 'square', name: 'Square' },
-  { id: 'round', name: 'Round' }
+  { id: 'round', name: 'Round' },
+  { id: 'squoval', name: 'Squoval', hot: true }
 ];
 
 const NAIL_TEXTURES = [
@@ -56,7 +68,8 @@ const NAIL_TEXTURES = [
   { id: 'glazed-donut', name: 'Glazed Donut' },
   { id: 'marble-foil', name: 'Marble Foil' },
   { id: 'glossy-gel', name: 'Glossy Gel' },
-  { id: 'velvet-matte', name: 'Velvet Matte' }
+  { id: 'velvet-matte', name: 'Velvet Matte' },
+  { id: 'pearl', name: 'Pearl Powder', hot: true }
 ];
 
 const PROGRESS_STEPS = [
@@ -73,6 +86,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'french', globalColorId: 'default' }]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
@@ -141,7 +155,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
   const handleFileChange = (e) => { const file = e.target.files[0]; if (file) loadImage(file); };
   const triggerUpload = () => fileInputRef.current.click();
-  const triggerCamera = () => cameraInputRef.current.click();
+  const triggerCamera = () => setIsCameraOpen(true);
 
   const scrollToPreview = () => {
     if (window.innerWidth <= 900 && previewPanelRef.current) {
@@ -277,8 +291,9 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           if (shapeObj) nailsDesc += ` Shape: ${shapeObj.name}.`;
           if (textureObj) nailsDesc += ` Texture: ${textureObj.name}.`;
 
+          const compressedFile = await compressImage(imageFile);
           const formData = new FormData();
-          formData.append('image', imageFile);
+          formData.append('image', compressedFile);
           formData.append('taskType', 'nails');
           formData.append('nails', nailsDesc);
           formData.append('gender', 'female');
@@ -366,16 +381,20 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
 
   const handleDownloadAll = async () => {
     const successImages = resultImages.filter(r => r.status === 'success');
-    for (let i = 0; i < successImages.length; i++) {
-      const img = successImages[i];
-      const link = document.createElement('a');
-      link.href = img.result;
-      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      if (i < successImages.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+    if (isTelegramApp()) {
+      await downloadAllTelegram(successImages, toast);
+    } else {
+      for (let i = 0; i < successImages.length; i++) {
+        const img = successImages[i];
+        const link = document.createElement('a');
+        link.href = img.result;
+        link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (i < successImages.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
     }
   };
@@ -887,6 +906,7 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                                 download={`glamai_${res.styleName}_${res.colorName}.png`}
                                 className="generation-card-btn"
                                 title="Download"
+                                onClick={(e) => handleDownloadClick(e, res.result, `glamai_${res.styleName}_${res.colorName}.png`, toast)}
                               >
                                 <Download size={14} />
                               </a>
@@ -909,7 +929,13 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
                               <button
                                 className="generation-card-btn"
                                 title="Share to Stories"
-                                onClick={() => setShowStoriesModal({ url: res.result, styleName: res.styleName })}
+                                onClick={() => {
+                                  if (isTelegramApp()) {
+                                    shareResult(image, res.result, res.styleName, toast);
+                                  } else {
+                                    setShowStoriesModal({ url: res.result, styleName: res.styleName });
+                                  }
+                                }}
                               >
                                 <Share2 size={14} />
                               </button>
@@ -1043,6 +1069,13 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
           
           <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
           <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
+          <CameraModal
+            isOpen={isCameraOpen}
+            onClose={() => setIsCameraOpen(false)}
+            onCapture={(file) => loadImage(file)}
+            preferredFacingMode="environment"
+            fallbackTrigger={() => cameraInputRef.current.click()}
+          />
         </div>
 
       {/* See the Magic in Action */}

@@ -1122,7 +1122,17 @@
     "payment.stripeUnavailableDesc": "Live payments are currently disabled because Stripe is not configured. Please contact the administrator to set the Stripe credentials in the environment setup.",
     "payment.placeholderName": "Your Name",
     "payment.successDesc": "Your payment has been approved. +{tokens} Tokens have been credited to your GlamAI account.",
-    "payment.redirecting": "Redirecting you to the playground..."
+    "payment.redirecting": "Redirecting you to the playground...",
+    "audit.makeup.communityFeed": "Community Lookbook",
+    "audit.makeup.communityPresetsTitle": "Trending Lookbook & Presets",
+    "audit.makeup.communityPresetsDesc": "Explore community-favorite makeovers. Click \"Try Preset\" to apply the style instantly.",
+    "audit.makeup.presetLoaded": "Preset loaded successfully!",
+    "audit.nails.selectGlobalColor": "Select Nail Color",
+    "audit.nails.selectglobalcolor": "Select Nail Color",
+    "audit.playground.selectStyle": "Select Hairstyle",
+    "audit.playground.selectColor": "Select Hair Color",
+    "audit.playground.styleSelected": "Style selected!",
+    "audit.playground.beardSelected": "Beard style selected!"
   },
   "es": {
     "nav.tryItNow": "Revela Mi Nuevo Look",
@@ -2247,7 +2257,17 @@
     "payment.stripeUnavailableDesc": "Los pagos en vivo están desactivados porque Stripe no está configurado. Por favor, contacta al administrador.",
     "payment.placeholderName": "Tu Nombre",
     "payment.successDesc": "¡Tu pago ha sido aprobado! Se han acreditado +{tokens} tokens a tu cuenta GlamAI.",
-    "payment.redirecting": "Redirigiéndote al editor de belleza..."
+    "payment.redirecting": "Redirigiéndote al editor de belleza...",
+    "audit.makeup.communityFeed": "Lookbook de la comunidad",
+    "audit.makeup.communityPresetsTitle": "Lookbook y ajustes populares",
+    "audit.makeup.communityPresetsDesc": "Explore los cambios de imagen favoritos de la comunidad. Haga clic en \"Probar preajuste\" para aplicar el estilo al instante.",
+    "audit.makeup.presetLoaded": "¡Ajuste preestablecido cargado con éxito!",
+    "audit.nails.selectGlobalColor": "Seleccionar color de uñas",
+    "audit.nails.selectglobalcolor": "Seleccionar color de uñas",
+    "audit.playground.selectStyle": "Seleccionar peinado",
+    "audit.playground.selectColor": "Seleccionar color de cabello",
+    "audit.playground.styleSelected": "¡Peinado seleccionado!",
+    "audit.playground.beardSelected": "¡Estilo de barba seleccionado!"
   },
   "fr": {
     "nav.tryItNow": "Révéler Mon Nouveau Look",
@@ -3372,7 +3392,17 @@
     "payment.stripeUnavailableDesc": "Les paiements en direct sont désactivés car Stripe n'est pas configuré. Veuillez contacter l'administrateur.",
     "payment.placeholderName": "Votre Nom",
     "payment.successDesc": "Votre paiement a été approuvé. +{tokens} jetons ont été crédités sur votre compte GlamAI.",
-    "payment.redirecting": "Redirection vers le studio de beauté..."
+    "payment.redirecting": "Redirection vers le studio de beauté...",
+    "audit.makeup.communityFeed": "Lookbook de la communauté",
+    "audit.makeup.communityPresetsTitle": "Lookbook & presets populaires",
+    "audit.makeup.communityPresetsDesc": "Explorez les relookings préférés de la communauté. Cliquez sur \"Essayer le preset\" pour appliquer le style instantanément.",
+    "audit.makeup.presetLoaded": "Preset chargé avec succès !",
+    "audit.nails.selectGlobalColor": "Sélectionner la couleur des ongles",
+    "audit.nails.selectglobalcolor": "Sélectionner la couleur des ongles",
+    "audit.playground.selectStyle": "Sélectionner la coiffure",
+    "audit.playground.selectColor": "Sélectionner la couleur des cheveux",
+    "audit.playground.styleSelected": "Coiffure sélectionnée !",
+    "audit.playground.beardSelected": "Style de barbe sélectionné !"
   },
   "de": {
     "nav.tryItNow": "Meinen Neuen Look Enthüllen",
@@ -4497,7 +4527,17 @@
     "payment.stripeUnavailableDesc": "Zahlungen sind derzeit deaktiviert, da Stripe nicht konfiguriert ist. Bitte kontaktieren Sie den Administrator.",
     "payment.placeholderName": "Ihr Name",
     "payment.successDesc": "Ihre Zahlung wurde genehmigt. +{tokens} Token wurden Ihrem GlamAI-Konto gutgeschrieben.",
-    "payment.redirecting": "Weiterleitung zum Beauty-Studio..."
+    "payment.redirecting": "Weiterleitung zum Beauty-Studio...",
+    "audit.makeup.communityFeed": "Lookbook der Community",
+    "audit.makeup.communityPresetsTitle": "Beliebte Lookbooks & Presets",
+    "audit.makeup.communityPresetsDesc": "Entdecken Sie die beliebtesten Makeovers der Community. Klicken Sie auf \"Preset testen\", um das Make-up sofort aufzutragen.",
+    "audit.makeup.presetLoaded": "Preset erfolgreich geladen!",
+    "audit.nails.selectGlobalColor": "Nagelfarbe wählen",
+    "audit.nails.selectglobalcolor": "Nagelfarbe wählen",
+    "audit.playground.selectStyle": "Frisur auswählen",
+    "audit.playground.selectColor": "Haarfarbe auswählen",
+    "audit.playground.styleSelected": "Frisur ausgewählt!",
+    "audit.playground.beardSelected": "Bartstil ausgewählt!"
   },
   "ru": {
     "nav.tryItNow": "Показать мой новый образ",
@@ -5622,6 +5662,16 @@
     "payment.stripeUnavailableDesc": "В данный момент платежи отключены из-за отсутствия конфигурации Stripe. Обратитесь к администратору.",
     "payment.placeholderName": "Имя Фамилия",
     "payment.successDesc": "Ваш платеж успешно одобрен. +{tokens} токенов зачислено на ваш аккаунт GlamAI.",
-    "payment.redirecting": "Перенаправление в личный кабинет..."
+    "payment.redirecting": "Перенаправление в личный кабинет...",
+    "audit.makeup.communityFeed": "Лукбук сообщества",
+    "audit.makeup.communityPresetsTitle": "Популярные пресеты и образы",
+    "audit.makeup.communityPresetsDesc": "Исследуйте любимые образы нашего сообщества. Нажмите \"Примерить пресет\", чтобы мгновенно нанести макияж.",
+    "audit.makeup.presetLoaded": "Пресет успешно загружен!",
+    "audit.nails.selectGlobalColor": "Выберите цвет ногтей",
+    "audit.nails.selectglobalcolor": "Выберите цвет ногтей",
+    "audit.playground.selectStyle": "Выберите прическу",
+    "audit.playground.selectColor": "Выберите цвет волос",
+    "audit.playground.styleSelected": "Прическа выбрана!",
+    "audit.playground.beardSelected": "Стиль бороды выбран!"
   }
 }

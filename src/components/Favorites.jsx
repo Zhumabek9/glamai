@@ -1,6 +1,8 @@
 import t from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, Download, Sparkles, Image } from 'lucide-react';
+import { useToast } from './Toast';
+import { handleDownloadClick } from '../utils/telegramHelper';
 
 const FAVORITES_KEY = 'glamai_favorites';
 
@@ -35,6 +37,7 @@ export function useFavorites() {
 
 export default function Favorites({ setActiveTab }) {
   const { favorites, removeFavorite } = useFavorites();
+  const toast = useToast();
 
   if (favorites.length === 0) {
     return (
@@ -122,6 +125,7 @@ export default function Favorites({ setActiveTab }) {
                     className="btn btn-primary"
                     style={{ flex: 2, padding: '0.55rem 0', fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
                     title={t('audit.favorites.download')}
+                    onClick={(e) => handleDownloadClick(e, item.result, `glamai_fav_${item.id}.png`, toast)}
                   >
                     <Download size={13} /> <span>{t('audit.favorites.download')}</span>
                   </a>

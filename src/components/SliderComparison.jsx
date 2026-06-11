@@ -1,12 +1,15 @@
 import t from '../utils/i18n';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Download, Share2 } from 'lucide-react';
+import { useToast } from './Toast';
+import { handleDownloadClick } from '../utils/telegramHelper';
 
 /**
  * SliderComparison — Interactive drag before/after comparison slider
  * Touch + mouse compatible
  */
 export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, onDownload, hideActions }) {
+  const toast = useToast();
   const [position, setPosition] = useState(50); // percentage 0–100
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
@@ -126,7 +129,10 @@ export default function SliderComparison({ beforeSrc, afterSrc, title, onShare, 
             href={afterSrc}
             download={`glamai_${title || 'hairstyle'}.png`}
             className="btn btn-primary"
-            onClick={onDownload}
+            onClick={(e) => {
+              handleDownloadClick(e, afterSrc, `glamai_${title || 'hairstyle'}.png`, toast);
+              if (onDownload) onDownload(e);
+            }}
           >
             <Download size={16} />
             <span>{t('audit.slidercomparison.downloadHd')}</span>

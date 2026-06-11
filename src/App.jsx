@@ -41,10 +41,40 @@ const PrivacyPolicy = lazyWithRetry(() => import('./components/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./components/TermsOfService'));
 const Favorites = lazyWithRetry(() => import('./components/Favorites'));
 
-export default function App() {
+// Detect Telegram Mini App mode (evaluated once at module load)
+const IS_TELEGRAM = !!(
+  typeof window !== 'undefined' &&
+  (window.location.hash.includes('tgWebAppData=') ||
+   window.location.search.includes('tgWebAppData=') ||
+   (window.Telegram?.WebApp?.initData && window.Telegram.WebApp.initData.length > 0))
+);
+
+// Inner app component that requires Clerk hooks — only rendered when ClerkProvider is present
+function AppWithClerk(props) {
   const { isLoaded, userId, getToken } = useAuth();
   const { user: clerkUser } = useUser();
   const { signOut, openSignIn } = useClerk();
+  return <AppCore {...props} isLoaded={isLoaded} userId={userId} getToken={getToken}
+    clerkUser={clerkUser} signOut={signOut} openSignIn={openSignIn} />;
+}
+
+// Telegram mode wrapper — no Clerk hooks needed
+function AppTelegram(props) {
+  const isLoaded = true;
+  const userId = null;
+  const getToken = async () => null;
+  const clerkUser = null;
+  const signOut = async () => {};
+  const openSignIn = () => {};
+  return <AppCore {...props} isLoaded={isLoaded} userId={userId} getToken={getToken}
+    clerkUser={clerkUser} signOut={signOut} openSignIn={openSignIn} />;
+}
+
+export default function App() {
+  return IS_TELEGRAM ? <AppTelegram /> : <AppWithClerk />;
+}
+
+function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn }) {
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
@@ -214,6 +244,11 @@ export default function App() {
     if (!isLoaded) return;
 
     const syncClerkUser = async () => {
+      // If we are in Telegram, we rely on Telegram auth, so don't sync Clerk or clear user
+      if (IS_TELEGRAM) {
+        return;
+      }
+
       if (!userId || !clerkUser) {
         setUser(null);
         return;
@@ -318,6 +353,58 @@ export default function App() {
     loadHistory(activeUser.email);
   }, [loadHistory]);
 
+  // Telegram Web App Auth with polling for SDK initialization
+  useEffect(() => {
+    let attempts = 0;
+    const checkTelegram = () => {
+      const tg = window.Telegram?.WebApp;
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        tg.expand();
+        authFetch('/api/auth/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            initData: tg.initData,
+            user: tg.initDataUnsafe.user
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok && data.user) {
+            if (data.botUsername) {
+              localStorage.setItem('tg_bot_username', data.botUsername);
+            }
+            handleAuthSuccess({
+              id: data.user.id,
+              email: data.user.email,
+              credits: data.user.credits,
+              referralCode: data.user.referralCode,
+              subscriptionTier: data.user.subscriptionTier,
+              subscriptionStatus: data.user.subscriptionStatus,
+              role: data.user.role
+            });
+          }
+        })
+        .catch(err => console.error('Telegram auth failed', err));
+        return true; // Success, stop polling
+      }
+      return false;
+    };
+
+    // Try immediately
+    if (checkTelegram()) return;
+
+    // Otherwise poll every 100ms for up to 5 seconds
+    const interval = setInterval(() => {
+      attempts++;
+      if (checkTelegram() || attempts > 50) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [handleAuthSuccess]);
+
   const handleLogout = useCallback(async () => {
     try {
       await signOut();
@@ -357,6 +444,35 @@ export default function App() {
   }, [user]);
 
   const handleSelectPlan = (plan) => {
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      let starsAmount = 50;
+      if (plan.price === '$4.99') starsAmount = 250;
+      else if (plan.price === '$7.99') starsAmount = 400;
+      else if (plan.price === '$9.99') starsAmount = 500;
+      else if (plan.price === '$19.99') starsAmount = 1000;
+      else if (plan.price === '$149.99') starsAmount = 7500;
+      
+      authFetch('/api/payment/telegram-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: starsAmount, credits: plan.tokens })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.url) {
+          tg.openInvoice(data.url, (status) => {
+            if (status === 'paid') {
+              const newTokens = (user?.tokens || 0) + plan.tokens;
+              handlePaymentSuccess(newTokens);
+            }
+          });
+        }
+      })
+      .catch(err => console.error('Telegram invoice error:', err));
+      return;
+    }
+
     if (stripeEnabled) {
       authFetch('/api/checkout', {
         method: 'POST',
@@ -434,6 +550,37 @@ export default function App() {
   return (
     <ToastProvider>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {/* Debug Banner */}
+        {window.location.search.includes('debug=1') && (
+          <div style={{
+            background: '#1a1a24',
+            color: '#fff',
+            padding: '10px',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            borderBottom: '2px solid #ff2e93',
+            zIndex: 99999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
+          }}>
+            <div><strong>[GlamAI Debug]</strong></div>
+            <div>UA: {navigator.userAgent}</div>
+            <div>Telegram WebApp SDK: {window.Telegram ? 'Loaded' : 'Not Loaded'}</div>
+            {window.Telegram && (
+              <>
+                <div>WebApp Version: {window.Telegram.WebApp?.version || 'N/A'}</div>
+                <div>Platform: {window.Telegram.WebApp?.platform || 'N/A'}</div>
+                <div>Has initData: {window.Telegram.WebApp?.initData ? 'Yes' : 'No'} (length: {window.Telegram.WebApp?.initData?.length || 0})</div>
+                <div>User ID: {window.Telegram.WebApp?.initDataUnsafe?.user?.id || 'N/A'}</div>
+                <div>User Name: {window.Telegram.WebApp?.initDataUnsafe?.user?.username || 'N/A'}</div>
+              </>
+            )}
+            <div>Is Telegram Mode: {IS_TELEGRAM ? 'Active' : 'Inactive'}</div>
+            <div>URL: {window.location.href}</div>
+          </div>
+        )}
+
         <Navbar
           activeTab={activeTab}
           setActiveTab={navigateToTab}

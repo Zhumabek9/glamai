@@ -9,6 +9,12 @@
   --bg-secondary: #ffffff;
   --bg-tertiary: #f9eff7;
   
+  --bg-surface: #ffffff;
+  --faq-border: rgba(0, 0, 0, 0.02);
+  
+  --pricing-card-bg: rgba(255, 255, 255, 0.8);
+  --pricing-featured-bg: linear-gradient(180deg, rgba(255, 46, 147, 0.04) 0%, rgba(255, 255, 255, 0.98) 100%);
+
   --color-pink-primary: #ff2e93;
   --color-pink-glow: rgba(255, 46, 147, 0.2);
   --color-pink-hover: #ff52a9;
@@ -53,6 +59,12 @@
   --bg-secondary: #120d1e;
   --bg-tertiary: #191227;
   
+  --bg-surface: var(--bg-secondary);
+  --faq-border: rgba(255, 255, 255, 0.06);
+  
+  --pricing-card-bg: rgba(18, 13, 30, 0.85);
+  --pricing-featured-bg: linear-gradient(180deg, rgba(255, 46, 147, 0.08) 0%, rgba(25, 18, 39, 0.98) 100%);
+
   --text-primary: #f8f6fa;
   --text-secondary: #c0b5cf;
   --text-muted: #807192;
@@ -578,6 +590,23 @@ button, .btn {
   background: var(--bg-secondary) !important;
   color: var(--text-primary) !important;
 }
+
+[data-theme='dark'] .navbar {
+  background: rgba(10, 6, 18, 0.8) !important;
+  border-bottom: 1px solid rgba(255, 46, 147, 0.15) !important;
+}
+
+[data-theme='dark'] .history-card {
+  background: var(--bg-secondary) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme='dark'] .history-card span,
+[data-theme='dark'] .history-card a,
+[data-theme='dark'] .history-card button {
+  color: var(--text-primary);
+}
+
 
 
 

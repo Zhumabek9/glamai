@@ -3,13 +3,16 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Upload, Sparkles, Download, RefreshCw, Scissors, Check, TrendingUp, Camera, Share2, Heart } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { compressImage } from '../utils/image';
 import { trackEvent } from '../utils/analytics';
+import CameraModal from './CameraModal';
 import SliderComparison from './SliderComparison';
 import { usePreferences } from '../utils/usePreferences';
 import { useAchievements } from '../utils/useAchievements';
 import { useFavorites } from './Favorites';
 import ShareStoriesModal from './ShareStoriesModal';
 import confetti from 'canvas-confetti';
+import { isTelegramApp, handleDownloadClick, downloadAllTelegram, shareResult } from '../utils/telegramHelper';
 
 
 const POPULAR_STYLE_IDS = ['bob', 'pixie-cut', 'wavy', 'french-crop', 'skin-fade'];
@@ -352,6 +355,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   // Custom states for new UX requirements
   const [activePreset, setActivePreset] = useState(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const [etaRemaining, setEtaRemaining] = useState(30);
   const [feedback, setFeedback] = useState(null);
@@ -536,7 +540,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   };
 
   const triggerCamera = () => {
-    cameraInputRef.current.click();
+    setIsCameraOpen(true);
   };
 
   const handleCameraCapture = (e) => {
@@ -547,6 +551,12 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
   };
 
   const handleShare = async (imgUrl) => {
+    if (isTelegramApp()) {
+      const activeItem = resultImages[activeResultIndex];
+      const styleName = activeItem ? (activeItem.styleName === 'No Change' ? activeItem.colorName : activeItem.styleName) : 'hairstyle';
+      await shareResult(image, imgUrl, styleName, toast);
+      return;
+    }
     const shareData = {
       title: 'My AI Hairstyle — GlamAI',
       text: 'Check out my AI hairstyle transformation by GlamAI!',
@@ -686,8 +696,9 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
         }, 120);
 
         try {
+          const compressedFile = await compressImage(imageFile);
           const formData = new FormData();
-          formData.append('image', imageFile);
+          formData.append('image', compressedFile);
           
           const isBeard = styleId.startsWith('beard-');
           const taskType = isBeard ? 'beard' : 'hairstyle';
@@ -805,16 +816,20 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
 
   const handleDownloadAll = async () => {
     const successImages = resultImages.filter(r => r.status === 'success');
-    for (let i = 0; i < successImages.length; i++) {
-      const img = successImages[i];
-      const link = document.createElement('a');
-      link.href = img.result;
-      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      if (i < successImages.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+    if (isTelegramApp()) {
+      await downloadAllTelegram(successImages, toast);
+    } else {
+      for (let i = 0; i < successImages.length; i++) {
+        const img = successImages[i];
+        const link = document.createElement('a');
+        link.href = img.result;
+        link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (i < successImages.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
     }
   };
@@ -1294,6 +1309,7 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
                                 download={`glamai_${res.styleName}_${res.colorName}.png`}
                                 className="generation-card-btn"
                                 title={t('audit.playground.downloadHdRender')}
+                                onClick={(e) => handleDownloadClick(e, res.result, `glamai_${res.styleName}_${res.colorName}.png`, toast)}
                               >
                                 <Download size={14} />
                               </a>
@@ -1567,6 +1583,13 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
           
           <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
           <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleCameraCapture} style={{ display: 'none' }} />
+          <CameraModal
+            isOpen={isCameraOpen}
+            onClose={() => setIsCameraOpen(false)}
+            onCapture={(file) => loadImage(file)}
+            preferredFacingMode="user"
+            fallbackTrigger={() => cameraInputRef.current.click()}
+          />
         </div>
       {lightboxImage && (
         <div 

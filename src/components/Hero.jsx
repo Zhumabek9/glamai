@@ -384,7 +384,7 @@ function Hero({
                 <div 
                   key={index}
                   style={{
-                    background: 'var(--bg-surface, #ffffff)',
+                    background: 'var(--bg-surface)',
                     border: '1px solid rgba(255, 46, 147, 0.08)',
                     borderRadius: '16px',
                     overflow: 'hidden',
@@ -419,7 +419,7 @@ function Hero({
                   </button>
 
                   {isOpened && (
-                    <div style={{ padding: '0 1.5rem 1.25rem 2.5rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', borderTop: '1px solid rgba(0,0,0,0.02)' }}>
+                    <div style={{ padding: '0 1.5rem 1.25rem 2.5rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', borderTop: '1px solid var(--faq-border)' }}>
                       {t(aKey)}
                     </div>
                   )}

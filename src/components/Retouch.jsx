@@ -3,6 +3,8 @@ import React, { useState, useRef } from 'react';
 import { Upload, Sparkles, Coins, Download, RefreshCw, Eye, Check, HelpCircle, EyeOff, ArrowRight, Star, ChevronDown, ChevronUp, Users, Lock, Palette } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { compressImage } from '../utils/image';
+import { handleDownloadClick } from '../utils/telegramHelper';
 
 export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
   const toast = useToast();
@@ -86,6 +88,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
     }, 110);
 
     try {
+      const compressedFile = await compressImage(imageFile);
       const retouchConfig = JSON.stringify({
         smoothSkin,
         teethWhitening,
@@ -98,7 +101,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
       });
 
       const formData = new FormData();
-      formData.append('image', imageFile);
+      formData.append('image', compressedFile);
       formData.append('taskType', 'retouch');
       formData.append('retouch', retouchConfig);
       formData.append('gender', 'person');
@@ -420,6 +423,7 @@ export default function Retouch({ user, guestTokens, onDeductToken, onOpenAuth, 
                       download="glamai_retouch.png"
                       className="btn btn-primary"
                       style={{ flex: 1, maxWidth: '200px' }}
+                      onClick={(e) => handleDownloadClick(e, resultImage, 'glamai_retouch.png', toast)}
                     >
                       <Download size={16} />
                       <span>{t('audit.favorites.download')}</span>

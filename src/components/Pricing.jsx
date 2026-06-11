@@ -390,9 +390,9 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 padding: isMobile ? '2.5rem 1.5rem 2rem' : '3.5rem 2.25rem 3rem',
                 borderRadius: '24px',
                 position: 'relative',
-                border: isRecommended ? '2.5px solid var(--color-pink-primary)' : (isFeatured ? '2px solid var(--color-pink-primary)' : '1px solid rgba(255, 46, 147, 0.12)'),
+                border: isRecommended ? '2.5px solid var(--color-pink-primary)' : (isFeatured ? '2px solid var(--color-pink-primary)' : '1px solid var(--pricing-card-border, rgba(255, 46, 147, 0.12))'),
                 boxShadow: isRecommended ? '0 16px 48px rgba(255, 46, 147, 0.22), 0 0 0 1px rgba(255, 46, 147, 0.08)' : (isFeatured ? '0 16px 40px rgba(255, 46, 147, 0.12)' : 'var(--glass-shadow)'),
-                background: isFeatured ? 'linear-gradient(180deg, rgba(255, 46, 147, 0.04) 0%, rgba(255, 255, 255, 0.98) 100%)' : 'rgba(255, 255, 255, 0.8)',
+                background: isFeatured ? 'var(--pricing-featured-bg)' : 'var(--pricing-card-bg)',
                 transform: isRecommended && !isMobile ? 'scale(1.03)' : 'none',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 ...(isMobile ? {
@@ -419,7 +419,13 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
               
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.2rem', margin: '1rem 0 1.5rem' }}>
                 <span className="tier-price" style={{ fontSize: '3.25rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
-                  {plan.price}
+                  {window.Telegram?.WebApp?.initData ? (
+                    plan.price === '$4.99' ? '250⭐️' :
+                    plan.price === '$7.99' ? '400⭐️' :
+                    plan.price === '$9.99' ? '500⭐️' :
+                    plan.price === '$19.99' ? '1000⭐️' :
+                    plan.price === '$149.99' ? '7500⭐️' : plan.price
+                  ) : plan.price}
                 </span>
                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                   {plan.billingPeriod === 'one-time' ? '' : 
@@ -495,8 +501,8 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
           gap: '1rem',
           padding: '2rem 1.25rem',
           borderRadius: '20px',
-          background: 'rgba(255, 255, 255, 0.4)',
-          border: '1px solid rgba(255, 46, 147, 0.08)',
+          background: 'var(--glass-bg)',
+          border: '1px solid var(--glass-border)',
           boxShadow: 'var(--glass-shadow)',
           backdropFilter: 'blur(10px)',
           textAlign: 'center'
@@ -509,26 +515,26 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
             ✨ Your photos are 100% private and deleted immediately after processing. We never share your data.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: 'var(--glass-shadow)' }}>
               <img src="/stripe.svg" alt="Stripe" style={{ height: '18px', maxWidth: '100%', objectFit: 'contain' }} />
             </div>
-            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: 'var(--glass-shadow)' }}>
               <img src="/visa.svg" alt="Visa" style={{ height: '12px', maxWidth: '100%', objectFit: 'contain' }} />
             </div>
-            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: 'var(--glass-shadow)' }}>
               <img src="/mastercard.svg" alt="Mastercard" style={{ height: '20px', maxWidth: '100%', objectFit: 'contain' }} />
             </div>
-            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: 'var(--glass-shadow)' }}>
               <img src="/googlepay.svg" alt="Google Pay" style={{ height: '16px', maxWidth: '100%', objectFit: 'contain' }} />
             </div>
-            <div style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', padding: '0.4rem 0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '80px', boxShadow: 'var(--glass-shadow)' }}>
               <img src="/applepay.svg" alt="Apple Pay" style={{ height: '16px', maxWidth: '100%', objectFit: 'contain' }} />
             </div>
           </div>
         </div>
 
         {/* Feature Comparison Table */}
-        <div style={{ maxWidth: '800px', margin: '0 auto 6rem', background: 'rgba(255,255,255,0.7)', borderRadius: '24px', border: '1px solid rgba(255, 46, 147, 0.1)', padding: isMobile ? '2rem 1rem' : '3.5rem 2.5rem', boxShadow: 'var(--glass-shadow)' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto 6rem', background: 'var(--glass-bg)', borderRadius: '24px', border: '1px solid var(--glass-border)', padding: isMobile ? '2rem 1rem' : '3.5rem 2.5rem', boxShadow: 'var(--glass-shadow)' }}>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2rem' }}>
             {t('audit.pricing.vipVsFreePlan')}
           </h2>
@@ -597,7 +603,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                 <div 
                   key={index}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--bg-surface)',
                     border: '1px solid rgba(255, 46, 147, 0.08)',
                     borderRadius: '16px',
                     overflow: 'hidden',
@@ -631,7 +637,7 @@ export default function Pricing({ user, onSelectPlan, onOpenAuth }) {
                   </button>
 
                   {isOpened && (
-                    <div style={{ padding: '0 1.5rem 1.25rem 2.5rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', borderTop: '1px solid rgba(0,0,0,0.02)' }}>
+                    <div style={{ padding: '0 1.5rem 1.25rem 2.5rem', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', borderTop: '1px solid var(--faq-border)' }}>
                       {t(aKey)}
                     </div>
                   )}

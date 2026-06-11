@@ -829,6 +829,85 @@ app.post('/api/auth/clerk', async (req, res) => {
     }
 });
 
+// Telegram BOT TOKEN
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+
+let botUsername = 'tryglamai_bot';
+if (TELEGRAM_BOT_TOKEN) {
+    fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok && data.result.username) {
+                botUsername = data.result.username;
+                console.log(`[Telegram] Dynamically loaded bot username: @${botUsername}`);
+            }
+        })
+        .catch(err => {
+            console.error('[Telegram] Failed to fetch bot info on startup:', err.message);
+        });
+}
+
+
+function validateTelegramWebAppData(telegramInitData) {
+    if (!TELEGRAM_BOT_TOKEN) return false;
+    const urlParams = new URLSearchParams(telegramInitData);
+    const hash = urlParams.get('hash');
+    urlParams.delete('hash');
+    urlParams.sort();
+    
+    let dataCheckString = '';
+    for (const [key, value] of urlParams.entries()) {
+        dataCheckString += `${key}=${value}\n`;
+    }
+    dataCheckString = dataCheckString.slice(0, -1);
+    
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TELEGRAM_BOT_TOKEN).digest();
+    const checkHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+    
+    return checkHash === hash;
+}
+
+app.post('/api/auth/telegram', async (req, res) => {
+    const { initData, user: tgUser } = req.body;
+    if (!initData || !tgUser) {
+        return res.status(400).json({ error: 'MISSING_DATA' });
+    }
+
+    if (!validateTelegramWebAppData(initData)) {
+        return res.status(403).json({ error: 'INVALID_TELEGRAM_HASH' });
+    }
+
+    try {
+        const userEmail = `tg_${tgUser.id}@telegram.local`;
+        let user = await auth.userByEmail(userEmail);
+        if (!user) {
+            const dummyPassword = `tg_${tgUser.id}_${Date.now()}`;
+            user = await auth.createUser(userEmail, dummyPassword);
+        }
+
+        const fullUser = await auth.userById(user.id);
+        const token = auth.signToken(fullUser);
+        auth.setAuthCookie(res, token);
+
+        res.json({
+            ok: true,
+            user: { 
+                id: fullUser.id, 
+                email: fullUser.email, 
+                credits: fullUser.credits,
+                referralCode: fullUser.referral_code,
+                subscriptionTier: fullUser.subscription_tier || 'free',
+                subscriptionStatus: fullUser.subscription_status || 'inactive',
+                role: fullUser.role || 'user'
+            },
+            botUsername: botUsername
+        });
+    } catch (err) {
+        console.error('/api/auth/telegram error:', err.message);
+        res.status(500).json({ error: 'TELEGRAM_AUTH_FAILED' });
+    }
+});
+
 app.get('/api/me', (req, res) => {
     if (!req.userFromCookie) {
         return res.status(401).json({ authenticated: false });
@@ -845,6 +924,7 @@ app.get('/api/me', (req, res) => {
             subscriptionEnd: req.userFromCookie.subscription_end || null,
             role: req.userFromCookie.role || 'user'
         },
+        botUsername: botUsername
     });
 });
 
@@ -939,6 +1019,307 @@ app.post('/api/checkout/mock-success', async (req, res) => {
     }
 });
 
+app.post('/api/payment/telegram-invoice', async (req, res) => {
+    if (!req.userFromCookie) {
+        return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+    }
+    const { amount, credits } = req.body;
+    if (!TELEGRAM_BOT_TOKEN) return res.status(500).json({ error: 'TELEGRAM_NOT_CONFIGURED' });
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/createInvoiceLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: `Buy ${credits} Credits`,
+                description: `Purchase ${credits} generation credits for GlamAI`,
+                payload: `${req.userFromCookie.id}_${credits}`,
+                provider_token: "", // must be empty for Telegram Stars
+                currency: "XTR",
+                prices: [{ label: `${credits} Credits`, amount: amount }] // amount is in XTR
+            })
+        });
+        const data = await response.json();
+        if (data.ok) {
+            res.json({ url: data.result });
+        } else {
+            console.error('Telegram invoice error:', data);
+            res.status(500).json({ error: 'FAILED_TO_CREATE_INVOICE' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'FAILED_TO_CREATE_INVOICE' });
+    }
+});
+
+app.post('/api/telegram/send-photo', async (req, res) => {
+    if (!req.userFromCookie) {
+        return res.status(401).json({ error: 'LOGIN_REQUIRED' });
+    }
+    const { imageUrl, caption } = req.body;
+    if (!imageUrl) {
+        return res.status(400).json({ error: 'IMAGE_URL_REQUIRED' });
+    }
+    if (!TELEGRAM_BOT_TOKEN) {
+        return res.status(500).json({ error: 'TELEGRAM_NOT_CONFIGURED' });
+    }
+
+    try {
+        const email = req.userFromCookie.email;
+        if (!email || !email.startsWith('tg_') || !email.endsWith('@telegram.local')) {
+            return res.status(400).json({ error: 'NOT_TELEGRAM_USER' });
+        }
+        const telegramId = email.substring(3, email.indexOf('@'));
+
+        // Resolve / fetch the image buffer
+        let buffer;
+        let contentType = 'image/png';
+        let filename = 'photo.png';
+
+        if (imageUrl.startsWith('data:image/')) {
+            const matches = imageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+            if (!matches || matches.length !== 3) {
+                return res.status(400).json({ error: 'INVALID_BASE64_DATA' });
+            }
+            contentType = matches[1];
+            buffer = Buffer.from(matches[2], 'base64');
+        } else {
+            let targetUrl = imageUrl;
+            if (targetUrl.includes('/api/proxy-image?url=')) {
+                const urlParam = new URL(targetUrl, 'http://localhost').searchParams.get('url');
+                if (urlParam) {
+                    targetUrl = urlParam;
+                }
+            } else if (targetUrl.startsWith('/')) {
+                targetUrl = `${PUBLIC_BASE_URL}${targetUrl}`;
+            }
+
+            const imgRes = await fetch(targetUrl);
+            if (!imgRes.ok) {
+                return res.status(400).json({ error: 'FAILED_TO_FETCH_IMAGE', details: `Status ${imgRes.status}` });
+            }
+            contentType = imgRes.headers.get('content-type') || 'image/png';
+            const arrayBuffer = await imgRes.arrayBuffer();
+            buffer = Buffer.from(arrayBuffer);
+        }
+
+        // Build manual multipart form data to be fully compatible with any Node environment
+        const boundary = `----WebKitFormBoundary${Math.random().toString(36).substring(2)}`;
+        const parts = [];
+
+        parts.push(Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${telegramId}\r\n`
+        ));
+
+        parts.push(Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`
+        ));
+        parts.push(buffer);
+        parts.push(Buffer.from('\r\n'));
+
+        if (caption) {
+            parts.push(Buffer.from(
+                `--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`
+            ));
+            parts.push(Buffer.from(
+                `--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nMarkdown\r\n`
+            ));
+        }
+
+        parts.push(Buffer.from(`--${boundary}--\r\n`));
+        const bodyBuffer = Buffer.concat(parts);
+
+        const tgRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': `multipart/form-data; boundary=${boundary}`
+            },
+            body: bodyBuffer
+        });
+
+        const tgData = await tgRes.json();
+        if (tgData.ok) {
+            res.json({ success: true });
+        } else {
+            console.error('[Telegram] sendPhoto error response:', tgData);
+            res.status(502).json({ error: 'TELEGRAM_API_ERROR', details: tgData.description });
+        }
+    } catch (err) {
+        console.error('[Telegram] /api/telegram/send-photo error:', err);
+        res.status(500).json({ error: 'SERVER_ERROR', message: err.message });
+    }
+});
+
+async function translateText(text, targetLang) {
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const json = await res.json();
+        if (json && json[0]) {
+            return json[0].map(item => item[0]).join('');
+        }
+        throw new Error('Invalid response structure');
+    } catch (err) {
+        console.error('Translation failed:', err.message);
+        return text;
+    }
+}
+
+app.post('/api/telegram/webhook', async (req, res) => {
+    const update = req.body;
+    
+    if (update.pre_checkout_query) {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pre_checkout_query_id: update.pre_checkout_query.id,
+                ok: true
+            })
+        });
+        return res.sendStatus(200);
+    }
+    
+    if (update.message && update.message.successful_payment) {
+        const payload = update.message.successful_payment.invoice_payload;
+        const [userId, creditsStr] = payload.split('_');
+        const creditsToAdd = parseInt(creditsStr, 10);
+        
+        try {
+            const user = await auth.userById(userId);
+            if (user) {
+                const newCredits = (user.credits || 0) + creditsToAdd;
+                await db.query('UPDATE users SET credits = $1 WHERE id = $2', [newCredits, userId]);
+                console.log(`Added ${creditsToAdd} Stars credits to user ${userId}`);
+            }
+        } catch (err) {
+            console.error('Error crediting user for Stars:', err);
+        }
+    }
+
+    // Handle /start command to send a welcome message with Web App button (localized)
+    if (update.message && update.message.text && update.message.text.startsWith('/start')) {
+        const chatId = update.message.chat.id;
+        const rawLang = update.message.from?.language_code || 'en';
+        const lang = rawLang.toLowerCase().slice(0, 2);
+        console.log(`[Telegram Bot] /start command received. Chat ID: ${chatId}, Raw Language Code: "${rawLang}", Sliced: "${lang}"`);
+
+        const messages = {
+            ru: {
+                text: `👋 *Привет! Добро пожаловать в GlamAI — твою персональную AI-студию красоты!* 💇‍♀️✨\n\n` +
+                    `Я помогу тебе мгновенно примерить новый образ прямо на фото. Никаких рисков и походов в салон вслепую!\n\n` +
+                    `📸 *Что я умею:*\n` +
+                    `• 💇‍♂️ *Прически и стрижки*: Примерь 120+ мужских и женских причесок (боб, пикси, каре, фейд и др.).\n` +
+                    `• 🎨 *Цвет волос*: Экспериментируй с цветом — от натурального блонда до яркого неона.\n` +
+                    `• 💄 *Макияж*: Примерь трендовые макияжи (Glam, Natural, Korean и др.).\n` +
+                    `• 💅 *Маникюр*: Подбери идеальную форму и дизайн ногтей.\n` +
+                    `• 🧔 *Борода и усы*: Найди свой идеальный стиль оформления бороды.\n\n` +
+                    `🎁 *Для старта мы дарим тебе бесплатные кредиты!*\n\n` +
+                    `👇 Нажми на кнопку ниже, чтобы открыть студию и создать свой первый образ!`,
+                button: "Открыть студию ⚡"
+            },
+            es: {
+                text: `👋 *¡Bienvenido a GlamAI, tu estudio de belleza personal con IA!* 💇‍♀️✨\n\n` +
+                    `Te ayudaré a probar nuevos looks al instante en tu foto. ¡Sin arrepentimientos en el salón!\n\n` +
+                    `📸 *Lo que puedo hacer:*\n` +
+                    `• 💇‍♂️ *Peinados y Cortes*: Pruébate más de 120 estilos (bob, pixie, degradado, etc.).\n` +
+                    `• 🎨 *Color de Pelo*: Experimenta desde rubios naturales hasta neones brillantes.\n` +
+                    `• 💄 *Maquillaje*: Prueba estilos en tendencia (Glam, Natural, Coreano, etc.).\n` +
+                    `• 💅 *Manicura*: Encuentra la forma y el diseño de uñas perfectos.\n` +
+                    `• 🧔 *Barba y Bigote*: Diseña tu barba en un solo clic.\n\n` +
+                    `🎁 *¡Te hemos regalado créditos gratuitos para empezar!*\n\n` +
+                    `👇 ¡Toca el botón de abajo para abrir el estudio y crear tu primer look!`,
+                button: "Abrir estudio ⚡"
+            },
+            fr: {
+                text: `👋 *Bienvenue sur GlamAI — votre salon de beauté virtuel par IA !* 💇‍♀️✨\n\n` +
+                    `Je vous aide à essayer instantanément de nouveaux looks sur votre photo. Plus de regrets chez le coiffeur !\n\n` +
+                    `📸 *Ce que je peux faire :*\n` +
+                    `• 💇‍♂️ *Coiffures & Coupes* : Essayez plus de 120 styles (bob, pixie, dégradé, etc.).\n` +
+                    `• 🎨 *Couleur de Cheveux* : Expérimentez du blond naturel au néon flashy.\n` +
+                    `• 💄 *Maquillage* : Essayez les styles tendance (Glam, Naturel, Coréen, etc.).\n` +
+                    `• 💅 *Manure* : Trouvez la forme et le design d'ongles parfaits.\n` +
+                    `• 🧔 *Barbe & Moustache* : Taillez votre barbe en un clic.\n\n` +
+                    `🎁 *Nous vous offrons des crédits gratuits pour commencer !*\n\n` +
+                    `👇 Appuyez sur le bouton ci-dessous pour ouvrir le studio et créer votre premier look !`,
+                button: "Ouvrir le studio ⚡"
+            },
+            de: {
+                text: `👋 *Willkommen bei GlamAI — deinem persönlichen KI-Schönheitsstudio!* 💇‍♀️✨\n\n` +
+                    `Ich helfe dir, neue Looks sofort auf deinem Foto auszuprobieren. Keine Enttäuschungen mehr im Salon!\n\n` +
+                    `📸 *Was ich kann:*\n` +
+                    `• 💇‍♂️ *Frisuren & Schnitte*: Probiere über 120 Styles aus (Bob, Pixie, Fade usw.).\n` +
+                    `• 🎨 *Haarfarbe*: Experimentiere von natürlichem Blond bis hin zu leuchtendem Neon.\n` +
+                    `• 💄 *Make-up*: Teste trendige Make-up-Looks (Glam, Natural, Koreanisch usw.).\n` +
+                    `• 💅 *Nageldesign*: Finde deine perfekte Nagelform und dein Design.\n` +
+                    `• 🧔 *Bart & Schnurrbart*: Style deinen Bart mit einem Klick.\n\n` +
+                    `🎁 *Wir haben dir zum Start kostenlose Credits geschenkt!*\n\n` +
+                    `👇 Tippe auf die Schaltfläche unten, um das Studio zu öffnen und deinen ersten Look zu erstellen!`,
+                button: "Studio öffnen ⚡"
+            },
+            en: {
+                text: `👋 *Welcome to GlamAI — your personal AI Beauty Studio!* 💇‍♀️✨\n\n` +
+                    `I will help you instantly try on new looks right on your photo. Zero salon regrets!\n\n` +
+                    `📸 *What I can do:*\n` +
+                    `• 💇‍♂️ *Hairstyles & Cuts*: Try 120+ styles (bob, pixie, fade, crops, etc.).\n` +
+                    `• 🎨 *Hair Color*: Experiment with colors from natural blond to bright neon.\n` +
+                    `• 💄 *Makeup*: Try trending makeup looks (Glam, Natural, Korean, etc.).\n` +
+                    `• 💅 *Nail Art*: Find your perfect nail shape and design.\n` +
+                    `• 🧔 *Beards & Mustache*: Style your beard in one click.\n\n` +
+                    `🎁 *We've gifted you free credits to get started!*\n\n` +
+                    `👇 Tap the button below to open the studio and create your first look!`,
+                button: "Open Studio ⚡"
+            }
+        };
+
+        let currentMsg = messages[lang];
+        if (!currentMsg) {
+            console.log(`[Telegram Bot] No predefined translation found for "${lang}". Performing dynamic translation...`);
+            try {
+                const translatedText = await translateText(messages.en.text, lang);
+                const translatedButton = await translateText(messages.en.button, lang);
+                console.log(`[Telegram Bot] Dynamic translation successful for "${lang}"`);
+                currentMsg = {
+                    text: translatedText,
+                    button: translatedButton
+                };
+            } catch (err) {
+                console.error('[Telegram Bot] Dynamic translation failed, falling back to English:', err);
+                currentMsg = messages.en;
+            }
+        } else {
+            console.log(`[Telegram Bot] Using predefined translation for "${lang}"`);
+        }
+
+        try {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: currentMsg.text,
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[
+                            {
+                                text: currentMsg.button,
+                                web_app: {
+                                    url: "https://tryglamai.com"
+                                }
+                            }
+                        ]]
+                    }
+                })
+            });
+        } catch (err) {
+            console.error('Error sending welcome message:', err);
+        }
+    }
+    
+    res.sendStatus(200);
+});
+
 app.post('/api/admin/add-credits', async (req, res) => {
     const u = req.userFromCookie;
     if (!u || u.role !== 'admin') {
@@ -1029,6 +1410,46 @@ app.post('/api/admin/update-user', async (req, res) => {
         res.json({ success: true, message: 'User updated successfully' });
     } catch (e) {
         res.status(500).json({ error: 'ADMIN_USER_UPDATE_FAILED', message: e.message });
+    }
+});
+
+app.get('/api/admin/generations', async (req, res) => {
+    const u = req.userFromCookie;
+    if (!u || u.role !== 'admin') {
+        return res.status(403).json({ error: 'FORBIDDEN' });
+    }
+    const { taskType = '', search = '', limit = 100, offset = 0 } = req.query;
+    try {
+        let queryStr = `
+            SELECT g.id, g.user_id, u.email as user_email, g.ip, g.style, g.color, g.gender, g.ok, g.task_type, g.makeup, g.beard, g.nails, g.retouch, g.result_url, g.created_at
+            FROM generations g
+            LEFT JOIN users u ON g.user_id = u.id
+            WHERE 1=1
+        `;
+        const params = [];
+        let paramIdx = 1;
+
+        if (taskType) {
+            queryStr += ` AND g.task_type = $${paramIdx}`;
+            params.push(taskType);
+            paramIdx++;
+        }
+
+        if (search) {
+            queryStr += ` AND (lower(u.email) LIKE lower($${paramIdx}) OR g.ip LIKE $${paramIdx})`;
+            params.push(`%${search}%`);
+            paramIdx++;
+        }
+
+        queryStr += ` ORDER BY g.id DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+        params.push(parseInt(limit, 10) || 100);
+        params.push(parseInt(offset, 10) || 0);
+
+        const result = await db.query(queryStr, params);
+        res.json({ success: true, generations: result.rows });
+    } catch (e) {
+        console.error("Failed to fetch admin generations:", e);
+        res.status(500).json({ error: 'ADMIN_GENERATIONS_FETCH_FAILED', message: e.message });
     }
 });
 

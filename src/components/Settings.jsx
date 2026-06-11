@@ -5,9 +5,29 @@ import { authFetch } from '../apiClient';
 import { useUser } from '@clerk/react';
 import { useToast } from './Toast';
 
-export default function Settings({ user, onLogout, setActiveTab }) {
-  const toast = useToast();
+// Detect Telegram Mini App mode
+const IS_TELEGRAM = !!(
+  typeof window !== 'undefined' &&
+  (window.location.hash.includes('tgWebAppData=') ||
+   window.location.search.includes('tgWebAppData=') ||
+   (window.Telegram?.WebApp?.initData && window.Telegram.WebApp.initData.length > 0))
+);
+
+function SettingsWithClerk(props) {
   const { user: clerkUser } = useUser();
+  return <SettingsCore {...props} clerkUser={clerkUser} />;
+}
+
+function SettingsTelegram(props) {
+  return <SettingsCore {...props} clerkUser={null} />;
+}
+
+export default function Settings(props) {
+  return IS_TELEGRAM ? <SettingsTelegram {...props} /> : <SettingsWithClerk {...props} />;
+}
+
+function SettingsCore({ user, onLogout, setActiveTab, clerkUser }) {
+  const toast = useToast();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -232,43 +252,45 @@ export default function Settings({ user, onLogout, setActiveTab }) {
           </div>
 
           {/* Change Password Form */}
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              <Lock size={18} color="var(--color-pink-primary)" />
-              <span>{t('audit.settings.securitySettings')}</span>
-            </h3>
+          {!IS_TELEGRAM && (
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <Lock size={18} color="var(--color-pink-primary)" />
+                <span>{t('audit.settings.securitySettings')}</span>
+              </h3>
 
-            <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div className="form-group">
-                <label className="form-label">{t('audit.settings.newPassword')}</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder={t('audit.settings.min8Characters')}
-                  required
-                />
-              </div>
+              <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="form-group">
+                  <label className="form-label">{t('audit.settings.newPassword')}</label>
+                  <input 
+                    type="password" 
+                    className="form-input" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={t('audit.settings.min8Characters')}
+                    required
+                  />
+                </div>
 
-              <div className="form-group">
-                <label className="form-label">{t('audit.settings.confirmNewPassword')}</label>
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t('audit.settings.confirmPassword')}
-                  required
-                />
-              </div>
+                <div className="form-group">
+                  <label className="form-label">{t('audit.settings.confirmNewPassword')}</label>
+                  <input 
+                    type="password" 
+                    className="form-input" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t('audit.settings.confirmPassword')}
+                    required
+                  />
+                </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem' }} disabled={updating}>
-                {updating ? <RefreshCw className="animate-spin" size={16} /> : <Shield size={16} />}
-                <span>{t('audit.settings.updatePassword')}</span>
-              </button>
-            </form>
-          </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem' }} disabled={updating}>
+                  {updating ? <RefreshCw className="animate-spin" size={16} /> : <Shield size={16} />}
+                  <span>{t('audit.settings.updatePassword')}</span>
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* GDPR & CCPA Compliance Data Erasure Panel */}
           <div className="glass-panel" style={{ padding: '2rem', border: '1px solid rgba(255, 77, 77, 0.2)' }}>

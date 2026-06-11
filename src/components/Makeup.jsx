@@ -3,10 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Sparkles, RefreshCw, Check, Camera, Lock, ArrowRight, HelpCircle, ChevronDown, ChevronUp, Heart, Download, Share2 } from 'lucide-react';
 import { useToast } from './Toast';
 import { authFetch } from '../apiClient';
+import { compressImage } from '../utils/image';
+import CameraModal from './CameraModal';
 import { useFavorites } from './Favorites';
 import ShareStoriesModal from './ShareStoriesModal';
 import SliderComparison from './SliderComparison';
 import confetti from 'canvas-confetti';
+import { isTelegramApp, handleDownloadClick, downloadAllTelegram, shareResult } from '../utils/telegramHelper';
 
 const MAKEUP_PRESETS = [
   { id: 'bronze', name: 'Sunkissed Bronze', image: '/styles/makeup_bronze.webp', desc: 'Warm golden tones, radiant bronzed highlights, and a dewy beach glow.' },
@@ -21,7 +24,10 @@ const MAKEUP_PRESETS = [
   { id: 'matte', name: 'Velvet Matte', image: '/styles/makeup_matte.webp', desc: 'Flawless velvet skin, nude matte lip, structured contours.' },
   { id: 'seductive', name: 'Cat Eye', image: '/styles/makeup_seductive.webp', desc: 'Dramatic winged cat eyeliner, sharp contour, and dark bold lips.' },
   { id: 'glossy-lips', name: 'Glass Lips', image: '/styles/makeup_glossy_lips.webp', desc: 'Simple glass skin paired with high-shine wet lip gloss.' },
-  { id: 'siren-eyes', name: 'Siren Eyes', image: '/styles/makeup_siren_eyes.webp', desc: 'Elongated winged liner, smoked out edges, and dramatic lifted eyes.' },
+  { id: 'douyin', name: 'Douyin Beauty', image: '/styles/makeup_douyin.webp', desc: 'Doll-like manga lashes, glittering shimmery eyeshadow under eyes, blurred gradient lips.' },
+  { id: 'strawberry', name: 'Strawberry Girl', image: '/styles/makeup_strawberry.webp', desc: 'Glowing natural skin, heavy pink blush across nose and cheeks, faux freckles, juicy glossy lips.' },
+  { id: 'espresso', name: 'Espresso', image: '/styles/makeup_espresso.webp', desc: 'Deep dark roasted brown smokey eyes, brown lip contour with nude center.' },
+  { id: 'vampy', name: 'Vampy Chic', image: '/styles/makeup_vampy.webp', desc: 'Dark gothic pale skin, deep black or dark cherry matte lips, subtle contour.' },
   { id: 'latte-makeup', name: 'Latte Contour', image: '/styles/makeup_latte_makeup.webp', desc: 'Warm caramel tones, soft brown smoky eyes, and nude glossy lips.' }
 ];
 
@@ -46,7 +52,10 @@ const LIPSTICKS = [
   { id: 'velvet-red', name: 'Velvet Red', hex: '#b71c1c' },
   { id: 'satin-rosewood', name: 'Satin Rosewood', hex: '#a1695e' },
   { id: 'metallic-berry', name: 'Berry', hex: '#5d0032' },
-  { id: 'soft-coral', name: 'Soft Coral', hex: '#f08080' }
+  { id: 'soft-coral', name: 'Soft Coral', hex: '#f08080' },
+  { id: 'cherry-cola', name: 'Cherry Cola', hex: '#631e1c', hot: true },
+  { id: 'plum-wine', name: 'Plum Wine', hex: '#4f1a24' },
+  { id: 'peachy-nude', name: 'Peachy Nude', hex: '#d48d7c' }
 ];
 
 const EYELINERS = [
@@ -71,6 +80,14 @@ const BLUSHES = [
   { id: 'soft-lavender', name: 'Soft Lavender' }
 ];
 
+const EYE_COLORS = [
+  { id: 'none', name: 'None' },
+  { id: 'ice-blue', name: 'Ice Blue', hot: true },
+  { id: 'emerald', name: 'Emerald', hot: true },
+  { id: 'hazel', name: 'Hazel' },
+  { id: 'violet', name: 'Violet' }
+];
+
 const PROGRESS_STEPS = [
   '⬆️ Uploading selfie to AI engine...',
   '🔍 Scanning facial landmarks...',
@@ -85,6 +102,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [selectedCombinations, setSelectedCombinations] = useState([{ id: 1, presetId: 'bronze', lipstickId: 'none' }]);
   const [activeQuickPreset, setActiveQuickPreset] = useState(null);
   const [showStoriesModal, setShowStoriesModal] = useState(null);
@@ -93,6 +111,8 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   const [selectedEyeliner, setSelectedEyeliner] = useState('none');
   const [selectedEyeshadow, setSelectedEyeshadow] = useState('none');
   const [selectedBlush, setSelectedBlush] = useState('none');
+  const [selectedEyeColor, setSelectedEyeColor] = useState('none');
+  const [addFreckles, setAddFreckles] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('');
@@ -186,7 +206,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
   };
 
   const triggerUpload = () => fileInputRef.current.click();
-  const triggerCamera = () => cameraInputRef.current.click();
+  const triggerCamera = () => setIsCameraOpen(true);
 
   const scrollToPreview = () => {
     if (window.innerWidth <= 900 && previewPanelRef.current) {
@@ -206,7 +226,13 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
     scrollToPreview();
   };
 
-  const handleShare = async () => {
+  const handleShare = async (imgUrl) => {
+    if (isTelegramApp()) {
+      const activeResult = resultImages.find(r => r.result === imgUrl) || resultImages[0];
+      const styleName = activeResult ? activeResult.styleName : 'makeup';
+      await shareResult(image, imgUrl || (activeResult ? activeResult.result : null), styleName, toast);
+      return;
+    }
     const shareData = { title: 'My AI Makeup — GlamAI', text: 'Check out my AI makeup transformation!', url: 'https://glamai.app' };
     if (navigator.share) {
       try { await navigator.share(shareData); } catch (err) { if (err.name !== 'AbortError') toast.error('Sharing failed.'); }
@@ -320,9 +346,13 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           if (eyelinerObj && eyelinerObj.id !== 'none') makeupDesc += ` Eyeliner: ${eyelinerObj.name}.`;
           if (eyeshadowObj && eyeshadowObj.id !== 'none') makeupDesc += ` Eyeshadow: ${eyeshadowObj.name}.`;
           if (blushObj && blushObj.id !== 'none') makeupDesc += ` Blush: ${blushObj.name}.`;
+          const eyeColorObj = EYE_COLORS.find(e => e.id === selectedEyeColor);
+          if (eyeColorObj && eyeColorObj.id !== 'none') makeupDesc += ` EyeColor: ${eyeColorObj.name}.`;
+          if (addFreckles) makeupDesc += ` Freckles: true.`;
 
+          const compressedFile = await compressImage(imageFile);
           const formData = new FormData();
-          formData.append('image', imageFile);
+          formData.append('image', compressedFile);
           formData.append('taskType', 'makeup');
           formData.append('makeup', makeupDesc);
           formData.append('gender', 'female');
@@ -399,16 +429,20 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
   const handleDownloadAll = async () => {
     const successImages = resultImages.filter(r => r.status === 'success');
-    for (let i = 0; i < successImages.length; i++) {
-      const img = successImages[i];
-      const link = document.createElement('a');
-      link.href = img.result;
-      link.download = `glamai_${img.styleName}_${img.colorName}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      if (i < successImages.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+    if (isTelegramApp()) {
+      await downloadAllTelegram(successImages, toast);
+    } else {
+      for (let i = 0; i < successImages.length; i++) {
+        const img = successImages[i];
+        const link = document.createElement('a');
+        link.href = img.result;
+        link.download = `glamai_${img.styleName}_${img.colorName}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (i < successImages.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
     }
   };
@@ -596,6 +630,27 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
             </div>
           </div>
 
+          {/* Eye Color */}
+          <div className="selector-group">
+            <span className="selector-title">Colored Contact Lenses</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              {EYE_COLORS.map(e => (
+                <button key={e.id} className={`btn ${selectedEyeColor === e.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', position: 'relative' }} onClick={() => setSelectedEyeColor(e.id)}>
+                  {e.name}
+                  {e.hot && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--color-pink-primary)', color: '#fff', fontSize: '0.55rem', padding: '0.1rem 0.3rem', borderRadius: '4px', fontWeight: 800 }}>HOT</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Freckles Toggle */}
+          <div className="selector-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', background: 'rgba(0,0,0,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
+              <input type="checkbox" checked={addFreckles} onChange={(e) => setAddFreckles(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: 'var(--color-pink-primary)' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>Add Faux Freckles ✨</span>
+            </label>
+          </div>
+
           {/* Token usage info */}
           <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
@@ -724,6 +779,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                                 download={`glamai_${res.styleName}_${res.colorName}.png`}
                                 className="generation-card-btn"
                                 title="Download HD Render"
+                                onClick={(e) => handleDownloadClick(e, res.result, `glamai_${res.styleName}_${res.colorName}.png`, toast)}
                               >
                                 <Download size={14} />
                               </a>
@@ -783,7 +839,7 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
                   beforeSrc={image}
                   afterSrc={resultImages[0].result}
                   title={resultImages[0].styleName}
-                  onShare={() => setShowStoriesModal({ url: resultImages[0].result, styleName: resultImages[0].styleName })}
+                  onShare={() => handleShare(resultImages[0].result)}
                   onDownload={() => {}}
                   hideActions={false}
                 />
@@ -902,6 +958,13 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
 
           <input ref={fileInputRef} type="file" className="file-input" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
           <input ref={cameraInputRef} type="file" className="file-input" accept="image/*" capture="user" onChange={handleFileChange} style={{ display: 'none' }} />
+          <CameraModal
+            isOpen={isCameraOpen}
+            onClose={() => setIsCameraOpen(false)}
+            onCapture={(file) => loadImage(file)}
+            preferredFacingMode="user"
+            fallbackTrigger={() => cameraInputRef.current.click()}
+          />
 
           {/* Generate Button (positioned under upload dropzone) */}
           {image && (

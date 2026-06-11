@@ -1,11 +1,19 @@
 import { t, getLanguage } from '../utils/i18n';
 import React, { useState, useEffect } from 'react';
-import { Coins, User, Calendar, CreditCard, Copy, Check, Grid, RefreshCw, Scissors, Sparkles, Smile, Eye } from 'lucide-react';
+import { Coins, User, Calendar, CreditCard, Copy, Check, Grid, RefreshCw, Scissors, Sparkles, Smile, Eye, X, Share2, Download } from 'lucide-react';
 import { authFetch } from '../apiClient';
 import { useToast } from './Toast';
+import { handleDownloadClick, isTelegramApp, shareResult } from '../utils/telegramHelper';
 
 export default function Dashboard({ user, onLogout, setActiveTab }) {
   const toast = useToast();
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [filterType, setFilterType] = useState('all');
@@ -19,11 +27,18 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
   });
 
   // Admin Control Panel States
-  const [activeSubTab, setActiveSubTab] = useState('history'); // 'history' or 'admin'
+  const [activeSubTab, setActiveSubTab] = useState('history'); // 'history', 'admin', or 'admin_generations'
   const [adminSearch, setAdminSearch] = useState('');
   const [adminUsers, setAdminUsers] = useState([]);
   const [loadingAdminUsers, setLoadingAdminUsers] = useState(false);
   const [creditsInput, setCreditsInput] = useState({});
+
+  // Admin Generations States
+  const [adminGenerations, setAdminGenerations] = useState([]);
+  const [loadingAdminGenerations, setLoadingAdminGenerations] = useState(false);
+  const [adminGenerationsSearch, setAdminGenerationsSearch] = useState('');
+  const [adminGenerationsFilter, setAdminGenerationsFilter] = useState('all');
+  const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
     fetchHistory();
@@ -34,14 +49,35 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
     if (user?.role === 'admin') {
       fetchAnalytics();
       fetchAdminUsers();
+      fetchAdminGenerations();
     }
   }, [user]);
 
   useEffect(() => {
-    if (user?.role === 'admin' && activeSubTab === 'admin') {
-      fetchAdminUsers(adminSearch);
+    if (user?.role === 'admin') {
+      if (activeSubTab === 'admin') {
+        fetchAdminUsers(adminSearch);
+      } else if (activeSubTab === 'admin_generations') {
+        fetchAdminGenerations(adminGenerationsSearch, adminGenerationsFilter);
+      }
     }
-  }, [activeSubTab, user]);
+  }, [activeSubTab, adminGenerationsFilter, user]);
+
+  const fetchAdminGenerations = async (searchVal = '', filterVal = 'all') => {
+    try {
+      setLoadingAdminGenerations(true);
+      const typeParam = filterVal === 'all' ? '' : filterVal;
+      const res = await authFetch(`/api/admin/generations?search=${encodeURIComponent(searchVal)}&taskType=${typeParam}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdminGenerations(data.generations || []);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch admin generations:", err);
+    } finally {
+      setLoadingAdminGenerations(false);
+    }
+  };
 
   const fetchAdminUsers = async (searchVal = '') => {
     try {
@@ -202,7 +238,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
               {user?.role === 'admin' ? (
-                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(0,0,0,0.03)', padding: '0.25rem', borderRadius: '100px' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', background: 'rgba(0,0,0,0.03)', padding: '0.25rem', borderRadius: '100px', flexWrap: 'wrap' }}>
                   <button 
                     onClick={() => setActiveSubTab('history')}
                     style={{
@@ -232,6 +268,21 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                     }}
                   >
                     {t('audit.dashboard.adminControlPanel')}
+                  </button>
+                  <button 
+                    onClick={() => setActiveSubTab('admin_generations')}
+                    style={{
+                      border: 'none',
+                      background: activeSubTab === 'admin_generations' ? 'var(--gradient-pink-purple)' : 'transparent',
+                      color: activeSubTab === 'admin_generations' ? '#fff' : 'var(--text-secondary)',
+                      padding: '0.4rem 1.25rem',
+                      borderRadius: '100px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Client Generations
                   </button>
                 </div>
               ) : (
@@ -303,10 +354,10 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                 </div>
               ) : (
                 /* History grid */
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(200px, 1fr))', gap: isMobile ? '0.75rem' : '1.5rem' }}>
                   {history.map((item) => (
-                    <div key={item.id} className="history-card" style={{ background: '#fff', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s ease' }}>
-                      <div style={{ position: 'relative', width: '100%', height: '220px', background: '#000' }}>
+                    <div key={item.id} className="history-card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.2s ease' }}>
+                      <div style={{ position: 'relative', width: '100%', height: isMobile ? '160px' : '220px', background: '#000', cursor: 'pointer' }} onClick={() => setPreviewImage(item.result_url || item.style)}>
                         <img 
                           src={item.result_url || item.style} 
                           alt="Transformation" 
@@ -318,7 +369,7 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                         </div>
                       </div>
                       
-                      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <div style={{ padding: isMobile ? '0.75rem' : '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {item.task_type === 'hairstyle' ? (item.style || t('audit.dashboard.customStyle')) : (item.makeup || item.nails || t('audit.dashboard.customLook'))}
                         </span>
@@ -327,21 +378,37 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                         </span>
                         
                         {item.result_url && (
-                          <a 
-                            href={item.result_url} 
-                            download={`glamai_${item.task_type}.png`}
-                            className="btn btn-secondary" 
-                            style={{ marginTop: '0.75rem', padding: '0.35rem 0', fontSize: '0.75rem', width: '100%' }}
-                          >
-                            {t('audit.dashboard.downloadHd')}
-                          </a>
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.75rem' }}>
+                            <a 
+                              href={item.result_url} 
+                              download={`glamai_${item.task_type}.png`}
+                              className="btn btn-secondary" 
+                              style={{ padding: '0.4rem 0.2rem', fontSize: '0.7rem', flex: 1, minWidth: 0 }}
+                              onClick={(e) => handleDownloadClick(e, item.result_url, `glamai_${item.task_type}.png`, toast)}
+                            >
+                              <Download size={12} style={{ flexShrink: 0 }} />
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>HD</span>
+                            </a>
+                            <button 
+                              type="button"
+                              className="btn btn-pink-outline" 
+                              style={{ padding: '0.4rem 0.2rem', fontSize: '0.7rem', flex: 1, minWidth: 0 }}
+                              onClick={() => {
+                                const styleName = item.task_type === 'hairstyle' ? (item.style || 'Custom Style') : (item.makeup || item.nails || 'Custom Look');
+                                shareResult(null, item.result_url, styleName, toast);
+                              }}
+                            >
+                              <Share2 size={12} style={{ flexShrink: 0 }} />
+                              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{t('audit.dashboard.share') || 'Share'}</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               )
-            ) : (
+            ) : activeSubTab === 'admin' ? (
               // Admin Sub-Tab: visible only to users with role='admin'
               user?.role === 'admin' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -507,9 +574,181 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
                     </div>
                   )}
                 </div>
-              )
-            )}
-          </div>
+              ) ) : (
+                // Admin Generations Sub-Tab: visible only to users with role='admin'
+                user?.role === 'admin' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {/* Search and filter bar */}
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '280px' }}>
+                        <input
+                          type="text"
+                          placeholder="Search generations by user email or IP..."
+                          value={adminGenerationsSearch}
+                          onChange={(e) => setAdminGenerationsSearch(e.target.value)}
+                          style={{
+                            flex: 1,
+                            padding: '0.75rem 1rem',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--glass-border)',
+                            background: 'rgba(255,255,255,0.7)',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            fontSize: '0.9rem'
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') fetchAdminGenerations(adminGenerationsSearch, adminGenerationsFilter);
+                          }}
+                        />
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => fetchAdminGenerations(adminGenerationsSearch, adminGenerationsFilter)}
+                          style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}
+                        >
+                          Search
+                        </button>
+                      </div>
+
+                      {/* Filter by task type */}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '0.35rem', 
+                        background: 'rgba(0,0,0,0.03)', 
+                        padding: '0.2rem', 
+                        borderRadius: '100px',
+                        alignItems: 'center'
+                      }}>
+                        {['all', 'hairstyle', 'makeup', 'nails', 'beard', 'retouch'].map(filterCode => {
+                          const labelMap = {
+                            all: t('audit.dashboard.filter.all'),
+                            hairstyle: t('audit.dashboard.filter.hair'),
+                            makeup: t('audit.dashboard.filter.makeup'),
+                            nails: t('audit.dashboard.filter.nails'),
+                            beard: t('audit.dashboard.filter.beard'),
+                            retouch: t('audit.dashboard.filter.retouch')
+                          };
+                          const label = labelMap[filterCode] || filterCode;
+                          return (
+                            <button
+                              key={filterCode}
+                              onClick={() => setAdminGenerationsFilter(filterCode)}
+                              style={{
+                                border: 'none',
+                                background: adminGenerationsFilter === filterCode ? 'var(--gradient-pink-purple)' : 'transparent',
+                                color: adminGenerationsFilter === filterCode ? '#fff' : 'var(--text-secondary)',
+                                padding: '0.35rem 0.85rem',
+                                fontSize: '0.75rem',
+                                borderRadius: '100px',
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {loadingAdminGenerations ? (
+                      <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                        <div className="spinner-inner" style={{ margin: '0 auto 1rem' }}></div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading generations...</span>
+                      </div>
+                    ) : adminGenerations.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                        <p>No generations found in client history.</p>
+                      </div>
+                    ) : (
+                      /* Generations grid */
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                        {adminGenerations.map((item) => (
+                          <div 
+                            key={item.id} 
+                            className="history-card" 
+                            style={{ 
+                              background: '#fff', 
+                              border: '1px solid var(--glass-border)', 
+                              borderRadius: '16px', 
+                              overflow: 'hidden', 
+                              transition: 'all 0.2s ease',
+                              display: 'flex',
+                              flexDirection: 'column'
+                            }}
+                          >
+                            <div 
+                              style={{ position: 'relative', width: '100%', height: '200px', background: '#000', cursor: 'zoom-in' }}
+                              onClick={() => setPreviewImage(item.result_url)}
+                            >
+                              <img 
+                                src={item.result_url} 
+                                alt="Client Generation" 
+                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              />
+                              
+                              <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: 'rgba(255, 46, 147, 0.9)', color: '#fff', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', textTransform: 'capitalize', fontWeight: 800 }}>
+                                {item.task_type}
+                              </div>
+
+                              <div 
+                                style={{ 
+                                  position: 'absolute', 
+                                  bottom: '0.5rem', 
+                                  right: '0.5rem', 
+                                  background: 'rgba(0, 0, 0, 0.6)', 
+                                  color: '#fff', 
+                                  borderRadius: '50%', 
+                                  width: '28px', 
+                                  height: '28px', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center' 
+                                }}
+                              >
+                                <Eye size={14} />
+                              </div>
+                            </div>
+                            
+                            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                              <span 
+                                style={{ 
+                                  fontSize: '0.8rem', 
+                                  fontWeight: 800, 
+                                  color: 'var(--text-primary)', 
+                                  wordBreak: 'break-all'
+                                }}
+                                title={item.user_email || `Guest (${item.ip})`}
+                              >
+                                {item.user_email || `Guest (${item.ip})`}
+                              </span>
+                              
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.1rem', marginTop: '0.25rem' }}>
+                                {item.task_type === 'hairstyle' && (
+                                  <>
+                                    <div>Style: <strong>{item.style || 'Default'}</strong></div>
+                                    <div>Color: <strong>{item.color || 'Default'}</strong></div>
+                                  </>
+                                )}
+                                {item.task_type === 'makeup' && <div>Preset: <strong>{item.makeup || 'Default'}</strong></div>}
+                                {item.task_type === 'nails' && <div>Preset: <strong>{item.nails || 'Default'}</strong></div>}
+                                {item.task_type === 'beard' && <div>Style: <strong>{item.beard || 'Default'}</strong></div>}
+                                {item.task_type === 'retouch' && <div>Params: <strong>Retouched</strong></div>}
+                                <div>Gender: <strong>{item.gender || 'n/a'}</strong></div>
+                              </div>
+                              
+                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 'auto', paddingTop: '0.5rem' }}>
+                                {new Date(item.created_at).toLocaleString(getLanguage(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
 
           {/* Pre-existing Monetization Analytics: Restricted to Admin Panel */}
           {user?.role === 'admin' && activeSubTab === 'admin' && (
@@ -574,6 +813,85 @@ export default function Dashboard({ user, onLogout, setActiveTab }) {
             </div>
           )}
         </div>
+
+        {previewImage && (
+          <div 
+            className="modal-backdrop" 
+            onClick={() => setPreviewImage(null)}
+            style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+          >
+            <div 
+              className="glass-panel" 
+              style={{ 
+                position: 'relative', 
+                padding: '1.5rem', 
+                maxWidth: '90vw', 
+                maxHeight: '90vh', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                background: 'var(--bg-secondary)',
+                borderRadius: '16px'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  position: 'absolute',
+                  top: '0.75rem',
+                  right: '0.75rem',
+                  background: 'rgba(0,0,0,0.05)',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+              <img 
+                src={previewImage} 
+                alt="Preview" 
+                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px', marginTop: '1rem' }} 
+              />
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', justifyContent: 'center' }}>
+                <a 
+                  href={previewImage} 
+                  download="glamai_generation.png" 
+                  className="btn btn-primary"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', flex: 1, minWidth: '100px' }}
+                  onClick={(e) => handleDownloadClick(e, previewImage, 'glamai_generation.png', toast)}
+                >
+                  <Download size={14} style={{ marginRight: '0.2rem' }} />
+                  Download
+                </a>
+                <button 
+                  onClick={() => {
+                    shareResult(null, previewImage, 'Custom Look', toast);
+                  }} 
+                  className="btn btn-pink-outline"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', flex: 1, minWidth: '100px' }}
+                >
+                  <Share2 size={14} style={{ marginRight: '0.2rem' }} />
+                  Share
+                </button>
+                <button 
+                  onClick={() => setPreviewImage(null)} 
+                  className="btn btn-secondary"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', flex: 1, minWidth: '100px' }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

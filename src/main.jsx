@@ -8,7 +8,25 @@ import App from './App.jsx'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
-if (!PUBLISHABLE_KEY) {
+// Detect Telegram Mini App before React mounts
+const isTelegramMiniApp = !!(
+  (typeof window !== 'undefined' &&
+   (window.location.hash.includes('tgWebAppData=') ||
+    window.location.search.includes('tgWebAppData='))) ||
+  (window.Telegram?.WebApp?.initData && window.Telegram.WebApp.initData.length > 0)
+);
+
+if (isTelegramMiniApp) {
+  // Running inside Telegram — skip Clerk entirely, use Telegram auth only
+  console.log('[GlamAI] Running inside Telegram Mini App — Clerk bypassed');
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>,
+  );
+} else if (!PUBLISHABLE_KEY) {
   console.warn("VITE_CLERK_PUBLISHABLE_KEY is not set in environment variables.")
   
   createRoot(document.getElementById('root')).render(

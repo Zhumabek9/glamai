@@ -2,6 +2,7 @@ import t from '../utils/i18n';
 import { useRef, useEffect, useState } from 'react';
 import { X, Download, Copy } from 'lucide-react';
 import { useToast } from './Toast';
+import { isTelegramApp, downloadImage } from '../utils/telegramHelper';
 
 /**
  * ShareStoriesModal
@@ -132,11 +133,15 @@ export default function ShareStoriesModal({ imageUrl, styleName, onClose }) {
 
   const handleDownload = () => {
     if (!dataUrl) return;
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `glamai_stories_${Date.now()}.png`;
-    a.click();
-    toast.success('Story saved! Share it on Instagram 🌟');
+    if (isTelegramApp()) {
+      downloadImage(dataUrl, `glamai_stories_${Date.now()}.png`, toast);
+    } else {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `glamai_stories_${Date.now()}.png`;
+      a.click();
+      toast.success('Story saved! Share it on Instagram 🌟');
+    }
   };
 
   const handleCopy = async () => {

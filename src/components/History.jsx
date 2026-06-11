@@ -1,17 +1,15 @@
 import t from '../utils/i18n';
 import React, { useState } from 'react';
-import { History as HistoryIcon, Download, Calendar, Eye, Trash2, X } from 'lucide-react';
+import { History as HistoryIcon, Download, Calendar, Eye, Trash2, X, Share2 } from 'lucide-react';
+import { useToast } from './Toast';
+import { downloadImage, shareResult } from '../utils/telegramHelper';
 
 export default function History({ history, onClearItem, onStartClick }) {
+  const toast = useToast();
   const [selectedItem, setSelectedItem] = useState(null);
 
   const handleDownload = (imgUrl, filename) => {
-    const link = document.createElement('a');
-    link.href = imgUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadImage(imgUrl, filename, toast);
   };
 
 
@@ -97,6 +95,14 @@ export default function History({ history, onClearItem, onStartClick }) {
                       <button 
                         className="btn btn-secondary" 
                         style={{ padding: '0.25rem', borderRadius: '4px' }}
+                        onClick={(e) => { e.stopPropagation(); shareResult(item.original, item.result, item.style, toast); }}
+                        title="Share"
+                      >
+                        <Share2 size={12} />
+                      </button>
+                      <button 
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.25rem', borderRadius: '4px' }}
                         onClick={(e) => { e.stopPropagation(); onClearItem(item.id); }}
                         title={t('audit.history.delete')}
                       >
@@ -154,12 +160,19 @@ export default function History({ history, onClearItem, onStartClick }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button 
                 className="btn btn-secondary" 
                 onClick={() => setSelectedItem(null)}
               >
                 Close Preview
+              </button>
+              <button 
+                className="btn btn-pink-outline" 
+                onClick={() => shareResult(selectedItem.original, selectedItem.result, selectedItem.style, toast)}
+              >
+                <Share2 size={16} />
+                <span>Share</span>
               </button>
               <button 
                 className="btn btn-primary" 

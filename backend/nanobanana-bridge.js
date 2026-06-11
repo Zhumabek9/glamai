@@ -336,6 +336,14 @@ function parseMakeupDescription(makeupStyle) {
         presetDesc = "Korean style glass skin makeup, gradient cherry lips, subtle puppy eyeliner, soft coral blush, clean straight eyebrows, youthful aesthetic";
     } else if (styleLower.includes('soft girl') || styleLower.includes('soft_girl')) {
         presetDesc = "soft girl makeup look, pink tones, rosy cheeks, cute faux freckles, glossy pink lips, fluffy brows";
+    } else if (styleLower.includes('douyin')) {
+        presetDesc = "Douyin makeup style, doll-like manga lashes, glittering shimmery eyeshadow under eyes, blurred gradient lips, soft Asian beauty look";
+    } else if (styleLower.includes('strawberry')) {
+        presetDesc = "Strawberry makeup look, glowing natural skin, heavy pink blush across the nose and cheeks, faux freckles, juicy glossy lips";
+    } else if (styleLower.includes('espresso')) {
+        presetDesc = "Espresso makeup look, deep dark roasted brown smokey eyes, brown lip contour with nude center, rich monochromatic brown tones";
+    } else if (styleLower.includes('vampy')) {
+        presetDesc = "Vampy chic makeup, dark gothic pale skin, deep black or dark cherry matte lips, subtle contour, bold dark aesthetic";
     } else if (styleLower.includes('natural')) {
         presetDesc = "no-makeup makeup look, very natural skin texture, light mascara, sheer nude lip gloss, subtle dewy skin glow, clean natural eyebrows";
     }
@@ -408,6 +416,18 @@ function parseMakeupDescription(makeupStyle) {
         }
     }
 
+    // 6. Detect EyeColor and Freckles
+    let eyeColorDesc = "";
+    const eyeMatch = makeupStyle.match(/EyeColor:\s*([^.,]+)/i);
+    if (eyeMatch && eyeMatch[1] && eyeMatch[1].trim().toLowerCase() !== 'none') {
+        eyeColorDesc = `${eyeMatch[1].trim()} colored contact lenses, intensely colored irises`;
+    }
+    
+    let frecklesDesc = "";
+    if (makeupStyle.match(/Freckles:\s*true/i) || styleLower.includes('with freckles')) {
+        frecklesDesc = "cute natural looking faux freckles across the nose and cheeks";
+    }
+
     // Combine them intelligently
     let details = [];
     if (presetDesc) details.push(presetDesc);
@@ -415,6 +435,8 @@ function parseMakeupDescription(makeupStyle) {
     if (eyelinerDesc) details.push(`eyeliner: ${eyelinerDesc}`);
     if (eyeshadowDesc) details.push(`eyeshadow: ${eyeshadowDesc}`);
     if (blushDesc) details.push(`cheeks: ${blushDesc}`);
+    if (eyeColorDesc) details.push(`eyes: ${eyeColorDesc}`);
+    if (frecklesDesc) details.push(frecklesDesc);
     
     if (details.length === 0) {
         return `custom makeup style: ${makeupStyle}`;
