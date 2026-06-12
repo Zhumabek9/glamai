@@ -412,10 +412,300 @@ const BLOG_ARTICLES = [
         type: 'cta', text: 'Take a step toward your new look with GlamAI — use artificial intelligence to find your perfect hairstyle right now!'
       }
     ]
+  },
+  {
+    id: 8,
+    slug: 'makeup-trends-2025',
+    category: 'Makeup',
+    title: 'Top 10 Makeup Trends Dominating 2025: From Latte Makeup to Siren Eyes',
+    excerpt: 'The beauty world moves fast. Here are the 10 makeup trends every beauty lover should know this year — from glass skin to bold editorial eye art.',
+    minRead: 7,
+    date: 'June 5, 2025',
+    image: '/blog/makeup-trends.png',
+    tags: ['Makeup', 'Trends', '2025'],
+    content: [
+      {
+        type: 'intro',
+        text: '2025 is redefining beauty standards. Makeup this year is all about expressing personality — whether that means a barely-there "your skin but better" look or a dramatic editorial moment. We\'ve rounded up the 10 biggest makeup trends taking over social media and runways.'
+      },
+      {
+        type: 'h2', text: '1. ☕ Latte Makeup'
+      },
+      {
+        type: 'p', text: 'The trend that swept TikTok and Instagram: warm brown tones across the entire face. Think caramel eyeshadow, brown liner, coffee-toned blush, and a nude-brown lip. The result is a cozy, effortlessly chic look that flatters every skin tone and works for both daytime and evening.'
+      },
+      {
+        type: 'h2', text: '2. 🧊 Glass Skin'
+      },
+      {
+        type: 'p', text: 'Borrowed from K-beauty, glass skin focuses on achieving a dewy, translucent glow. The technique layers hydrating primers, luminous foundations, and cream highlighters to create skin that looks lit from within. Skip the powder — this look is all about moisture and reflection.'
+      },
+      {
+        type: 'tip', text: 'GlamAI Tip: Try our Glass Skin preset in the Makeup tab — it applies dewy highlighter, soft blush, and natural lip color to your photo instantly!'
+      },
+      {
+        type: 'h2', text: '3. 🔥 Siren Eyes'
+      },
+      {
+        type: 'p', text: 'The siren eye technique elongates the eyes using strategic liner and shadow placement. Dark shadow is concentrated at the outer corner and pulled upward, while the inner corner gets a clean highlight. The result: sultry, feline eyes that look dangerously glamorous.'
+      },
+      {
+        type: 'h2', text: '4. 🌸 Soft-Girl Blush'
+      },
+      {
+        type: 'p', text: 'Blush is the star product of 2025. Applied generously across cheeks, nose bridge, and even eyelids, it creates a youthful, sun-kissed flush. Cream and liquid blush formulas in peachy-pink and coral shades are the top picks.'
+      },
+      {
+        type: 'h2', text: '5. 💎 Y2K Sparkle Revival'
+      },
+      {
+        type: 'p', text: 'Glitter is back — but elevated. Think micro-shimmer eyeshadows, crystal accents near the eyes, and iridescent highlighters. The 2000s nostalgia wave brings body glitter, glossy lids, and metallic lip toppers back into the spotlight.'
+      },
+      {
+        type: 'h2', text: '6. 🍓 Strawberry Girl Makeup'
+      },
+      {
+        type: 'p', text: 'Fresh, fruity, and playful. This trend combines dewy skin with rosy-pink blush concentrated on the apples of the cheeks, a berry-tinted lip balm, and minimal eye makeup. It\'s the embodiment of effortless summer beauty.'
+      },
+      {
+        type: 'h2', text: '7. 🎭 Bold Lip Comebacks'
+      },
+      {
+        type: 'p', text: 'After years of nude lip dominance, bold lips are reclaiming their throne. Deep burgundy, classic red, and unexpected shades like chocolate brown and tangerine are trending. The key is a precise, clean lip line paired with minimal eye makeup.'
+      },
+      {
+        type: 'h2', text: '8. 👁️ Colored Contact Lenses'
+      },
+      {
+        type: 'p', text: 'Colored lenses have become a mainstream beauty accessory. Hazel, emerald green, and ice blue are the most requested shades. They instantly change the mood of any makeup look and are a game-changer for photoshoots.'
+      },
+      {
+        type: 'h2', text: '9. 🌿 Clean Girl Aesthetic'
+      },
+      {
+        type: 'p', text: 'Minimalism reigns. Concealer only where needed, groomed brows, a swipe of clear brow gel, neutral lip balm, and a touch of cream blush. The focus is on flawless skin prep and that "I woke up like this" perfection.'
+      },
+      {
+        type: 'h2', text: '10. 💜 Euphoria-Inspired Art'
+      },
+      {
+        type: 'p', text: 'For those who love to push boundaries: editorial eye art with graphic liner, colored mascara, rhinestones, and unconventional color palettes (think lilac, tangerine, and electric blue). Self-expression meets artistry.'
+      },
+      {
+        type: 'cta', text: 'Want to try Latte Makeup, Siren Eyes, or Glass Skin on your face? Upload your photo to GlamAI and experiment with all these looks instantly!'
+      }
+    ]
+  },
+  {
+    id: 9,
+    slug: 'virtual-makeup-try-on-guide',
+    category: 'Makeup',
+    title: 'How to Use AI Makeup Try-On: The Ultimate Guide to Virtual Beauty',
+    excerpt: 'AI makeup tools let you test lipstick, eyeshadow, blush, and lenses before buying. Here is your complete guide to getting the most realistic virtual makeup results.',
+    minRead: 6,
+    date: 'May 28, 2025',
+    image: '/blog/virtual-makeup.png',
+    tags: ['Makeup', 'AI Tech', 'Guide'],
+    content: [
+      {
+        type: 'intro',
+        text: 'Virtual makeup try-on technology has revolutionized how we shop for beauty products and plan our looks. No more buying a lipstick only to discover it clashes with your skin tone. With AI, you can test hundreds of products and combinations in minutes — for free.'
+      },
+      {
+        type: 'h2', text: '💄 What Can AI Makeup Try-On Do?'
+      },
+      {
+        type: 'p', text: 'Modern AI makeup tools like GlamAI can apply a wide range of products to your photo with impressive accuracy:\n\n• **Lipstick** — Try on matte, glossy, satin, and ombre lip looks in dozens of shades\n• **Eyeshadow** — Preview smokey eyes, cut creases, glitter looks, and natural nude tones\n• **Blush** — Test placement, intensity, and shade (peachy, rose, coral)\n• **Eyeliner** — Classic, winged, graphic, and smokey liner styles\n• **Colored Lenses** — See yourself with hazel, blue, green, or violet eyes\n• **Full Presets** — Complete curated looks like Glam, Natural, Korean Glass Skin, and Bridal'
+      },
+      {
+        type: 'h2', text: '📸 How to Get the Best Results'
+      },
+      {
+        type: 'p', text: 'The quality of your source photo directly impacts how realistic the result looks. Here are the golden rules:\n\n**1. Face the camera directly** — A straight-on, front-facing selfie gives the AI the clearest facial landmarks to work with.\n\n**2. Use even, natural lighting** — Avoid harsh shadows, backlighting, or yellow-tinted indoor light. Soft natural daylight from a window is ideal.\n\n**3. Remove glasses and accessories** — Glasses, hats, and headbands can interfere with the AI\'s ability to precisely map the eye area and forehead.\n\n**4. Start with a clean face** — Upload a photo without any makeup for the most accurate preview of how the virtual products will look on you.'
+      },
+      {
+        type: 'tip', text: 'GlamAI Tip: Our batch generation feature lets you try multiple makeup looks simultaneously! Select several presets and compare them side by side.'
+      },
+      {
+        type: 'h2', text: '🛍️ Smart Shopping with Virtual Try-On'
+      },
+      {
+        type: 'p', text: 'Virtual makeup try-on is not just fun — it saves money. Beauty products are expensive and often non-returnable once opened. By previewing shades digitally, you can confidently purchase products that actually suit your complexion. This is especially valuable for online shoppers who can\'t test products in-store.'
+      },
+      {
+        type: 'h2', text: '💡 Perfect Use Cases'
+      },
+      {
+        type: 'p', text: '**Wedding Planning** — Brides-to-be can test dozens of bridal makeup styles and share the results with their makeup artist to ensure perfect communication.\n\n**Event Looks** — Planning a prom, gala, or party look? Test bold options you normally wouldn\'t dare to try — risk-free.\n\n**Product Discovery** — Curious about a TikTok-viral lipstick shade? Try it on yourself before adding it to cart.\n\n**Seasonal Updates** — Refresh your everyday look with new seasonal colors as trends change.'
+      },
+      {
+        type: 'h2', text: '🔐 Privacy & Safety'
+      },
+      {
+        type: 'p', text: 'A common concern with AI beauty tools is photo privacy. At GlamAI, your photos are processed securely and are never used for AI training. You can delete your data at any time. We believe beautiful technology should also be trustworthy.'
+      },
+      {
+        type: 'cta', text: 'Ready to discover your perfect makeup look? Upload your photo to GlamAI and try on lipsticks, eyeshadows, and complete beauty presets in seconds!'
+      }
+    ]
+  },
+  {
+    id: 10,
+    slug: 'trending-nail-designs-2025',
+    category: 'Nails',
+    title: 'The Hottest Nail Trends of 2025: Chrome, Aura, and Beyond',
+    excerpt: 'From chrome French tips to mesmerizing aura gradients and 3D water drop art — here are the nail designs dominating salons and Instagram feeds in 2025.',
+    minRead: 7,
+    date: 'May 20, 2025',
+    image: '/blog/nail-trends.png',
+    tags: ['Nails', 'Trends', '2025'],
+    content: [
+      {
+        type: 'intro',
+        text: 'Nail art has evolved from simple polish into a true form of self-expression. In 2025, nails are bolder, more creative, and more personal than ever. Whether you prefer minimalist elegance or avant-garde art, there is a trend for you.'
+      },
+      {
+        type: 'h2', text: '1. 🪞 Chrome & Metallic Finishes'
+      },
+      {
+        type: 'p', text: 'Chrome nails continue to dominate. The liquid metal finish creates a futuristic, high-fashion look. In 2025, variations include silver chrome, gold chrome, rose gold chrome, and even holographic chrome. The effect is achieved with chrome powder applied over a gel base and cured under UV light.'
+      },
+      {
+        type: 'h2', text: '2. ✨ Glazed Donut Nails'
+      },
+      {
+        type: 'p', text: 'Popularized by Hailey Bieber, this pearlescent shimmer look isn\'t going anywhere. It uses a sheer milky base with a fine iridescent powder that gives nails a soft, luminous glow — like a freshly glazed donut. Elegant, understated, and universally flattering.'
+      },
+      {
+        type: 'tip', text: 'GlamAI Tip: Try our "Glazed Donut" texture preset in the Nails Studio! Pair it with any nail shape to see the effect on your hands.'
+      },
+      {
+        type: 'h2', text: '3. 🌈 Aura Gradient Nails'
+      },
+      {
+        type: 'p', text: 'The aura nail trend features a soft, airbrushed gradient circle in the center of each nail, resembling a glowing aura. Popular color combos include pink-to-purple, blue-to-green, and peach-to-yellow. The dreamy, ethereal effect is achieved with an airbrush or sponge technique.'
+      },
+      {
+        type: 'h2', text: '4. 🐚 3D Embellishments & Water Drops'
+      },
+      {
+        type: 'p', text: 'Textured nails are huge in 2025. 3D gel drops ("water drop nails"), pearls, bows, and sculpted flowers add dimension and tactile interest. The water drop technique uses clear gel to create realistic dewdrop effects on the nail surface.'
+      },
+      {
+        type: 'h2', text: '5. 🐆 Tortoiseshell & Animal Prints'
+      },
+      {
+        type: 'p', text: 'Tortoiseshell nails mimic the warm amber-and-brown patterns of actual tortoise shell. The translucent effect is achieved by layering warm brown, amber, and black gel over a clear base. Other animal prints like cow print, snake, and leopard are also trending.'
+      },
+      {
+        type: 'h2', text: '6. 💅 Chrome French Tips'
+      },
+      {
+        type: 'p', text: 'The classic French manicure gets a 2025 upgrade with chrome or metallic tips. Instead of traditional white, the tips are finished with silver, gold, or copper chrome powder. The combination of a clean nude base with metallic tips is both elegant and modern.'
+      },
+      {
+        type: 'h2', text: '7. 🌸 Soft Pastel & "Milk Bath" Nails'
+      },
+      {
+        type: 'p', text: 'Sheer, milky pastels are the perfect everyday nail. Think translucent pink, lavender, baby blue, and mint. "Milk bath" nails add dried flower petals suspended in a clear gel layer for a romantic, spa-like effect.'
+      },
+      {
+        type: 'h2', text: '8. 🖤 Dark Luxe: Oxblood, Navy & Black'
+      },
+      {
+        type: 'p', text: 'Deep, moody shades make a sophisticated statement. Oxblood burgundy, midnight navy, and glossy jet black are the go-to choices for fall and winter. Pair them with a high-shine top coat for maximum drama.'
+      },
+      {
+        type: 'h2', text: '9. 🎨 Mix-and-Match Accent Nails'
+      },
+      {
+        type: 'p', text: 'Why choose one design when you can have several? The mix-and-match trend pairs different designs on each finger — one chrome, one French tip, one aura, one solid. It\'s personalized nail art at its finest.'
+      },
+      {
+        type: 'h2', text: '10. 💠 Geometric & Negative Space Art'
+      },
+      {
+        type: 'p', text: 'Clean lines, shapes, and deliberate bare spots create a modern, architectural look. Thin tape or stencils are used to create sharp geometric patterns — triangles, stripes, and abstract blocks — with sections of bare nail peeking through.'
+      },
+      {
+        type: 'cta', text: 'Ready to try chrome, aura, or 3D nails on your hands? Upload your photo to GlamAI\'s Nail Studio and preview any design risk-free!'
+      }
+    ]
+  },
+  {
+    id: 11,
+    slug: 'nail-care-healthy-strong-nails',
+    category: 'Nails',
+    title: 'Complete Nail Care Guide: How to Grow Healthy, Strong & Beautiful Nails',
+    excerpt: 'Beautiful nails start with proper care. From cuticle health to the best vitamins, here is everything you need to know about maintaining strong, gorgeous nails.',
+    minRead: 8,
+    date: 'May 12, 2025',
+    image: '/blog/nail-care.png',
+    tags: ['Nails', 'Nail Care', 'Guide'],
+    content: [
+      {
+        type: 'intro',
+        text: 'Stunning nail art and salon manicures look best on healthy, well-maintained nails. Whether you wear gel extensions, dip powder, or prefer natural nails, these care fundamentals will keep your nails strong, flexible, and beautiful.'
+      },
+      {
+        type: 'h2', text: '1. 💧 Hydrate Your Cuticles Daily'
+      },
+      {
+        type: 'p', text: 'Dry, cracked cuticles are the #1 enemy of beautiful nails. Apply cuticle oil (jojoba, vitamin E, or almond oil) at least once a day. Massage it into the cuticle and nail bed to promote blood flow and healthy nail growth. Keep a small cuticle oil pen in your bag for on-the-go application.'
+      },
+      {
+        type: 'h2', text: '2. 🧤 Protect Your Hands'
+      },
+      {
+        type: 'p', text: 'Household cleaning products, dish soap, and even prolonged water exposure weaken nails. Always wear rubber gloves when doing dishes or cleaning. Apply hand cream after every hand wash. In cold weather, wear warm gloves to prevent brittle, flaking nails.'
+      },
+      {
+        type: 'tip', text: 'GlamAI Tip: Worried about how gel or acrylic might look on your natural nails? Preview any nail design virtually before committing to a salon appointment!'
+      },
+      {
+        type: 'h2', text: '3. 🥗 Feed Your Nails from Within'
+      },
+      {
+        type: 'p', text: 'Strong nails need proper nutrition. Key nutrients for nail health include:\n\n**Biotin (Vitamin B7)** — The gold standard for nail strength. Found in eggs, almonds, and salmon.\n**Iron** — Deficiency causes spoon-shaped, brittle nails. Eat lean red meat, spinach, and lentils.\n**Zinc** — Essential for nail cell growth. Sources: pumpkin seeds, chickpeas, and yogurt.\n**Protein** — Nails are made of keratin protein. Ensure adequate protein intake daily.\n**Omega-3 Fatty Acids** — Keep nails moisturized and flexible. Found in fish, walnuts, and flax seeds.'
+      },
+      {
+        type: 'h2', text: '4. ✂️ File Correctly'
+      },
+      {
+        type: 'p', text: 'Never saw back and forth — this causes micro-fractures and splitting. Always file in one direction, from the outer edge toward the center, using a fine-grit glass or crystal file. Avoid metal files on natural nails. Shape your nails to follow your natural cuticle line for the most flattering look.'
+      },
+      {
+        type: 'h2', text: '5. 🚫 Skip the Nail Hardeners'
+      },
+      {
+        type: 'p', text: 'Counterintuitive, but true: most nail hardeners contain formaldehyde, which makes nails rigid and more prone to snapping. Flexible nails are strong nails. Instead, use a nourishing base coat with keratin, calcium, or bamboo extract.'
+      },
+      {
+        type: 'h2', text: '6. 💅 Give Your Nails Breaks Between Manicures'
+      },
+      {
+        type: 'p', text: 'Continuous gel or acrylic wear without breaks thins the nail plate. After every 3–4 gel sessions, take a 2-week break. During this time, apply a strengthening treatment and keep nails hydrated. Your nails will thank you with faster, healthier growth.'
+      },
+      {
+        type: 'h2', text: '7. 🧴 The Perfect At-Home Manicure Routine'
+      },
+      {
+        type: 'p', text: '**Step 1**: Remove old polish with an acetone-free remover.\n**Step 2**: Soak hands in warm water with a drop of olive oil for 5 minutes.\n**Step 3**: Gently push back cuticles with a wooden orange stick — never cut them.\n**Step 4**: Shape nails with a glass file (one direction only).\n**Step 5**: Buff the surface lightly for smoothness.\n**Step 6**: Apply base coat, two coats of color, and a top coat.\n**Step 7**: Finish with cuticle oil and hand cream.'
+      },
+      {
+        type: 'h2', text: '8. 🌙 Overnight Nail Treatment'
+      },
+      {
+        type: 'p', text: 'Before bed, apply a thick layer of cuticle oil and hand cream, then wear cotton gloves overnight. This "overnight mask" deeply penetrates and restores dry, damaged nails and cuticles. You will wake up with noticeably softer, more supple hands and nails.'
+      },
+      {
+        type: 'cta', text: 'Looking for nail design inspiration while you grow your dream nails? Try on stunning designs in GlamAI\'s Nail Studio — completely free!'
+      }
+    ]
   }
 ];
 
-const CATEGORIES = ['All', 'Guides', 'Trends', 'AI Tools', 'Styles', 'Hair Care', 'About Us'];
+const CATEGORIES = ['All', 'Guides', 'Trends', 'AI Tools', 'Styles', 'Hair Care', 'Makeup', 'Nails', 'About Us'];
 
 const parseMarkdownBold = (text) => {
   if (!text) return '';
@@ -611,6 +901,8 @@ export default function Blog({ onStartClick }) {
                 'AI Tools': 'blog.category.aiTools',
                 'Styles': 'blog.category.styles',
                 'Hair Care': 'blog.category.hairCare',
+                'Makeup': 'blog.category.makeup',
+                'Nails': 'blog.category.nails',
                 'About Us': 'blog.category.aboutUs'
               };
               return (
@@ -669,6 +961,8 @@ export default function Blog({ onStartClick }) {
                       'AI Tools': 'blog.category.aiTools',
                       'Styles': 'blog.category.styles',
                       'Hair Care': 'blog.category.hairCare',
+                      'Makeup': 'blog.category.makeup',
+                      'Nails': 'blog.category.nails',
                       'About Us': 'blog.category.aboutUs'
                     }[article.category] || article.category)}
                   </span>
