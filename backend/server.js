@@ -1283,8 +1283,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chat_id: chatId,
-                    text: `appss_f0cdf4`,
-                    parse_mode: 'Markdown'
+                    text: `appss_f0cdf4`
                 })
             });
             const resData = await response.json();
