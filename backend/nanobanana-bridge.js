@@ -250,50 +250,126 @@ const HAIRCUT_MAP = {
 
 const COLOR_MAP = {
     "AI Recommended": "Random",
+    "ai-recommended": "Random",
     "No Change": "No change",
     "No change": "No change",
     "no_change": "No change",
     "no-change": "No change",
-    "Jet Black": "Jet Black",
-    "Blonde": "Blonde",
-    "Blue Highlights": "Blue",
-    "Pastel Pink": "Pink",
-    "Black": "Black",
-    "Blue-Black": "Blue-Black",
-    "Dark Brown": "Dark Brown",
-    "Medium Brown": "Medium Brown",
-    "Light Brown": "Light Brown",
-    "Chestnut": "Chestnut",
-    "Mahogany": "Mahogany",
-    "Ash Brown": "Ash Brown",
-    "Brunette": "Brunette",
-    "Caramel": "Caramel",
-    "Golden Blonde": "Golden Blonde",
-    "Honey Blonde": "Honey Blonde",
-    "Strawberry Blonde": "Strawberry Blonde",
-    "Platinum Blonde": "Platinum Blonde",
-    "Ash Blonde": "Ash Blonde",
-    "Auburn": "Auburn",
-    "Copper": "Copper",
-    "Burgundy": "Burgundy",
-    "Silver": "Silver",
-    "White": "White",
-    "Titanium": "Titanium",
-    "Rose Gold": "Rose Gold",
-    "Red": "Red",
-    "Blue": "Blue",
-    "Purple": "Purple",
-    "Pink": "Pink",
-    "Green": "Green",
-    "balayage-blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
-    "Balayage Blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
-    "rose-gold-highlights": "delicate metallic rose-gold highlights woven through the hair",
-    "sunset-copper": "sunset copper, vibrant fiery orange-red with warm gold undertones",
-    "Sunset Copper": "sunset copper, vibrant fiery orange-red with warm gold undertones",
+
+    // Jet Black
+    "Jet Black": "sleek, glossy pitch-black hair color",
+    "jet-black": "sleek, glossy pitch-black hair color",
+    "Black": "sleek, glossy pitch-black hair color",
+    "black": "sleek, glossy pitch-black hair color",
+
+    // Platinum Blonde
+    "Platinum Blonde": "ice-cool white platinum blonde hair color",
+    "platinum-blonde": "ice-cool white platinum blonde hair color",
+    "Blonde": "warm rich blonde hair color",
+    "blonde": "warm rich blonde hair color",
+
+    // Dark Brown
+    "Dark Brown": "natural deep dark chocolate brown hair color",
+    "dark-brown": "natural deep dark chocolate brown hair color",
+
+    // Medium Brown
+    "Medium Brown": "natural medium brown hair color",
+    "medium-brown": "natural medium brown hair color",
+
+    // Light Brown
+    "Light Brown": "natural light chestnut brown hair color",
+    "light-brown": "natural light chestnut brown hair color",
+
+    // Chestnut
+    "Chestnut": "rich chestnut brown hair color with subtle warm mahogany tones",
+    "chestnut": "rich chestnut brown hair color with subtle warm mahogany tones",
+
+    // Caramel
+    "Caramel": "warm caramel brown hair color with golden highlights",
+    "caramel": "warm caramel brown hair color with golden highlights",
+
+    // Golden Blonde
+    "Golden Blonde": "bright radiant golden blonde hair color",
+    "golden-blonde": "bright radiant golden blonde hair color",
+
+    // Honey Blonde
+    "Honey Blonde": "warm honey blonde hair color",
+    "honey-blonde": "warm honey blonde hair color",
+
+    // Strawberry Blonde
+    "Strawberry Blonde": "strawberry blonde hair color, a beautiful warm blend of blonde and light red tones",
+    "strawberry-blonde": "strawberry blonde hair color, a beautiful warm blend of blonde and light red tones",
+
+    // Auburn
+    "Auburn": "rich auburn hair color, a deep warm reddish-brown shade",
+    "auburn": "rich auburn hair color, a deep warm reddish-brown shade",
+
+    // Copper
+    "Copper": "vibrant metallic copper orange hair color",
+    "copper": "vibrant metallic copper orange hair color",
+
+    // Burgundy
+    "Burgundy": "deep rich burgundy wine-red hair color",
+    "burgundy": "deep rich burgundy wine-red hair color",
+
+    // Rose Gold
+    "Rose Gold": "soft rose gold pinkish-gold metallic hair color",
+    "rose-gold": "soft rose gold pinkish-gold metallic hair color",
+
+    // Pastel Pink
+    "Pastel Pink": "soft pastel baby pink hair color",
+    "pastel-pink": "soft pastel baby pink hair color",
+
+    // Pastel Lilac
     "Pastel Lilac": "pastel lilac, a soft and delicate light lavender-purple shade",
     "pastel-lilac": "pastel lilac, a soft and delicate light lavender-purple shade",
+
+    // Silver
+    "Silver": "sleek metallic silver-grey hair color",
+    "silver": "sleek metallic silver-grey hair color",
+
+    // Red
+    "Red": "vibrant crimson red hair color",
+    "red": "vibrant crimson red hair color",
+
+    // Blue
+    "Blue": "deep sapphire blue hair color",
+    "blue": "deep sapphire blue hair color",
+
+    // Purple
+    "Purple": "vibrant violet purple hair color",
+    "purple": "vibrant violet purple hair color",
+
+    // Green
+    "Green": "vibrant emerald green hair color",
+    "green": "vibrant emerald green hair color",
+
+    // Balayage Blonde
+    "Balayage Blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
+    "balayage-blonde": "a beautiful balayage blonde paint job with darker roots transitioning to soft golden blonde highlights",
+
+    // Split-dye Pink & Black
     "Split-dye Pink & Black": "split-dye hair color, with one half of the head colored pastel pink and the other half colored pitch black",
-    "split-dye-pink-black": "split-dye hair color, with one half of the head colored pastel pink and the other half colored pitch black"
+    "split-dye-pink-black": "split-dye hair color, with one half of the head colored pastel pink and the other half colored pitch black",
+    "split-pink-black": "split-dye hair color, with one half of the head colored pastel pink and the other half colored pitch black",
+
+    // Sunset Copper
+    "Sunset Copper": "sunset copper, vibrant fiery orange-red with warm gold undertones",
+    "sunset-copper": "sunset copper, vibrant fiery orange-red with warm gold undertones",
+
+    // --- NEW TRENDY SHADES ---
+    "Peach Fuzz": "soft pastel peach fuzz hair color, warm orange-pink pastel tone",
+    "peach-fuzz": "soft pastel peach fuzz hair color, warm orange-pink pastel tone",
+    "Emerald Green": "deep emerald green hair color, rich forest green tone",
+    "emerald-green": "deep emerald green hair color, rich forest green tone",
+    "Midnight Blue": "deep midnight blue-black hair color with dark indigo undertones",
+    "midnight-blue": "deep midnight blue-black hair color with dark indigo undertones",
+    "Lavender Frost": "cool ash lavender purple hair color with metallic silver frost undertones",
+    "lavender-frost": "cool ash lavender purple hair color with metallic silver frost undertones",
+    "Ginger Spice": "warm ginger spice hair color, vibrant cinnamon copper-brown shade",
+    "ginger-spice": "warm ginger spice hair color, vibrant cinnamon copper-brown shade",
+    "Chocolate Cherry": "rich dark chocolate cherry brunette hair color with deep burgundy red highlights",
+    "chocolate-cherry": "rich dark chocolate cherry brunette hair color with deep burgundy red highlights"
 };
 
 function parseMakeupDescription(makeupStyle) {
@@ -352,14 +428,32 @@ function parseMakeupDescription(makeupStyle) {
     let lipstickDesc = "";
     if (styleLower.includes('glazed donut') || styleLower.includes('glazed-donut')) {
         lipstickDesc = "ultra-glossy high-shine glazed donut clear lip gloss, wet-look lips";
-    } else if (styleLower.includes('velvet matte red') || styleLower.includes('velvet-red') || styleLower.includes('velvet matte red')) {
+    } else if (styleLower.includes('velvet red') || styleLower.includes('velvet-red') || styleLower.includes('velvet matte red') || styleLower.includes('velvet-matte-red')) {
         lipstickDesc = "bold velvet matte crimson red lipstick, perfectly defined clean lip lines";
     } else if (styleLower.includes('satin rosewood') || styleLower.includes('satin-rosewood')) {
         lipstickDesc = "soft satin rosewood dusty-rose lipstick, natural cream finish";
-    } else if (styleLower.includes('metallic berry') || styleLower.includes('metallic-berry')) {
-        lipstickDesc = "shimmering metallic berry plum lipstick, rich deep tone";
-    } else if (styleLower.includes('soft coral glow') || styleLower.includes('soft-coral')) {
+    } else if (styleLower.includes('metallic berry') || styleLower.includes('metallic-berry') || styleLower.includes('berry')) {
+        lipstickDesc = "shimmering metallic berry deep plum lipstick, rich deep tone";
+    } else if (styleLower.includes('soft coral glow') || styleLower.includes('soft-coral') || styleLower.includes('soft coral')) {
         lipstickDesc = "sheer soft coral peach cream lipstick with a subtle glow";
+    } else if (styleLower.includes('cherry cola') || styleLower.includes('cherry-cola')) {
+        lipstickDesc = "deep glossy cherry cola reddish-brown lipstick, high shine gloss finish";
+    } else if (styleLower.includes('plum wine') || styleLower.includes('plum-wine')) {
+        lipstickDesc = "deep matte plum wine berry burgundy lipstick, rich sophisticated dark lip color";
+    } else if (styleLower.includes('peachy nude') || styleLower.includes('peachy-nude')) {
+        lipstickDesc = "natural warm peachy nude cream lipstick, soft satin everyday lip color";
+    } else if (styleLower.includes('espresso matte') || styleLower.includes('espresso-matte')) {
+        lipstickDesc = "deep matte espresso brown lipstick, rich cool chocolate tone, clean velvety lip finish";
+    } else if (styleLower.includes('dusty mauve') || styleLower.includes('dusty-mauve')) {
+        lipstickDesc = "soft satin dusty mauve lipstick, cool-toned muted purplish-pink shade";
+    } else if (styleLower.includes('vampy plum') || styleLower.includes('vampy-plum')) {
+        lipstickDesc = "ultra-dark glossy vampy plum black-cherry lipstick, deep gothic berry shade";
+    } else if (styleLower.includes('peach cream') || styleLower.includes('peach-cream')) {
+        lipstickDesc = "creamy warm peach apricot lipstick, soft satin coral-orange finish";
+    } else if (styleLower.includes('gilded bronze') || styleLower.includes('gilded-bronze')) {
+        lipstickDesc = "shimmering metallic gilded bronze lipstick with warm gold reflect highlights";
+    } else if (styleLower.includes('electric violet') || styleLower.includes('electric-violet')) {
+        lipstickDesc = "vibrant glossy electric violet purple lipstick, high-shine wet finish";
     } else if (styleLower.includes('rose pink')) {
         lipstickDesc = "soft rose pink creamy lipstick, natural finish";
     } else {
@@ -515,6 +609,89 @@ function parseBeardDescription(beardStyle) {
     return finalDesc;
 }
 
+function getDetailedNailColor(colorName) {
+    if (!colorName) return '';
+    const colorLower = colorName.trim().toLowerCase();
+    
+    switch (colorLower) {
+        case 'default':
+        case 'default color':
+        case 'matching':
+        case 'matching shade':
+            return '';
+        case 'candy pink':
+        case 'candy-pink':
+            return 'vibrant candy pink';
+        case 'obsidian black':
+        case 'obsidian-black':
+            return 'deep glossy obsidian black';
+        case 'pure white':
+        case 'pure-white':
+            return 'clean crisp pure white';
+        case 'silver shimmer':
+        case 'silver-shimmer':
+            return 'sparkling silver shimmer glittery';
+        case 'gold leaf':
+        case 'gold-leaf':
+            return 'luxurious gold leaf metallic gold';
+        case 'royal blue':
+        case 'royal-blue':
+            return 'rich glossy royal blue';
+        case 'lavender':
+            return 'soft pastel lavender lilac';
+        case 'emerald':
+        case 'emerald green':
+        case 'emerald-green':
+            return 'deep rich emerald green';
+        case 'cherry red':
+        case 'cherry-red':
+            return 'vibrant glossy cherry red';
+        case 'neon green':
+        case 'neon-green':
+            return 'bright glowing neon green';
+        case 'baby blue':
+        case 'baby-blue':
+            return 'soft pastel baby blue';
+        case 'mocha brown':
+        case 'mocha-brown':
+            return 'rich warm mocha espresso brown';
+        case 'butter yellow':
+        case 'butter-yellow':
+            return 'soft pale butter yellow';
+        case 'matcha green':
+        case 'matcha-green':
+            return 'creamy pastel matcha green';
+        case 'cyber silver':
+        case 'cyber-silver':
+            return 'futuristic metallic cyber silver chrome';
+        case 'oxblood':
+            return 'deep dark oxblood maroon burgundy red';
+        
+        // --- 6 NEW TRENDY NAIL SHADES ---
+        case 'peach fuzz':
+        case 'peach-fuzz':
+            return 'soft creamy peach fuzz apricot';
+        case 'midnight navy':
+        case 'midnight-navy':
+            return 'deep dark midnight navy blue';
+        case 'milky oat':
+        case 'milky-oat':
+            return 'chic sheer milky white oat vanilla gel';
+        case 'rose quartz':
+        case 'rose-quartz':
+            return 'translucent jelly-like rose quartz pink';
+        case 'burnt terracotta':
+        case 'burnt-terracotta':
+            return 'warm earthy burnt terracotta orange-brown';
+        case 'sage green':
+        case 'sage-green':
+            return 'dusty sage green';
+        
+        default:
+            return colorLower;
+    }
+}
+
 function parseNailsDescription(nailStyle) {
     if (!nailStyle) return "classic neat manicure with a glossy finish";
     const nailLower = nailStyle.toLowerCase();
@@ -523,7 +700,7 @@ function parseNailsDescription(nailStyle) {
     function getSingleFingerDescription(presetName, colorName) {
         const presetLower = presetName.toLowerCase();
         const colorLower = colorName.toLowerCase();
-        const colorVal = (colorLower === 'matching shade' || colorLower === 'default') ? '' : colorName;
+        const colorVal = getDetailedNailColor(colorName);
 
         if (presetLower.includes('french tip') || presetLower.includes('french')) {
             if (presetLower.includes('chrome')) {
@@ -625,19 +802,18 @@ function parseNailsDescription(nailStyle) {
 
     // Extract explicit color from "in [Color Name]" pattern
     let explicitColor = "";
-    const colorMatch = nailStyle.match(/\bin\s+([A-Z][a-zA-Z\s]+?)(?:\.|,|$)/);
+    const colorMatch = nailStyle.match(/\bin\s+([^.,]+?)(?:\bShape:|\bTexture:|\.|,|$)/i);
     if (colorMatch && colorMatch[1]) {
         const colorName = colorMatch[1].trim();
-        // Don't treat common words as colors
-        const skipWords = ['the', 'a', 'an', 'classic', 'default', 'matching'];
-        if (!skipWords.includes(colorName.toLowerCase()) && colorName.toLowerCase() !== 'default color') {
+        const skipWords = ['the', 'a', 'an', 'classic', 'default', 'matching', 'default color', 'matching shade'];
+        if (!skipWords.includes(colorName.toLowerCase())) {
             explicitColor = colorName;
         }
     }
 
     // 1. Detect Design with color injection
     let designDesc = "";
-    const colorVal = (explicitColor && explicitColor.toLowerCase() !== 'default') ? explicitColor : "";
+    const colorVal = getDetailedNailColor(explicitColor);
 
     if (nailLower.includes('french')) {
         if (nailLower.includes('chrome')) {
@@ -669,13 +845,19 @@ function parseNailsDescription(nailStyle) {
         designDesc = `${colorVal || 'edgy glossy solid jet black'} nail design`;
     } else {
         const match = nailStyle.match(/^([^.,]+)/);
-        if (match && match[1]) {
-            designDesc = `${match[1].trim()} nail design`;
+        let designName = match && match[1] ? match[1].trim() : "manicure";
+        
+        if (designName.toLowerCase().startsWith('classic design')) {
+            if (colorVal) {
+                designDesc = `solid ${colorVal} gel nail polish design`;
+            } else {
+                designDesc = "classic neat manicure with a glossy finish";
+            }
         } else {
-            designDesc = "manicure nail design";
-        }
-        if (colorVal) {
-            designDesc += ` in ${colorVal} color`;
+            designDesc = `${designName} nail design`;
+            if (colorVal) {
+                designDesc += ` in ${colorVal} color`;
+            }
         }
     }
 

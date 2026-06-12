@@ -1052,6 +1052,34 @@ app.post('/api/payment/telegram-invoice', async (req, res) => {
     }
 });
 
+app.get('/api/telegram/set-commands', async (req, res) => {
+    if (!TELEGRAM_BOT_TOKEN) {
+        return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN_MISSING' });
+    }
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                commands: [
+                    {
+                        command: "start",
+                        description: "Start the GlamAI Studio"
+                    },
+                    {
+                        command: "appss_verify",
+                        description: "Verify the bot on AppSS catalog"
+                    }
+                ]
+            })
+        });
+        const data = await response.json();
+        res.json({ success: data.ok, result: data });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.post('/api/telegram/send-photo', async (req, res) => {
     if (!req.userFromCookie) {
         return res.status(401).json({ error: 'LOGIN_REQUIRED' });
@@ -1195,6 +1223,27 @@ app.post('/api/telegram/webhook', async (req, res) => {
             }
         } catch (err) {
             console.error('Error crediting user for Stars:', err);
+        }
+    }
+
+    // Handle /appss_verify command
+    if (update.message && update.message.text && update.message.text.startsWith('/appss_verify')) {
+        const chatId = update.message.chat.id;
+        console.log(`[Telegram Bot] /appss_verify command received. Chat ID: ${chatId}`);
+        try {
+            const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: `appss_f0cdf4`,
+                    parse_mode: 'Markdown'
+                })
+            });
+            const resData = await response.json();
+            console.log(`[Telegram Bot] /appss_verify response status: ${response.status}, payload:`, resData);
+        } catch (err) {
+            console.error('Error sending verification response:', err);
         }
     }
 

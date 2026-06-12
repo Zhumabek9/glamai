@@ -201,7 +201,13 @@ const COLORS = [
   { id: "blue", name: "Blue", hex: "#0066cc", hue: 165, saturate: 160, brightness: 90 },
   { id: "balayage-blonde", name: "Balayage Blonde", hex: "linear-gradient(135deg, #4a3728, #f5d376)", hot: true, hue: 0, saturate: 100, brightness: 100 },
   { id: "split-pink-black", name: "Split-dye Pink & Black", hex: "linear-gradient(90deg, #ff69b4 50%, #1a1a1a 50%)", hot: true, hue: 0, saturate: 100, brightness: 100 },
-  { id: "sunset-copper", name: "Sunset Copper", hex: "linear-gradient(135deg, #b87333, #e8192c)", hot: true, hue: 0, saturate: 100, brightness: 100 }
+  { id: "sunset-copper", name: "Sunset Copper", hex: "linear-gradient(135deg, #b87333, #e8192c)", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "peach-fuzz", name: "Peach Fuzz", hex: "#fdb595", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "emerald-green", name: "Emerald Green", hex: "#0e6655", hue: 0, saturate: 100, brightness: 100 },
+  { id: "midnight-blue", name: "Midnight Blue", hex: "#1b263b", hue: 0, saturate: 100, brightness: 100 },
+  { id: "lavender-frost", name: "Lavender Frost", hex: "#b8a9c9", hot: true, hue: 0, saturate: 100, brightness: 100 },
+  { id: "ginger-spice", name: "Ginger Spice", hex: "#ca5c2e", hue: 0, saturate: 100, brightness: 100 },
+  { id: "chocolate-cherry", name: "Chocolate Cherry", hex: "#5a2228", hot: true, hue: 0, saturate: 100, brightness: 100 }
 ];
 
 const GENDERS = [

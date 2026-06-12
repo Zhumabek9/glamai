@@ -44,7 +44,13 @@ const FINGER_COLORS = [
   { id: 'butter-yellow', name: 'Butter Yellow', hex: '#fff59d', hot: true },
   { id: 'matcha-green', name: 'Matcha Green', hex: '#c5e1a5' },
   { id: 'cyber-silver', name: 'Cyber Silver', hex: '#c0c0c0', hot: true },
-  { id: 'oxblood', name: 'Oxblood', hex: '#4a0404' }
+  { id: 'oxblood', name: 'Oxblood', hex: '#4a0404' },
+  { id: 'peach-fuzz', name: 'Peach Fuzz', hex: '#ffbe9f', hot: true },
+  { id: 'midnight-navy', name: 'Midnight Navy', hex: '#1d2d44' },
+  { id: 'milky-oat', name: 'Milky Oat', hex: '#faf0e6', hot: true },
+  { id: 'rose-quartz', name: 'Rose Quartz', hex: '#ffd1dc' },
+  { id: 'burnt-terracotta', name: 'Burnt Terracotta', hex: '#b85d38' },
+  { id: 'sage-green', name: 'Sage Green', hex: '#8a9a86' }
 ];
 
 const QUICK_PRESETS = [

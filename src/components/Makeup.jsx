@@ -55,37 +55,43 @@ const LIPSTICKS = [
   { id: 'soft-coral', name: 'Soft Coral', hex: '#f08080' },
   { id: 'cherry-cola', name: 'Cherry Cola', hex: '#631e1c', hot: true },
   { id: 'plum-wine', name: 'Plum Wine', hex: '#4f1a24' },
-  { id: 'peachy-nude', name: 'Peachy Nude', hex: '#d48d7c' }
+  { id: 'peachy-nude', name: 'Peachy Nude', hex: '#d48d7c' },
+  { id: 'espresso-matte', name: 'Espresso Matte', hex: '#4b3621', hot: true },
+  { id: 'dusty-mauve', name: 'Dusty Mauve', hex: '#af868b' },
+  { id: 'vampy-plum', name: 'Vampy Plum', hex: '#33001a', hot: true },
+  { id: 'peach-cream', name: 'Peach Cream', hex: '#f28f73' },
+  { id: 'gilded-bronze', name: 'Gilded Bronze', hex: '#a57c5b' },
+  { id: 'electric-violet', name: 'Electric Violet', hex: '#a855f7', hot: true }
 ];
 
 const EYELINERS = [
-  { id: 'none', name: 'None' },
-  { id: 'classic', name: 'Classic' },
-  { id: 'winged', name: 'Winged Cat Eye' },
-  { id: 'smokey', name: 'Smokey Smudge' }
+  { id: 'none', name: 'None', image: '/styles/makeup_eyeliner_none.webp' },
+  { id: 'classic', name: 'Classic', image: '/styles/makeup_eyeliner_classic.webp' },
+  { id: 'winged', name: 'Winged Cat Eye', image: '/styles/makeup_eyeliner_winged.webp' },
+  { id: 'smokey', name: 'Smokey Smudge', image: '/styles/makeup_eyeliner_smokey.webp' }
 ];
 
 const EYESHADOWS = [
-  { id: 'none', name: 'None' },
-  { id: 'smoky-sunset', name: 'Smoky Sunset' },
-  { id: 'glitter-euphoria', name: 'Glitter Euphoria' },
-  { id: 'nude-silhouette', name: 'Nude Silhouette' },
-  { id: 'emerald-envy', name: 'Emerald Envy' }
+  { id: 'none', name: 'None', image: '/styles/makeup_eyeshadow_none.webp' },
+  { id: 'smoky-sunset', name: 'Smoky Sunset', image: '/styles/makeup_eyeshadow_smoky_sunset.webp' },
+  { id: 'glitter-euphoria', name: 'Glitter Euphoria', image: '/styles/makeup_eyeshadow_glitter_euphoria.webp' },
+  { id: 'nude-silhouette', name: 'Nude Silhouette', image: '/styles/makeup_eyeshadow_nude_silhouette.webp' },
+  { id: 'emerald-envy', name: 'Emerald Envy', image: '/styles/makeup_eyeshadow_emerald_envy.webp' }
 ];
 
 const BLUSHES = [
-  { id: 'none', name: 'None' },
-  { id: 'glass-skin', name: 'Glass Skin Glow' },
-  { id: 'sunkissed-peach', name: 'Sun-Kissed Peach' },
-  { id: 'soft-lavender', name: 'Soft Lavender' }
+  { id: 'none', name: 'None', image: '/styles/makeup_blush_none.webp' },
+  { id: 'glass-skin', name: 'Glass Skin Glow', image: '/styles/makeup_blush_glass_skin.webp' },
+  { id: 'sunkissed-peach', name: 'Sun-Kissed Peach', image: '/styles/makeup_blush_sunkissed_peach.webp' },
+  { id: 'soft-lavender', name: 'Soft Lavender', image: '/styles/makeup_blush_soft_lavender.webp' }
 ];
 
 const EYE_COLORS = [
-  { id: 'none', name: 'None' },
-  { id: 'ice-blue', name: 'Ice Blue', hot: true },
-  { id: 'emerald', name: 'Emerald', hot: true },
-  { id: 'hazel', name: 'Hazel' },
-  { id: 'violet', name: 'Violet' }
+  { id: 'none', name: 'None', image: '/styles/makeup_lens_none.webp' },
+  { id: 'ice-blue', name: 'Ice Blue', image: '/styles/makeup_lens_ice_blue.webp', hot: true },
+  { id: 'emerald', name: 'Emerald', image: '/styles/makeup_lens_emerald.webp', hot: true },
+  { id: 'hazel', name: 'Hazel', image: '/styles/makeup_lens_hazel.webp' },
+  { id: 'violet', name: 'Violet', image: '/styles/makeup_lens_violet.webp' }
 ];
 
 const PROGRESS_STEPS = [
@@ -603,43 +609,133 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
           {/* Eyeliner */}
           <div className="selector-group">
             <span className="selector-title">{t('audit.makeup.eyelinerStyle')}</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              {EYELINERS.map(e => (
-                <button key={e.id} className={`btn ${selectedEyeliner === e.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedEyeliner(e.id)}>{e.name}</button>
-              ))}
+            <div className="style-cards-grid">
+              {EYELINERS.map(e => {
+                const isSelected = selectedEyeliner === e.id;
+                return (
+                  <button
+                    type="button"
+                    key={e.id}
+                    className={`style-card ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    aria-label={`Select: ${e.name}`}
+                    onClick={() => setSelectedEyeliner(e.id)}
+                    style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  >
+                    {isSelected && (
+                      <div className="selected-badge">
+                        <Check size={12} />
+                      </div>
+                    )}
+                    <div className="style-card-image-wrapper">
+                      <img src={e.image} alt={e.name} className="style-card-img" loading="lazy" decoding="async" />
+                      <div className="style-card-overlay"></div>
+                    </div>
+                    <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{e.name}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Eyeshadow */}
           <div className="selector-group">
             <span className="selector-title">{t('audit.makeup.eyeshadowPalette')}</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              {EYESHADOWS.map(es => (
-                <button key={es.id} className={`btn ${selectedEyeshadow === es.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedEyeshadow(es.id)}>{es.name}</button>
-              ))}
+            <div className="style-cards-grid">
+              {EYESHADOWS.map(es => {
+                const isSelected = selectedEyeshadow === es.id;
+                return (
+                  <button
+                    type="button"
+                    key={es.id}
+                    className={`style-card ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    aria-label={`Select: ${es.name}`}
+                    onClick={() => setSelectedEyeshadow(es.id)}
+                    style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  >
+                    {isSelected && (
+                      <div className="selected-badge">
+                        <Check size={12} />
+                      </div>
+                    )}
+                    <div className="style-card-image-wrapper">
+                      <img src={es.image} alt={es.name} className="style-card-img" loading="lazy" decoding="async" />
+                      <div className="style-card-overlay"></div>
+                    </div>
+                    <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{es.name}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Blush */}
           <div className="selector-group">
             <span className="selector-title">{t('audit.makeup.blushSkinGlow')}</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              {BLUSHES.map(b => (
-                <button key={b.id} className={`btn ${selectedBlush === b.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem' }} onClick={() => setSelectedBlush(b.id)}>{b.name}</button>
-              ))}
+            <div className="style-cards-grid">
+              {BLUSHES.map(b => {
+                const isSelected = selectedBlush === b.id;
+                return (
+                  <button
+                    type="button"
+                    key={b.id}
+                    className={`style-card ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    aria-label={`Select: ${b.name}`}
+                    onClick={() => setSelectedBlush(b.id)}
+                    style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  >
+                    {isSelected && (
+                      <div className="selected-badge">
+                        <Check size={12} />
+                      </div>
+                    )}
+                    <div className="style-card-image-wrapper">
+                      <img src={b.image} alt={b.name} className="style-card-img" loading="lazy" decoding="async" />
+                      <div className="style-card-overlay"></div>
+                    </div>
+                    <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{b.name}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Eye Color */}
           <div className="selector-group">
             <span className="selector-title">Colored Contact Lenses</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-              {EYE_COLORS.map(e => (
-                <button key={e.id} className={`btn ${selectedEyeColor === e.id ? 'btn-primary' : 'btn-secondary'}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.75rem', position: 'relative' }} onClick={() => setSelectedEyeColor(e.id)}>
-                  {e.name}
-                  {e.hot && <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--color-pink-primary)', color: '#fff', fontSize: '0.55rem', padding: '0.1rem 0.3rem', borderRadius: '4px', fontWeight: 800 }}>HOT</span>}
-                </button>
-              ))}
+            <div className="style-cards-grid">
+              {EYE_COLORS.map(e => {
+                const isSelected = selectedEyeColor === e.id;
+                return (
+                  <button
+                    type="button"
+                    key={e.id}
+                    className={`style-card ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
+                    aria-label={`Select: ${e.name}`}
+                    onClick={() => setSelectedEyeColor(e.id)}
+                    style={{ border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                  >
+                    {isSelected && (
+                      <div className="selected-badge">
+                        <Check size={12} />
+                      </div>
+                    )}
+                    {e.hot && (
+                      <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'var(--color-pink-primary)', color: '#fff', fontSize: '0.55rem', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: 800, zIndex: 3 }}>
+                        HOT
+                      </div>
+                    )}
+                    <div className="style-card-image-wrapper">
+                      <img src={e.image} alt={e.name} className="style-card-img" loading="lazy" decoding="async" />
+                      <div className="style-card-overlay"></div>
+                    </div>
+                    <div className="style-card-footer" style={{ fontSize: '0.72rem', fontWeight: 700 }}>{e.name}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

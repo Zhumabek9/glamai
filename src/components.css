@@ -1504,11 +1504,9 @@
 @media (max-width: 768px) {
   .category-chips {
     display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    padding-bottom: 0.4rem !important;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
     gap: 0.4rem !important;
   }
 
@@ -1522,7 +1520,6 @@
     min-height: 38px !important;
     border-radius: 100px !important;
     white-space: nowrap !important;
-    flex-shrink: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -1575,16 +1572,17 @@
     transform: none !important;
   }
 
-  /* Square image box */
+  /* Square image box — padding-bottom trick for Safari/iOS compatibility */
   .style-card-image-wrapper {
     width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
+    height: 0 !important;
+    padding-bottom: 100% !important;
+    position: relative !important;
     border-radius: 10px !important;
     overflow: hidden !important;
     border: 1.5px solid rgba(0, 0, 0, 0.06) !important;
     background: rgba(255, 255, 255, 0.5) !important;
     flex: none !important;
-    height: auto !important;
   }
 
   .style-card.selected .style-card-image-wrapper {
@@ -1594,6 +1592,9 @@
 
   .style-card-image,
   .style-card-img {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
@@ -1741,9 +1742,8 @@
     height: auto;
   }
 
-  .style-card-image-wrapper {
-    height: 90px;
-  }
+  /* Image wrapper height for tablet: handled by base rule (110px) */
+  /* For mobile (<=768px): padding-bottom trick in the 768px media query handles Safari */
 
   .style-card-footer {
     font-size: 0.6rem;
@@ -2866,6 +2866,14 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   background: #fdfafd;
   transition: border-color 0.2s ease;
+}
+
+/* On mobile, override the fixed height — let padding-bottom handle sizing */
+@media (max-width: 768px) {
+  .style-card-image-wrapper {
+    height: 0 !important;
+    padding-bottom: 100% !important;
+  }
 }
 
 .style-card:hover .style-card-image-wrapper {

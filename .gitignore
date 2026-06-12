@@ -60,3 +60,4 @@ backend/test-*.cjs
 backend/test_*.png
 
 .vercel
+.env*
