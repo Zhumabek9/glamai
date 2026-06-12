@@ -260,7 +260,7 @@ const PROGRESS_STEPS = [
   '✨ Refining details & upscaling...'
 ];
 
-export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext }) {
+export default function Playground({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext, preloadedImage, setPreloadedImage }) {
   const toast = useToast();
   const isGuest = !user || user.isGuest;
   const [image, setImage] = useState(null);
@@ -358,6 +358,15 @@ export default function Playground({ user, guestTokens, onDeductToken, onOpenAut
       }
     }
   }, [styleContext, setStyleContext, toast]);
+
+  // Listen for preloaded image from SEO landing pages
+  useEffect(() => {
+    if (preloadedImage) {
+      setImage(preloadedImage.url);
+      setImageFile(preloadedImage.file);
+      if (setPreloadedImage) setPreloadedImage(null);
+    }
+  }, [preloadedImage, setPreloadedImage]);
 
   // Custom states for new UX requirements
   const [activePreset, setActivePreset] = useState(null);

@@ -40,6 +40,7 @@ const Blog = lazyWithRetry(() => import('./components/Blog'));
 const PrivacyPolicy = lazyWithRetry(() => import('./components/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./components/TermsOfService'));
 const Favorites = lazyWithRetry(() => import('./components/Favorites'));
+const SeoPage = lazyWithRetry(() => import('./components/SeoPage'));
 
 // Detect Telegram Mini App mode (evaluated once at module load)
 const IS_TELEGRAM = !!(
@@ -78,6 +79,19 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
 
   const getTabFromPath = (path) => {
     if (path.startsWith('/blog/')) return 'blog';
+    const seoPaths = [
+      '/ai-hairstyle-changer',
+      '/ai-hair-color-changer',
+      '/try-bangs-online',
+      '/short-hair-filter',
+      '/bob-haircut-filter',
+      '/blonde-hair-filter',
+      '/brunette-hair-filter',
+      '/makeup-ai-filter',
+      '/nail-design-generator',
+      '/virtual-makeover'
+    ];
+    if (seoPaths.includes(path)) return 'seo';
     const cleanPath = path.replace(/^\//, '');
     if (!cleanPath) return 'playground';
     const validTabs = [
@@ -126,6 +140,7 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
   }, []);
 
   const [styleContext, setStyleContext] = useState(null);
+  const [preloadedImage, setPreloadedImage] = useState(null); // { url, file }
   const [user, setUser] = useState(null);
   const [guestTokens, setGuestTokens] = useState(10);
   const [history, setHistory] = useState([]);
@@ -611,6 +626,8 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
                 playgroundRef={playgroundRef}
                 styleContext={styleContext}
                 setStyleContext={setStyleContext}
+                preloadedImage={preloadedImage}
+                setPreloadedImage={setPreloadedImage}
               />
             )}
 
@@ -624,6 +641,8 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
                 setActiveTab={navigateToTab}
                 styleContext={styleContext}
                 setStyleContext={setStyleContext}
+                preloadedImage={preloadedImage}
+                setPreloadedImage={setPreloadedImage}
               />
             )}
 
@@ -635,6 +654,8 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
                 onOpenAuth={handleOpenAuth}
                 onAddHistory={handleAddHistory}
                 setActiveTab={navigateToTab}
+                preloadedImage={preloadedImage}
+                setPreloadedImage={setPreloadedImage}
               />
             )}
 
@@ -692,7 +713,18 @@ function AppCore({ isLoaded, userId, getToken, clerkUser, signOut, openSignIn })
               <Favorites setActiveTab={navigateToTab} />
             )}
 
-            {!['playground', 'makeup', 'nails', 'trending', 'dashboard', 'settings', 'pricing', 'history', 'blog', 'privacy', 'terms', 'favorites'].includes(activeTab) && (
+            {activeTab === 'seo' && (
+              <SeoPage
+                path={window.location.pathname}
+                user={effectiveUser}
+                onSelectPlan={handleSelectPlan}
+                onOpenAuth={handleOpenAuth}
+                navigateToTab={navigateToTab}
+                setPreloadedImage={setPreloadedImage}
+              />
+            )}
+
+            {!['playground', 'makeup', 'nails', 'trending', 'dashboard', 'settings', 'pricing', 'history', 'blog', 'privacy', 'terms', 'favorites', 'seo'].includes(activeTab) && (
               <div style={{ padding: '8rem 2rem 10rem', textAlign: 'center', background: 'var(--bg-primary)' }}>
                 <div style={{ maxWidth: '500px', margin: '0 auto', padding: '3rem 2rem' }} className="glass-panel animate-fade-in">
                   <h1 style={{ fontSize: '6rem', fontWeight: 800, background: 'var(--gradient-pink-purple)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: '0 0 1rem' }}>404</h1>

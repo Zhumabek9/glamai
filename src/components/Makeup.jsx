@@ -104,7 +104,7 @@ const PROGRESS_STEPS = [
 ];
 
 
-function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext }) {
+function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, styleContext, setStyleContext, preloadedImage, setPreloadedImage }) {
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -172,6 +172,15 @@ function Makeup({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, se
       setStyleContext(null);
     }
   }, [styleContext, setStyleContext, toast]);
+
+  // Listen for preloaded image from SEO landing pages
+  useEffect(() => {
+    if (preloadedImage) {
+      setImage(preloadedImage.url);
+      setImageFile(preloadedImage.file);
+      if (setPreloadedImage) setPreloadedImage(null);
+    }
+  }, [preloadedImage, setPreloadedImage]);
 
   // Monitor scroll positioning to hide/show the mobile floating button appropriately
   useEffect(() => {

@@ -88,7 +88,7 @@ const PROGRESS_STEPS = [
 ];
 
 
-function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab }) {
+function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, setActiveTab, preloadedImage, setPreloadedImage }) {
   const toast = useToast();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -131,6 +131,15 @@ function Nails({ user, guestTokens, onDeductToken, onOpenAuth, onAddHistory, set
   const activeCost = selectedCombinations.length > 0 
     ? selectedCombinations.length * 10 
     : (activeFinger !== 'all' ? 10 : 0);
+
+  // Listen for preloaded image from SEO landing pages
+  useEffect(() => {
+    if (preloadedImage) {
+      setImage(preloadedImage.url);
+      setImageFile(preloadedImage.file);
+      if (setPreloadedImage) setPreloadedImage(null);
+    }
+  }, [preloadedImage, setPreloadedImage]);
 
   // Monitor scroll positioning to hide/show the mobile floating button appropriately
   useEffect(() => {

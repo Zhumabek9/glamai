@@ -34,7 +34,9 @@ function Hero({
   setActiveTab, 
   playgroundRef,
   styleContext,
-  setStyleContext
+  setStyleContext,
+  preloadedImage,
+  setPreloadedImage
 }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const isDragging = useRef(false);
@@ -223,6 +225,8 @@ function Hero({
             setActiveTab={setActiveTab}
             styleContext={styleContext}
             setStyleContext={setStyleContext}
+            preloadedImage={preloadedImage}
+            setPreloadedImage={setPreloadedImage}
           />
         </Suspense>
       </div>
