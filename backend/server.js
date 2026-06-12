@@ -1057,24 +1057,71 @@ app.get('/api/telegram/set-commands', async (req, res) => {
         return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN_MISSING' });
     }
     try {
-        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`, {
+        const commands = [
+            {
+                command: "start",
+                description: "Start the GlamAI Studio"
+            },
+            {
+                command: "appss_verify",
+                description: "Verify the bot on AppSS catalog"
+            }
+        ];
+        
+        // 1. Set default commands
+        const defaultRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                commands: [
-                    {
-                        command: "start",
-                        description: "Start the GlamAI Studio"
-                    },
-                    {
-                        command: "appss_verify",
-                        description: "Verify the bot on AppSS catalog"
-                    }
-                ]
-            })
+            body: JSON.stringify({ commands })
         });
-        const data = await response.json();
-        res.json({ success: data.ok, result: data });
+        const defaultData = await defaultRes.json();
+        
+        // 2. Set ru commands
+        const ruRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commands, language_code: 'ru' })
+        });
+        const ruData = await ruRes.json();
+        
+        // 3. Set en commands
+        const enRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commands, language_code: 'en' })
+        });
+        const enData = await enRes.json();
+        
+        res.json({
+            success: defaultData.ok && ruData.ok && enData.ok,
+            default: defaultData,
+            ru: ruData,
+            en: enData
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/telegram/get-commands', async (req, res) => {
+    if (!TELEGRAM_BOT_TOKEN) {
+        return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN_MISSING' });
+    }
+    try {
+        const defaultCommandsRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMyCommands`);
+        const defaultCommands = await defaultCommandsRes.json();
+        
+        const ruCommandsRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMyCommands?language_code=ru`);
+        const ruCommands = await ruCommandsRes.json();
+        
+        const enCommandsRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMyCommands?language_code=en`);
+        const enCommands = await enCommandsRes.json();
+        
+        res.json({
+            default: defaultCommands,
+            ru: ruCommands,
+            en: enCommands
+        });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
